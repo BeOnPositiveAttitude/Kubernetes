@@ -13,3 +13,20 @@
 # - processes
 # - IPCs (Inter-Process Communication)
 # Linux CGroups предлагают распределение и ограничение системных ресурсов
+
+# container runtime позволяет запускать контейнеры поверх ОС хоста
+# container runtime отвечает за все составляющие запуска контейнера, которые еще не являются частью самой запущенной программы контейнера
+# существуют разлчиные решения в части container runtime:
+# - docker
+# - lxc
+# - runc
+# - cri-o
+# - rkt
+# - containerd
+# перечисленные runtimes включены в различные container solutions
+
+# OCI - Open Containers Initiative (https://opencontainers.org)
+# OCI стандартизирует использование контйнеров:
+# - image-spec определяет как упаковывать контейнер в "filesystem bundle"
+# - runtime-spec определяет как запускать эту filesystem в контейнере
+# стандартизация OCI обеспечивает совместимость между контейнерами, неважно из какой environment они изначально пришли
