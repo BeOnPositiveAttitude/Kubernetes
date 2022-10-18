@@ -1,0 +1,11 @@
+docker ps   #показывает ID контейнеров - выберите один!
+docker start
+docker stop
+docker restart
+docker kill
+docker rm
+
+docker inspect <ID> | less
+docker inspect --format='{{.NetworkSettings.IPAddress}}' containername
+docker inspect --format='{{.State.Pid}}' containername
+# в качестве альтернативы используйте ps aux на хосте, чтобы найти PID контейнера
