@@ -1,0 +1,21 @@
+# доступно много различных environment, давайте рассмотри Docker
+# на CentOS/RHEL7 Docker доступен из репозиториев
+# используйте yum install docker для установки
+# запустите docker --version для проверки установки
+# на RHEL8 Docker больше недоступен, используйте docker-ce из Docker.io вместо этого:
+# https://docs.docker.com/install/linux/docker-ce/centos/
+# после установки используйте systemctl enable --now docker для старта и автозагрузки сервиса
+
+setenforce 0
+mkdir -p /var/www/html
+echo hello from docker >> /var/www/html/index.html
+docker run -d -p 8080:80 --name="myapache" -v /var/www/html:/var/www/html httpd
+docker ps
+ss -tunap | grep 8080
+curl http://localhost:8080
+# не нужно открывать порт 8080 или какой-либо другой на firewall-е docker-хоста
+# если проброс портов не работает, стоит перезапустить демон docker
+
+docker run -it busybox
+# Ctrl-p, Ctrl-q чтобы отключиться и сохранить контейнер запущенным
+# exit остановит текущее приложение контейнера и тем самым остановит контейнер
