@@ -1,0 +1,11 @@
+# кластер Kubernetes состоит из master и worker нод
+# master-нода несет в себе kube-apiserver, etcd, kube-scheduler, kube-controller-manager
+# kube-apiserver отвечает за возможность взаимодействия с кластером извне
+# kube-scheduler отвечает за распределение рабочей нагрузки по worker-нодам
+# etcd - это key/value хранилище
+# kube-controller-manager ?
+
+# worker-нода несет в себе компоненты kubelet и kube-proxy
+# kubelet - это агент k8s, принимает команды от kube-scheduler о распределении рабочей нагрузки
+# kube-proxy служит для безопасного сетевого взаимодействия между нодами
+
