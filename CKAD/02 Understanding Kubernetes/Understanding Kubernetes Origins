@@ -1,0 +1,4 @@
+# Kubernetes основан на Google Borg, это внутренняя система, которую Google использовал много лет для обеспечения доступа к своим приложениям
+# - https://research.google/pubs/pub43438/
+# Borg также был источником важных фич для ядра Linux, которые используются в контейнерах в настоящее время, например namespaces
+# Google пожертвовал спецификации Borg в Cloud Native Computing Foundation (CNCF), которая начала разработку Kubernetes
