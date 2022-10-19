@@ -14,3 +14,4 @@ git@github.com:sandervanvugt/containers.git
 
 docker build -t nmap .   #выполнить билд образа
 docker build --no-cache -t nmap .   #не использовать уже имеющийся в системе кэш слоев образа
+docker run nmap
