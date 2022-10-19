@@ -3,4 +3,34 @@
 # также потребуется клиент kubectl на вашей управляющей платформе
 
 # легкая установка поверх ОС Fedora обеспечивается с помощью лабораторного скрипта установки
-# склонируйте git-репозиторий git clone 
+# склонируйте git-репозиторий git clone https://github.com/sandervanvugt/ckad.git
+# запустите скрипт kube-setup.sh для установки Minikube и клиента kubectl
+# или следуйте процедуре ручной установки описанной в оставшейся части этого урока
+
+# macOS => VMware Fusion => Fedora 30 VM => Minikube (embedded virtualization)
+# Fedora 30 VM: 8Gb RAM, 40Gb disk
+grep vmx /proc/cpuinfo   #проверяем включена ли виртуализация
+# kube-setup.sh для запуска нужны root-привилегии
+# после установки скриптом нужно перезагрузить VM и далее ввести sudo vboxconfig
+
+# ручная установка
+# существует много способов установки клиента kubectl:
+# - из определенного облачного клиента (Google Cloud например)
+# - сборка из исходников
+# - напрямую из релизных бинарников
+# - использовать пакет kubernetes-client из репозитория вашего дистрибутива Linux
+
+# установите VirtualBox (или другой гипервизор)
+# обеспечьте установку пакетов gcc, make, elfutils-libelf-devel, perl и kernel-devel для добавления необходимых драйверов в ядро вашей ОС
+# включите поддержку CPU virtualization (bios)
+# запустите vboxconfig для конфигурирования вашего текущего ядра
+# заметьте: либо запустите скрипт kube-setup.sh предоставляемый в https://github.com/sandervanvugt/ckad.git
+# скачайте minikube с помощью:
+curl -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+chmod +x minikube
+sudo mv minikube /usr/local/bin
+minikube start   #может потребоваться более 15 мин для завершения
+kubectl cluster-info
+kubectl get nodes
+minikube --help
+minikube ssh
