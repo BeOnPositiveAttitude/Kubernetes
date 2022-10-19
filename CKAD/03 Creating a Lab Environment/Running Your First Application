@@ -1,0 +1,3 @@
+minikube dashboard   #запуск dashboard в браузере
+kubectl get all   #смотреть инфу о всех объектах k8s
+kubectl run nginx-run --image=nginx   #создать новый pod из образа
