@@ -3,3 +3,4 @@ kubectl proxy --port=8001   #номер порта - любой свободны
 curl http://localhost:8001   #получить список API
 curl http://localhost:8080/api/v1/namespaces/default/pods   #получить список pod-ов
 curl http://localhost:8080/api/v1/namespaces/default/pods/nginx-dash-d7b9d994f-4hjbh   #инфа о конкретном pod
+curl http://localhost:8080/apis/apps/v1/deployments/ | less   #инфа о deployments
