@@ -1,0 +1,5 @@
+# kubectl под капотом использует curl для отправки API-запросов к K8s API
+# kubectl содержит множество подкоманд, делая возможным управление всеми аспектами K8s
+# используйте "kubectl command --help" для получения документации, включая примеры
+# подсказка! также не забудьте https://kubernetes.io/docs, который доступен на экзамене
+# подсказка! взгляните на шпаргалку по kubectl https://kubernetes.io/docs/reference/kubectl/cheatsheet/
