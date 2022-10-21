@@ -14,3 +14,4 @@ kubectl get deployments
 kubectl get deployments nginx-dash -o yaml > nginx-deployment.yaml   #вытащить YAML файл из существующего deployment
 kubectl describe deployment nginx-dash   #смотреть детали deployment
 kubectl get pods -o wide   #больше полей в выводе
+kubectl logs sleepy   #смотреть логи pod-а
