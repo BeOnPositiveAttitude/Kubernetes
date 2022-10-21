@@ -7,6 +7,9 @@ kubectl get all --all-namespaces   #все ресурсы во всех namespac
 kubectl get pods --all-namespaces   #все pod-ы во всех namespaces
 kubectl get namespaces   #список namespaces
 kubectl create ns secret   #создать namespace с именем secret
-
+kubectl create ns prod -o yaml   #создать namespace и сразу вывести YAML
+kubectl delete ns prod   #удалить namespace
+kubectl delete pods busybox2   #удалить pod
+kubectl run nginx-test --image=nginx -o yaml --dry-run=client   #получить YAML без реального запуска команды
 
 

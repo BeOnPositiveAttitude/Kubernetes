@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-prod
+  namespace: production
+spec:
+  containers:
+  - image: nginx
+    name: nginx

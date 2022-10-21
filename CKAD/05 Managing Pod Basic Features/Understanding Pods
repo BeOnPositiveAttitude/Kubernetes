@@ -7,6 +7,7 @@
 
 # используйте "kubectl run" для запуска deployment основанного на образе по умолчанию
 kubectl run ghost --image=ghost:0.9
+kubectl run nginx-test --image=nginx -o yaml   #создать pod и вывести сразу в YAML
 # используйте kubectl объединенный с инструкциями из YAML-файла для выполнения необходимых вам действий
 kubectl create -f <name>.yaml
 kubectl get pods [-o yaml]   #покажет pod-ы в формате YAML
