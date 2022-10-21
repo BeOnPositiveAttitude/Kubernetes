@@ -1,0 +1,16 @@
+# рекомендуемый способ работы с kubectl - это написание ваших файлов манифестов и применение командой "kubectl {create|apply} -f manifest.yaml" для управления объектами кластера
+# декларативная методология дает намного больше контроля чем императивная методология, где вы создаете все через CLI
+# главный вызов - как лего генерировать YAML файлы
+
+kubectl get deployments nginx --export -o yaml   #получить текущий статус объекта
+kubectl replace -f nginx.yaml   #запушить настройки из нового манифеста
+kubectl apply -f nginx.yaml   #применить настройки из манифеста, если объект не существует, то он будет создан
+
+# обратитесь к документации на kubernetes.io/docs
+# отюсда скопируйте/вставьте в YAML файл и измените как необходимо
+# для дополнительных компонентов используйте "kubectl explain", чтобы получить список спицифических свойств, которые доступны на определенном уровне
+
+kubectl get deployments
+kubectl get deployments nginx-dash -o yaml > nginx-deployment.yaml   #вытащить YAML файл из существующего deployment
+kubectl describe deployment nginx-dash   #смотреть детали deployment
+kubectl get pods -o wide   #больше полей в выводе
