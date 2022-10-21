@@ -11,3 +11,31 @@ autocmd FileType yaml setlocal ai ts=2 sw=2 et
 # - metadata: содержит административную информацию об объекте
 # - spec: содержит особенности объекта
 # используйте "kubectl explain" для получения большей информации о базовых свойствах
+kubectl explain pods   #пример
+kubectl explain pods.spec   #через точку можно обращаться к определенным полям
+kubectl explain pods.spec.containers   #через точку можно обращаться к определенным полям
+
+# в спецификации контейнера требуются различные составляющие:
+# - name: имя контейнера
+# - image: образ, который должен использоваться
+# - command: команда, которую должен запустить контейнер
+# - args: аргументы, используемые командой
+# - env: переменные окружения, которые должны использоваться контейнером
+# все эти составляющие спецификации контейнера определяются в API
+
+# пример YAML-файла:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: mypod
+  namespace: default
+spec:
+  containers:
+  - name: busybox
+    image: busybox
+    command:
+      - sleep
+      - "3600"
+  - name: nginx
+    image: nginx
