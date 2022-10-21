@@ -1,0 +1,12 @@
+# NameSpace реализует изоляцию ресурсов на уровне ядра
+# K8s предлагает объекты NameSpace, которые обеспечивают аналогичную функциональность
+# разные NameSpaces могут быть использованы для строго разграничения между ресурсами заказчика
+# используйте "kubectl ... -n namespace" для работы с определенным NameSpace
+# используйте "kubectl get ... --all-namespaces", чтобы увидеть ресурсы во всех namespaces
+kubectl get all --all-namespaces   #все ресурсы во всех namespaces
+kubectl get pods --all-namespaces   #все pod-ы во всех namespaces
+kubectl get namespaces   #список namespaces
+kubectl create ns secret   #создать namespace с именем secret
+
+
+
