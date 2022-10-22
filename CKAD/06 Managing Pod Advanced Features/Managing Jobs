@@ -1,0 +1,24 @@
+# pod-ы обычно создаются, чтобы быть запущенными постоянно
+# для создания pod-а, который запускается на ограниченный период, используйте jobs вместо этого
+# jobs полезны для таких задач как бэкап, вычисления, пакетная обработка и много других
+# pod, который запущен Job-ой должен иметь restartPolicy, установленную в значение OnFailure или Never
+# OnFailure перезапустит контейнер на том же pod-е
+# Never перезапустит упавший контейнер в новом pod-е
+
+# 3 разных типа Job могут быть запущены, которые определяются с помощью параметров completions и parallelism:
+# Non-parallel Jobs: запускается один pod, если только pod не вышел из строя
+# - completions=1
+# - parallelism=1
+
+# Parallel Job с фиксированным числом завершений (completion): job завершается после успешного количества запусков, число которых указано в jobs.spec.completions
+# - completions=n
+# - parallelism=m
+
+# Parallel Job c рабочей очередью: запускаются несколько Jobs, когда одна успешно завершается, Job завершается
+# - completions=1
+# - parallelism=n
+
+kubectl get jobs   #список jobs
+kubectl get jobs -o yaml | less   #смотреть в формате YAML
+kubectl delete jobs simple-job   #удалить
+
