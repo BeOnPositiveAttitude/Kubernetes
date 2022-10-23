@@ -1,0 +1,5 @@
+# крупные изменения заставляют deployment создавать новый ReplicaSet, который использует новые свойства
+# старый ReplicaSet все еще хранится, но количество pod-ов будет установлено равным 0
+# это делает простой отмену изменения
+kubectl rollout history   #покажет историю rollout определенного deployment, который легко может быть обращен вспять
+kubectl rollout history deployment redis
