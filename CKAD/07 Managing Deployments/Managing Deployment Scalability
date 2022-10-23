@@ -5,3 +5,4 @@
 
 kubectl scale deployment my-deployment --replicas=4   #используйте для масштабирования числа запущенных в данныей момент реплик
 kubectl edit deployment my-deployment   #используйте в качестве альтернативы для редактирования числа реплик вручную
+kubectl get rs   #смотреть ReplicaSet
