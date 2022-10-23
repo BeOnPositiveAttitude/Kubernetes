@@ -2,10 +2,10 @@
 # каждые 3 месяца появляется новая версия API
 # мы будем определять объекты K8s с помощью YAML
 # в YAML-файле мы должны указать apiVersion
-# с помощью kubectl api-resources мы можем обратиться к API и получить список api-resources
+# с помощью "kubectl api-resources" мы можем обратиться к API и получить список api-resources
 # и увидеть таким образом какие api-resources соответствуют каким API (apps, networking, storage)
-# с помощью kubectl api-versions мы можем обратиться к API и получить список api-versions
-# kubectl api-versions покажет нам какие версии API использовать для создания различных объектов K8s
-# с помощью kubectl explain объяснит нам, что именно нужно добавить в YAML-файл (особенно в сочетании с api-version)
+# с помощью "kubectl api-versions" мы можем обратиться к API и получить список api-versions
+kubectl api-versions   #покажет нам какие версии API использовать для создания различных объектов K8s
+# с помощью "kubectl explain" объяснит нам, что именно нужно добавить в YAML-файл (особенно в сочетании с api-version)
 # kube-proxy подключается к API, между ними устанавливается безопасно TLS-соединение
 # с помощью утилиты curl мы можем взаимодействовать с API через kube-proxy
