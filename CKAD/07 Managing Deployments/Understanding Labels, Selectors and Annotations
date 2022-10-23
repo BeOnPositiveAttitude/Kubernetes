@@ -1,0 +1,17 @@
+# label может быть использована как пара ключ/значение для дальнейшей идентификации ресурсов K8s
+# это может быть полезно для определения местонахождения ресурсов на более поздней стадии
+# labels также используются самим K8s для выбора pod-ов deployment-ами и services
+# deployments следят за достаточным количеством pod-ов через run label
+# когда создаются services с помощью "kubectl expose", label добавляется автоматически
+# используйте опцию selector для поиска сущностей, которые имеют определенный установленный label
+kubectl get pods --selector='run=httpd'
+
+# annotations используются для предоставления детальной metadata в объекте
+# annotations не могут быть использованы в запросах, они только предоставляют дополнительную информацию
+# например информация о лицензиях, maintainer и другая
+
+kubectl label deployment redis nl=spook   #повесить label на deployment redis
+kubectl get deployment --show-labels   #отобразить labels
+kubectl get deployment --selector nl=spook   #выбрать deployment по label
+kubectl get all --selector app=redis   #все объекты K8s с заданным label
+kubectl label pod redis-6467896d84-4cs48 app-   #удалить label 'app-' с pod-а
