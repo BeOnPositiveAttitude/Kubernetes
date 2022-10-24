@@ -1,0 +1,4 @@
+# Service (LB) распределяет нагрузку между pod-ами
+# пользователи подключаются к Service напрямую или косвенно через Ingress
+# Users => Ingress (DNS-имя) => Service (IP-адрес) => Pods
+# port forwarding - это про localhost
