@@ -1,0 +1,7 @@
+# используйте "kubectl expose" для выставления текущего Deployment
+kubectl expose deployment nginx --port=80 --type=NodePort
+# заметьте, эта команда выделяет случайный порт на всех backend нодах, опционально используйте targetPort, чтобы определить порт, который должен использоваться
+kubectl get svc   #покажет текущие Services
+kubectl get svc nginx -o yaml   #покажет особенности Service в формате YAML
+# согласно типу, который выставлен, вам может потребоваться передать больше параметров, используя "kubectl expose", смотрите --help для справки
+
