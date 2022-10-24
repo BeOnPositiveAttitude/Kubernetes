@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: proxy
+  name: lab-nginx-deployment
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: proxy
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 2
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: proxy
+    spec:
+      containers:
+      - image: nginx:1.9
+        name: nginx-container
+        resources: {}
+status: {}
