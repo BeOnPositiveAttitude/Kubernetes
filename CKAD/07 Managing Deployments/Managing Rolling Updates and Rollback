@@ -10,3 +10,6 @@
 # опции RollingUpdate используются, чтобы гарантировать определенное минимальное и максимальное количество pod-ов, которые всегда доступны
 # - maxUnavailable: определяет максимальное количество pod-ов, которые обновляются одновременно
 # - maxSurge (всплеск): количество pod-ов, которые могут выйти за рамки желаемого числа pod-ов определенных в replica, чтобы гарантировать минимальную доступность
+
+kubectl rollout history deployment rolling-nginx --revision=2   #смотреть определенную версию истории deployment
+kubectl rollout undo deployment nginx-rollout --to-revision=1   #откатить deployment на определенную версию
