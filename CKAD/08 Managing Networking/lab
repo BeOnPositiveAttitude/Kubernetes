@@ -1,0 +1,9 @@
+kubectl create deployment nginx-dep --image=nginx
+kubectl expose deployment nginx-dep --port=80
+minikube ssh
+curl http://clusterIP:80
+kubectl edit svc nginx-dep
+targetPort меняем на nodePort
+# порт 80 меняем на 32000
+clusterIP меняем на NodePort
+curl http://minikubeIP:32000
