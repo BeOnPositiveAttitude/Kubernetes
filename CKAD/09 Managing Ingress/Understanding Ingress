@@ -1,0 +1,25 @@
+# при использовании в объекте Service опции clusterIP, мы должны находиться внутри кластера, чтобы получить доступ к приложению по clusterIP
+# если мы используем опцию nodePort, тогда мы можем получить доступ к приложению извне через указание адреса ноды в формате http://192.168.59.100:32000, однако здесь возникает проблема - конечном пользователю в url нужно указывать порт
+# главная цель Ingress - выставлять services наружу, используя DNS, то есть Ingress создает записи в DNS
+# Ingress работает с типом service LoadBalancer и NodePort
+# Ingress умеет сам балансировать нагрузку между services на основе labels
+# для использования Ingress нужно включить соответствующий контроллер
+
+# Ingress выставляет HTTP и HTTPS маршруты извне кластера до services в пределах кластера
+# маршрутизация трафика контролируется правилами, определенными в ресурсе Ingress
+# Ingress может быть сконфигурирован, чтобы выполнять следующее:
+# - предоставлять Services доступные извне URL-ы
+# - балансировать нагрузку трафика
+# - терминировать SSL/TLS
+# - обеспечивать name based virtual hosting
+# Ingress контроллер используется для реализации Ingress
+
+# создание Ingress ресурсов без Ingress контроллера не будет иметь эффекта
+# существует множество Ingress контроллеров:
+# - nginx: https://github.com/kubernetes/ingress-nginx
+# - haproxy: https://www.haproxy.com/blog/dissecting-the-haproxy-kubernetes-ingress-controller/
+# - traefik: https://doc.traefik.io
+# - kong: https://docs.konghq.com/kubernetes-ingress-controller/latest/
+# - contour: https://github.com/octetz/contour-adv-ing-and-delegation
+
+minikube addon enable ingress   #используйте, чтобы включить minikube addon
