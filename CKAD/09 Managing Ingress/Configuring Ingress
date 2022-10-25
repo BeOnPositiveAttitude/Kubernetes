@@ -1,1 +1,3 @@
 minikube addons list   #смотреть список addon-ов
+# добавить в /etc/hosts запись:
+192.168.59.100 ingress.example.com
