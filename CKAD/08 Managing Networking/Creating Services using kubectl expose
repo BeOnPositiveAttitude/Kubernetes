@@ -1,5 +1,10 @@
 # используйте "kubectl expose" для выставления текущего Deployment
-kubectl expose deployment nginx --port=80 --type=NodePort
+kubectl expose deployment nginx --port=80 --type=NodePort   #опубликовать порт 80 веб-сервера в поде на случайный порт на ноде
+# после этого команда "kubectl get svc" выдаст например:
+NAME         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)        AGE
+kubernetes   ClusterIP   10.96.0.1        <none>        443/TCP        5d18h
+nginx        NodePort    10.109.104.124   <none>        80:30226/TCP   102s
+# значит мы можем достучаться до веб-сервера извне кластера через "curl http://192.168.59.100:30226"
 # заметьте, эта команда выделяет случайный порт на всех backend нодах, опционально используйте targetPort, чтобы определить порт, который должен использоваться
 kubectl get svc   #покажет текущие Services
 kubectl get svc nginx -o yaml   #покажет особенности Service в формате YAML
