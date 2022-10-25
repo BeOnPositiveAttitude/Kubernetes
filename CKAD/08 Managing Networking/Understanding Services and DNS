@@ -1,0 +1,6 @@
+# Exposed (выставленные) Services автоматически регистрируются во внутреннем DNS K8s
+# когда services выставляют себя на динамических портах, разрешение имен services может быть сложной задачей
+# в качестве решения сервис DNS по умолчанию включен в K8s и этот DNS-сервис обновляется каждый раз, когда добавляется новый service
+# поэтому DNS name lookup внутри одного pod-а для любого выставленного service происходит автоматически
+kubectl exec -it sleepy -- nslookup mywebserver   #сделать nslookup из pod-а sleepy к service mywebserver
+# если nslookup не находит service стоит проверить selector в service и labels в deployment, т.к. service с помощью selector ищет deployment по заданным labels и если не находит, то не может установить подключение
