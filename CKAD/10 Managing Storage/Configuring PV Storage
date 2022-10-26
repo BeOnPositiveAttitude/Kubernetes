@@ -1,0 +1,9 @@
+# Persistent Volume - независимый объект, который подключается к внешнему хранилищу
+# - используйте persistentVolume, чтобы определить его
+# - он может указывать на все типы хранилищ
+# - используйте persistentVolumeClaims, чтобы создать определение вида и типа хранилища, которое требуется
+# - Persistent Volume Claim обращается к доступному backend storage provider и динамически использует volumes, которые доступны согласно этому типу хранилища
+# Persistent Volume Claim привяжется к Persistent Volume согласно доступности запрошенного accessModes и емкости volume
+
+kubectl get pv   #смотреть persistent volumes
+kubectl get pv pv-volume -o yaml

@@ -7,8 +7,8 @@ kubectl exec -it morevol -c centos1 -- touch /centos1/test
 kubectl exec -it morevol -c centos2 -- ls -l /centos2
 
 # поддерживается множество типов volume:
-# - emptyDir: создается временная директория на хосте
-# - hostPath: устойчиво подключается к host environment
+# - emptyDir: создается временная (!) директория на хосте
+# - hostPath: подключается к host environment на постоянной основе
 # - azureDisk: облачное хранилище Azure
 # - awsElasticBlockStorage: облачное хранилище AWS
 # - gcePersistentDisk: облачное хранилище Google
