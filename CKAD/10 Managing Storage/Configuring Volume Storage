@@ -1,0 +1,21 @@
+# во-первых, решите хотите ли вы использовать pod-local volume или Persistent Volume
+# для создания pod-local volume, pod-у необходимо определить volume в spec.volumes.
+# далее контейнер, который монтирует volume в spec.containers.volumemounts
+# для использования Persistent Volume дополнительно требуются external objects
+
+kubectl exec -it morevol -c centos1 -- touch /centos1/test
+kubectl exec -it morevol -c centos2 -- ls -l /centos2
+
+# поддерживается множество типов volume:
+# - emptyDir: создается временная директория на хосте
+# - hostPath: устойчиво подключается к host environment
+# - azureDisk: облачное хранилище Azure
+# - awsElasticBlockStorage: облачное хранилище AWS
+# - gcePersistentDisk: облачное хранилище Google
+# - cephfs: объектное хранилище Ceph
+# - rbd: rbd-интерфейс до хранилища Ceph
+# - fc: fibrechannel SAN хранилище
+# - iscsi: iSCSI SAN хранилище
+# - nfs: Network Files System хранилище
+# - gitrepo: Git репозиторий
+# и другие: смотрите pod.spec.volumes
