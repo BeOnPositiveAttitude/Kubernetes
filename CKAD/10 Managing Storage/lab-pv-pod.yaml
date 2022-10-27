@@ -4,9 +4,9 @@ metadata:
   name: lab-pv-pod
 spec:
   volumes:
-    - name: pvlab
+    - name: pvlab   #рандомное придуманное имя, не ссылка на реально созданный pv
       persistentVolumeClaim:
-        claimName: lab-pv-claim
+        claimName: lab-pv-claim   #имя claim из файла lab-pvc.yaml
   containers:
   - name: lab-container
     image: httpd
@@ -14,5 +14,5 @@ spec:
       - containerPort: 80
     volumeMounts:
       - mountPath: "/var/www/html"
-        name: pvlab
+        name: pvlab   #имя volume из секции выше
 
