@@ -1,0 +1,26 @@
+# PV => PVC => Pod
+
+# PV:
+# - accessModes: ReadWriteMany
+# - types: nobodycares (неважно с какого хранилища выдается, SAN, NAS, local storage)
+
+# PVC:
+# - accessModes: ReadWriteMany (на основе accessModes устанавливается Bound между PV и PVC)
+# - name: myclaim
+
+# Pod:
+# - claimName: myclaim (по имени myclaim Pod подключается к соответствующей PVC)
+
+# pod подключается не напрямую к PV, а через PVC
+
+# На сервере nfs (должен быть в одной подсети с minikube) выполняем:
+dnf install nfs-utils
+mkdir /data
+vim /etc/exports
+/data   -rw   *(rw,no_root_squash)
+systemctl enable --now nfs-server
+firewall-cmd --add-service=nfs --permanent
+firewall-cmd --add-service=mountd --permanent
+firewall-cmd --add-service=rpc-bind --permanent
+firewall-cmd --reload
+
