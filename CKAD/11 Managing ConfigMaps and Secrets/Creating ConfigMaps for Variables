@@ -1,0 +1,13 @@
+# начните с определения ConfigMap и создайте ее:
+# - учитывайте различные источники, которые могут быть использованы для ConfigMaps
+kubectl create cm variables --from-env-file=variables
+kubectl create cm variables --from-file=variables
+kubectl create cm special --from-literal=VAR3=red --from-literal=VAR4=blue
+kubectl describe cm <cmname>   #проверьте создание с помощью этой команды
+# заметьте, что на самом деле не имеет значения из чего создан ConfigMap, использование внутри pod-а будет аналогичным:
+envFrom:
+  - configMapRef:
+      name: ConfigMapName
+# далее определите pod, который использует ее
+
+kubectl create cm variables --from-file=variables -o yaml --dry-run=client
