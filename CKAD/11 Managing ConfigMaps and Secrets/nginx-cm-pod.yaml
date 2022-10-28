@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-cm-pod
+  labels:
+    role: web
+spec:
+  containers:
+  - name: nginx-cm-cont
+    image: nginx
+    volumeMounts:
+    - name: conf
+      mountPath: /etc/nginx/conf.d
+  volumes:
+  - name: conf
+    configMap:
+      name: nginx-cm
+      items:
+      - key: nginx-custom-config.conf   #в итоге наш конфиг монтируется как /etc/nginx/conf.d/default.conf
+        path: default.conf
