@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: secretservice
+  name: secretservice
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: secretservice
+  template:
+    metadata:
+      labels:
+        app: secretservice
+    spec:
+      containers:
+      - image: alpine
+        name: alpine-cont
+        command: ['sleep', '600']
+        volumeMounts:
+        - mountPath: /etc/users
+          name: cred-secret
+      volumes:
+      - name: cred-secret
+        secret:
+          secretName: lab-secret
