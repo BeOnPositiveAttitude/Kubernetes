@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cm-test-pod
+spec:
+  restartPolicy: Never   #добавили политику рестартов, без нее контейнер постоянно перезагружается
+  containers:
+  - name: test1
+    image: cirros
+    command: ["/bin/sh", "-c", "env"]
+    envFrom:
+      - configMapRef:
+          name: variables
