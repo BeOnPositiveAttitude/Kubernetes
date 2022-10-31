@@ -1,0 +1,2 @@
+kubectl delete all --all   #удалить все созданные объекты
+kubectl start --memory='4096mb'   #запустить minikube с заданным количество памяти
