@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-a
+  namespace: ckad-ns1
+spec:
+  containers:
+    - name: apache-webserver
+      image: httpd
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod-b
+  namespace: ckad-ns1
+spec:
+  containers:
+    - image: nginx
+      name: nginx-webserver
+    - image: alpine
+      name: alpine-box
+      command: ["sleep", "3600"]

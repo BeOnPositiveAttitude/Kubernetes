@@ -1,0 +1,1 @@
+kubectl run pod-a --image=httpd -n ckad-ns1
