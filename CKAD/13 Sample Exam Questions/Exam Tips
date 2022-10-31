@@ -1,0 +1,7 @@
+# будьте быстрыми и используйте наиболее эффективные инструменты
+# не пишите YAML с нуля
+# тренируйтесь, используя kubernetes.io/docs
+# не забудьте про kubectl cheat sheet:
+https://kubernetes.io/docs/reference/kubectl/cheatsheet/
+# используйте много "kubectl explain"
+# убедитесь, что вы знаете как "бороться" с K8s namespaces
