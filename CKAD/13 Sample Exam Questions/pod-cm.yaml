@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: configmap-exam-pod
+  namespace: ckad-ns2
+spec:
+  containers:
+    - name: alpine-container
+      image: alpine
+      command: ["sleep", "3600"]
+      envFrom:
+        - configMapRef:
+            name: lab-cm

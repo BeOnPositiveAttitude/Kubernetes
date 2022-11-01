@@ -1,0 +1,5 @@
+kubectl run pod-a --image=httpd -n ckad-ns1
+
+kubectl get all --selector=app=nginx -o wide    #искать все объекты по label app=nginx
+
+kubectl create cm lab-cm --from-literal=localport=localhost:8082 --from-literal=external_url=linux.com -n ckad-ns2

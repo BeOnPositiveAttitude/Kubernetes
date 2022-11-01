@@ -5,7 +5,7 @@ kubectl create cm variables --from-file=variables
 kubectl create cm special --from-literal=VAR3=red --from-literal=VAR4=blue
 kubectl describe cm <cmname>   #проверьте создание с помощью этой команды
 # заметьте, что на самом деле не имеет значения из чего создан ConfigMap, использование внутри pod-а будет аналогичным:
-envFrom:
+envFrom:   #добавит переменные определенные в ConfigMap-е в environment variables контейнера
   - configMapRef:
       name: ConfigMapName
 # далее определите pod, который использует ее

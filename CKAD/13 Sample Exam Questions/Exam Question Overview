@@ -8,7 +8,7 @@
 
 # Использование ConfigMaps
 # В ckad-ns2 NameSpace запустите pod с именем alpine-pod. Этот pod должен запускать контейнер, основанный на образе alpine. В этом контейнере должен быть установлено две переменные:
-# - 'localhost' установлен в значение 'localhost:8082'
+# - 'localport' установлен в значение 'localhost:8082'
 # - 'external_url' установлен в значение 'linux.com'
 
 # Использование Sidecars
