@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nginx-service
+  name: nginx-exam-service
+  namespace: ckad-ns6
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: nginx-webserver   #service смотрит именно на метку pod-а для установки соединения, не на метку deployment
+  type: NodePort
+status:
+  loadBalancer: {}

@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: database-pod
+  namespace: default
+  labels:
+    app: database
+spec:
+  containers:
+  - name: database
+    image: alpine
+    command: ["sleep", "3600"]
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webserver-pod
+  namespace: default
+  labels:
+    app: webserver
+spec:
+  containers:
+  - name: webserver
+    image: alpine
+    command: ["sleep", "3600"]
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: my-nw-policy
+  namespace: default
+spec:
+  podSelector:   #к какому pod-у применяется сетевая политика, в нашем случае только к БД
+    matchLabels:
+      app: database
+  policyTypes:
+  - Ingress
+  - Egress   #т.к. для egress ничего не указано, то по умолчанию весь исходящий трафик от pod-а с БД будет запрещен
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            app: webserver   #от какого pod-а разрешено принимать трафик pod-у с БД

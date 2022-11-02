@@ -2,19 +2,21 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    service: nginx
+    app: nginx-exam
+    app: webshop
   name: exam-deployment
 spec:
   replicas: 5
   selector:
     matchLabels:
-      app: webshop   #метка, по которой искать pod-ы в deployment-е
+      app: nginx-exam   #метка, по которой искать pod-ы в deployment-е
   strategy:
-    type: Recreate
+    rollingUpdate:
   template:
     metadata:
       labels:
-        app: webshop   #метка pod-а, по которой его ищет deployment
+        app: nginx-exam
+        service: nginx
     spec:
       containers:
       - image: nginx:1.8
