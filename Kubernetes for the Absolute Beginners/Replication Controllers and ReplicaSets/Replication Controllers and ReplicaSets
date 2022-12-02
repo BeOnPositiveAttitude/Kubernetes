@@ -5,3 +5,21 @@
 # Replication Controller может охватывать сразу несколько нод кластера
 
 # на смену Replication Controller пришла ReplicaSet
+# главное отличие между Replication Controller и ReplicaSet состоит в том, что ReplicaSet обязательно требует наличия опции selector
+# в то время как для Replication Controller опция selector возможна, но не обязательна
+# если в yaml-файле для Replication Controller пропустить опцию selector, тогда по умолчанию будут приняты labels указанные для pod-а
+# таким образом ReplicaSet также позволяет управлять pod-ами, которые не были определены в yaml-файле самой ReplicaSet
+
+# задача ReplicaSet состоит в мониторинге pod-ов и запуске нового pod-а, если какой-либо из pod-ов упалы
+
+# Replication Controller не начнет создавать новые pod-ы, если уже существуют pod-ы с labels указанными в RC definition файле
+
+# чтобы изменить количество реплик, можно отредактировать RS definition файл и выполнить команду "kubectl apply -f file.yaml"
+# второй способ изменить количество реплик:
+kubectl scale --replicas=6 -f replicaset-definition.yaml
+kubectl scale --replicas=6 -f replicaset myapp-replicaset   #type=replicaset, name=myapp-replicaset
+
+# при этом количество реплик в самом RS definition файле не изменится
+
+kubectl delete replicaset myapp-replicaset   #удалить RS и pod-ы созданные этой RS
+kubectl replace -f replicaset-definition.yaml   #обновить RS
