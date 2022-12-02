@@ -1,0 +1,7 @@
+# Replication Controller помогает нам запустить несколько экземпляров одного pod-а в кластере и там самым обеспечить HA
+# Replication Controller можно использовать даже с одним экземпляром pod-а, если pod упадет, контроллер поднимет новый
+# Replication Controller обеспечивает запуск нужного нам числа экземпляров pod-а одновременно
+# Replication Controller также нужен нам для распределения нагрузки между pod-ами
+# Replication Controller может охватывать сразу несколько нод кластера
+
+# на смену Replication Controller пришла ReplicaSet

@@ -1,0 +1,10 @@
+# установить extension от RedHat - YAML
+# зайти в Extension Settings => Yaml: Schemas => Edit in settings.json и прописать следующим образом:
+
+{
+    "yaml.schemas": {
+      "kubernetes": "*.yaml"   #можно задать любой wildcard
+    }
+}
+
+# перезапустить VS Code
