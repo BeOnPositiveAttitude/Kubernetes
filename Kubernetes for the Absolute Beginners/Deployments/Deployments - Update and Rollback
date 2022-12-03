@@ -1,0 +1,18 @@
+# когда мы впервые создаем deployment, это вызовет rollout
+# новый rollout создает новый deployment revision
+# предположим мы обновили приложение в контейнере, это вызывет новый rollout и будет создан новый deployment revision
+kubectl rollout status deployment/myapp-deployment   #смотреть статус
+kubectl rollout history deployment/myapp-deployment   #смотреть историю
+
+# Deployment Stategy:
+# Recreate Strategy - сначала убить все контейнеры со старой версией приложения и затем поднять новые, приводит к простою, не является дефолтной стратегией
+# Rolling Update - поочередно обновлять контейнер за контейнером, не приводит к простою, если не указать Deployment Stategy явно, то будет использована именно Rolling Update
+
+# как выполнить обновление приложения? можно отредактировать yaml файл и выполнить команду:
+kubectl apply -f deployment-definition.yaml
+kubectl set image deployment/myapp-deployment nginx=nginx:1.9.1   #обновить версию образа для запущенного deployment, при этом в yaml файле ничего не изменится
+
+# при обновлении нашего приложения Deployment создает новую ReplicaSet, в которой начинают создаваться pod-ы с новой версией приложения, при этом в старой ReplicaSet pod-ы будут по одному убиваться по мере появления новых (Rolling Update)
+
+kubectl rollout undo deployment/myapp-deployment   #откатить изменения
+# при откате pod-ы в новой RS будут поочередно удаляться, а pod-ы в старой RS подниматься
