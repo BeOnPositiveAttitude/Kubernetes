@@ -1,0 +1,6 @@
+# Rolling Updates - поочередное обновление контейнеров с нашим приложением
+# группой pod-ов управляет RS или RC, а Deployment в свою очередь находится уже на следующей ступени в иерархии K8s
+# Deployment позволяет нам выполнять Rolling Updates бесшовно, отменять выполненные изменения, ставить их на паузу и возобновлять вновь
+# Deployment автоматически создает RS
+
+kubectl create deployment httpd-frontend --image=httpd:2.4-alpine --replicas=3   #создать deployment командой
