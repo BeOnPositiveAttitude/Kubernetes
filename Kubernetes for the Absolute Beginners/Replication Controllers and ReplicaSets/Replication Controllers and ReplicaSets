@@ -18,9 +18,15 @@
 # чтобы изменить количество реплик, можно отредактировать RS definition файл и выполнить команду "kubectl replace -f replicaset-definition.yaml"
 # второй способ изменить количество реплик:
 kubectl scale --replicas=6 -f replicaset-definition.yaml
-kubectl scale --replicas=6 -f replicaset myapp-replicaset   #type=replicaset, name=myapp-replicaset
+kubectl scale replicaset myapp-replicaset --replicas=6   #type=replicaset, name=myapp-replicaset
 
 # при этом количество реплик в самом RS definition файле не изменится
 
 kubectl delete replicaset myapp-replicaset   #удалить RS и pod-ы созданные этой RS
 kubectl replace -f replicaset-definition.yaml   #обновить RS
+
+# если мы вручную создадим pod с label, который указан в селекторе RS, то pod будет сразу удален, т.к. RS будет поддерживать заданное число реплик
+
+kubectl edit rs myapp-replicaset   #редактировать налету
+
+kubectl delete pods podname1 podname2 podname3 podname4
