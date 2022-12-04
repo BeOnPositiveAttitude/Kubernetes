@@ -1,4 +1,4 @@
-# когда мы впервые создаем deployment, это вызовет rollout
+# когда мы впервые создаем deployment, это вызывает rollout (выкатывание)
 # новый rollout создает новый deployment revision
 # предположим мы обновили приложение в контейнере, это вызывет новый rollout и будет создан новый deployment revision
 kubectl rollout status deployment/myapp-deployment   #смотреть статус
@@ -10,9 +10,14 @@ kubectl rollout history deployment/myapp-deployment   #смотреть исто
 
 # как выполнить обновление приложения? можно отредактировать yaml файл и выполнить команду:
 kubectl apply -f deployment-definition.yaml
-kubectl set image deployment/myapp-deployment nginx=nginx:1.9.1   #обновить версию образа для запущенного deployment, при этом в yaml файле ничего не изменится
+kubectl set image deployment/myapp-deployment nginx=nginx:1.9.1   #обновить версию образа для запущенного deployment, при этом в yaml файле ничего не изменится, nginx - имя контейнера, nginx:1.9.1 - имя образа
 
 # при обновлении нашего приложения Deployment создает новую ReplicaSet, в которой начинают создаваться pod-ы с новой версией приложения, при этом в старой ReplicaSet pod-ы будут по одному убиваться по мере появления новых (Rolling Update)
 
-kubectl rollout undo deployment/myapp-deployment   #откатить изменения
+kubectl rollout undo deployment/myapp-deployment   #откатить изменения на предыдущий revision
+# при этом номер revision на которую мы откатились исчезнет из history и станет последней текущей версией
 # при откате pod-ы в новой RS будут поочередно удаляться, а pod-ы в старой RS подниматься
+
+kubectl create -f deployment.yaml --record   #запишет значение в поле CHANGE-CAUSE при выводе rollout status
+
+# при наличии 6 реплик в Deployment и обновлении его версии, 1 старый pod удаляется и 3 новых поднимаются и т.д.
