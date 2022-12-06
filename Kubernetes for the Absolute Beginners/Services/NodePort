@@ -14,3 +14,5 @@
 # в случае нескольких нод кластера, порт 30008 будет открыт на всех нодах и получить доступ к приложению можно обратившись к любой ноде
 
 minikube service myapp-service --url   #смотреть endpoint для доступа к опубликованному service
+
+# вывод команды "kubectl describe service myapp-service" покажет список endpoints - это все pod-ы, которые смог обнаружить Service по заданным labels
