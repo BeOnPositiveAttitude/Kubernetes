@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ResourceQuota
 metadata:
   name: compute-quota
-  namespace: dev
+  namespace: ckad-ns3
 spec:
   hard:
     pods: "10"

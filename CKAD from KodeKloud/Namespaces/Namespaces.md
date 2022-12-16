@@ -48,6 +48,9 @@ Contexts используются для управления множество
 
 Смотреть pod-ы сразу во всех namespace-ах:
 `kubectl get pods --all-namespaces`
+`kubectl get pods -A`
+
+Для ограничения ресурсов в namespace используйте ResourceQuota
 
 
 
