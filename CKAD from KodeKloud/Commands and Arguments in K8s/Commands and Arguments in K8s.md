@@ -20,6 +20,12 @@ CMD ["5"]
 
 Итого:
 
-Поле *args* в pod definition файле соответствует инструкции CMD в Dockerfile
+Поле *args* в pod definition файле переопределяет инструкцию CMD в Dockerfile
 
-Поле *command* в pod definition файле соответствует инструкции ENTRYPOINT в Dockerfile
+Поле *command* в pod definition файле переопределяет инструкцию ENTRYPOINT в Dockerfile
+
+Пример ниже из лабы, нужно переопределить дефолтный синий цвет приложения на зеленый
+Мы можем сделать это непосредственно командой, все что слева от "--" является опциями утилиты kubectl
+Все что справа от "--" является аргументами приложения в контейнере
+
+`kubectl run webapp-grenn --image=kodekloud/webapp-color -- --color green`
