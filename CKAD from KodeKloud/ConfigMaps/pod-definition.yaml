@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simple-webapp-color
+  labels:
+    name: simple-webapp-color
+spec:
+  containers:
+    - name: simple-webapp-color
+      image: simple-webapp-color
+      ports:
+        - containerPort: 8080
+      envFrom:
+        - configMapRef:
+            name: app-config   #имя ConfigMap из файла config-map.yaml
+#      env:
+#        - name: APP_COLOR
+#          valueFrom:
+#            configMapKeyRef:
+#              name: app-config
+#              key: APP_COLOR    #вставить только одну определенную key/value пару из ConfigMap
+#      volumes:
+#      - name: app-config-volume
+#        configMap:
+#          name: app-config     #вставить как volume
