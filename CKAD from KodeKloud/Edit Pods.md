@@ -4,3 +4,7 @@
 
   `kubectl get pod <pod-name> -o yaml > pod-definition.yaml`
 - затем отредактируйте этот файл, удалите pod и пересоздайте его заново
+
+Удалить pod и создать новый из файла одной командой:
+
+`kubectl replace --force -f pod.yaml`
