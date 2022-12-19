@@ -14,11 +14,11 @@ spec:
         - configMapRef:
             name: app-config   #имя ConfigMap из файла config-map.yaml
 #      env:
-#        - name: APP_COLOR
+#        - name: APP_COLOR   #имя environment variable в приложении
 #          valueFrom:
-#            configMapKeyRef:
+#            configMapKeyRef:     #вставить только одну определенную key/value пару из ConfigMap
 #              name: app-config
-#              key: APP_COLOR    #вставить только одну определенную key/value пару из ConfigMap
+#              key: APP_COLOR    #имя environment variable в ConfigMap
 #      volumes:
 #      - name: app-config-volume
 #        configMap:
