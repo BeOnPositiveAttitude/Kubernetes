@@ -43,3 +43,7 @@ Pod-ы "A", "B", "C" не будут размещены на ноде с Taint=b
 Смотреть Taints на мастер ноде:
 
 `kubectl describe node kubemaster | grep Taint`
+
+Убрать Taint с ноды:
+
+`kubectl taint nodes controlplane node-role.kubernetes.io/control-plane:NoSchedule-`
