@@ -46,6 +46,10 @@ ca.crt  namespace  token
 
 В случае Deployment, мы можем изменить спецификацию pod-а и это приведет к новому rollout
 
+Установить новый service account для Deployment командой:
+
+`kubectl set serviceaccount deploy/web-dashboard dashboard-sa`
+
 Важно помнить, что K8s по умолчанию автоматически монтирует default service account, если явно не указать другое
 
 **Начиная с версии K8s 1.22 были внесены существенные изменения в механизм service accounts**
