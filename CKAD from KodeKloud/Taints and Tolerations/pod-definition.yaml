@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: myapp-pod
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx
+  tolerations:                  #из команды "kubectl taint nodes node1 app=blue:NoSchedule"
+    - key: "app"
+      operator: "Equal"
+      value: "blue"
+      effect: "NoSchedule"

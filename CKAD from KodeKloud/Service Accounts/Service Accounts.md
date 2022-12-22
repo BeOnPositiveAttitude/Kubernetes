@@ -40,7 +40,7 @@ ca.crt  namespace  token
 
 Важно помнить, что default service account имеет сильные ограничения, у него есть доступ только к основным запросам к API
 
-Мы могли указать использовать другой service account в спецификации pod-а в поле serviceAccountName, пример в файле pod-definition.yaml
+Мы можем указать использовать другой service account в спецификации pod-а в поле serviceAccountName, пример в файле pod-definition.yaml
 
 Изменить service account у бегущего pod-а нельзя, только удалить и создать заново
 
