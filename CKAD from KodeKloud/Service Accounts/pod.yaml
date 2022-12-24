@@ -16,7 +16,7 @@ spec:
     resources: {}
     terminationMessagePath: /dev/termination-log
     terminationMessagePolicy: File
-    volumeMounts:                                               #начиная с версии 1.22 монтируется volume
+    volumeMounts:                                               #начиная с версии 1.22 монтируется projected volume
     - mountPath: /var/run/secrets/kubernetes.io/serviceaccount
       name: kube-api-access-q2x75
       readOnly: true

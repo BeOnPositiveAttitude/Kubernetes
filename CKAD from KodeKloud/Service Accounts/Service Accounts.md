@@ -54,11 +54,15 @@ ca.crt  namespace  token
 
 **Начиная с версии K8s 1.22 были внесены существенные изменения в механизм service accounts**
 
+KEP - Kubernetes Enhancement Proposal
+
 Был введен механизм TokenRequestAPI
 
 Пример в файле pod.yaml
 
 В прошлом до версии K8s 1.22 когда создавался service account, автоматически создавался Secret с токеном, который не имел expiration date, и был "not bound to any audience"
+
+После введения механизма TokenRequestAPI у токена появилась expiration data и он стал "bound to any audience"
 
 Начиная с версии 1.24 при создании service account, Secret с токеном теперь не создается автоматически
 

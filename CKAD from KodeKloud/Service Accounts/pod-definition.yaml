@@ -6,5 +6,5 @@ spec:
   containers:
     - name: my-kubernetes-dashboard
       image: busybox
-  serviceAccountName: dashboard-sa
-  automountServiceAccountToken: false
+  serviceAccountName: dashboard-sa   #можно указать использование другого service account
+  automountServiceAccountToken: false   #можно отключить автоматическое монтирование токена service account default
