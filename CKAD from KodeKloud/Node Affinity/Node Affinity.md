@@ -1,10 +1,14 @@
+Механизм Node Affinity предоставляет нам расширенные возможности для ограничения размещения pod-ов на определенные ноды
+
+With great power comes great complexity!
+
 Что если указанное для pod-а nodeAffinity не соответствует Label-у ни одной ноды?
 
-Что если кто-то в будущем изменит Laber у ноды? Останутся ли pod-ы на ноде?
+Что если кто-то в будущем изменит Label у ноды? Останутся ли pod-ы на ноде?
 
 Ответ на этот вопрос кроется в свойстве идущем после ключа nodeAffinity в pod-definition.yaml - тип nodeAffinity
 
-Тип nodeAffinity определяет поведение Scheduler-а
+Тип nodeAffinity определяет дальнейшее поведение Scheduler-а
 
 Существует два типа nodeAffinity - requiredDuringSchedulingIgnoredDuringExecution и preferredDuringSchedulingIgnoredDuringExecution
 

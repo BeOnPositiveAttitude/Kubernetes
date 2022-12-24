@@ -17,4 +17,4 @@ spec:
                   - Large
                   - Medium
 #             - key: size
-#               operator: Exists   #ноды, у которых есть хоть какой-то Label, возможно даже без value
+#               operator: Exists   #проверить существует ли вообще на нодах указанный Label
