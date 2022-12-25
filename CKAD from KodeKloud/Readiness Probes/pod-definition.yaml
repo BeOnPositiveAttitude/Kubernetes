@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    name: simple-webapp
+  name: simple-webapp
+spec:
+  containers:
+  - image: simple-webapp
+    name: simple-webapp
+    ports:
+      - containerPort: 8080
+    readinessProbe:
+      httpGet:
+        path: /api/ready
+        port: 8080
+      initialDelaySeconds: 10   #если мы точно значем, что приложение поднимается минимум 10 секунд, то можем задать интервал задержки перед проверкой
+      periodSeconds: 5          #как часто выполнять проверку
+      failureThreshold: 8       #по умолчанию после 3 неудачных попыток, Probe останавливается, можем переопределить на большее число попыток
+#     tcpSocket:                #пример проверки доступности порта
+#       port: 3306
+#     exec:                     #пример проверки выполнения команды
+#       command:
+#         - cat
+#         - /app/is_ready
