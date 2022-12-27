@@ -10,6 +10,14 @@ Selector - позволяет нам фильтровать объекты
 
 `kubectl get pods --selector app=App1` или более короткий вариант `kubectl get pods -l app=App1`
 
+Посчитать количество pod-ов с заданным Labels, опция --no-headers убирает имена столбцов в выводе команды, чтобы лишняя строка не попала в общее количество строк:
+
+`kubectl get pods --selector app=App1 --no-headers | wc -l`
+
+Можно указать сразу несколько Labels через запятую:
+
+`kubectl get pods --selector env=prod,bu=finance,tier=frontend`
+
 K8s использует Labels & Selectors для связки различных объектов вместе
 
 Annotations используются для записи различной служебной информации - версия билда, контактная информация и т.д.
