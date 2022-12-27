@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: simple-webapp
+  labels:                    #Labels самой ReplicaSet, нужны в случае если другие объекты K8s должны обнаруживать RS
+    app: App1
+    function: Front-end
+  annotations:
+    buildVersion: 1.34
+spec:
+  replicas: 3
+  selector:                #Selector по которому выбираются pod-ы
+    matchLabels:
+      app: App1
+  template:
+    metadata:
+      labels:                 #Labels pod-a
+        app: App1
+        function: Front-end
+    spec:
+      containers:
+        - name: simple-webapp
+          image: simple-webapp

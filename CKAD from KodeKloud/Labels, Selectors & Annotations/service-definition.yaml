@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: my-service
+spec:
+  selector:
+    app: App1         #label нужного нам pod-а, который развернут в рамках RS
+  ports:
+    - protocol: TCP
+      port: 80         #порт объекта Service
+      targetPort: 9376
+
