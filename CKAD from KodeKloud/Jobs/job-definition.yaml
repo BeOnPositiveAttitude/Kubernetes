@@ -3,6 +3,7 @@ kind: Job
 metadata:
   name: math-add-job
 spec:
+  completions: 3   #будут созданы три pod-а, по умолчанию один за другим
   template:
     spec:
       containers:

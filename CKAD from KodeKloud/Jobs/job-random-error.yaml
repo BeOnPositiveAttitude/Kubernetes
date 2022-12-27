@@ -1,0 +1,13 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: random-error-job
+spec:
+  completions: 3   #нужно три успешных выполнения задачи в pod-ах для завершения job-ы
+  parallelism: 3   #чтобы pod-ы запускались не поочередно, а параллельно - пачками по три в данном случае
+  template:
+    spec:
+      containers:
+        - name: random-error
+          image: kodekloud/random-error
+      restartPolicy: Never
