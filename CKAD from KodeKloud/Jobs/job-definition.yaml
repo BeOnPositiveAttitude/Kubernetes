@@ -4,6 +4,7 @@ metadata:
   name: math-add-job
 spec:
   completions: 3   #будут созданы три pod-а, по умолчанию один за другим
+  backoffLimit: 10   #допустимое количество неудачных запусков задачи после которого выполнение всей job-ы будет считаться failed
   template:
     spec:
       containers:
