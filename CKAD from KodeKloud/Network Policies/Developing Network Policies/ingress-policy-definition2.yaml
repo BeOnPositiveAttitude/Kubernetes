@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: db-policy
+  namespace: prod
+spec:
+  podSelector:
+    matchLabels:
+      role: db
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              name: api-pod
+        - namespaceSelector:  #в этом примере podSelector и namespaceSelector работают уже как логическое OR, то есть доступ будет разрешен pod-ам с Label=api-pod ИЛИ находящимся в namespace с Label=prod, одно "-" меняет логику работы
+            matchLabels:
+              name: prod
+        - ipBlock:
+            cidr: 192.168.5.10/32   #когда вне кластера у нас есть ВМ (например для бекапов), мы можем разрешить доступ с определенного ip; здесь уже работает как логическое OR, то есть доступ будет разрешен pod-ам из блока выше ИЛИ ВМ с указанным ip
+      ports:
+        - protocol: TCP
+          port: 3306
