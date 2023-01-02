@@ -8,11 +8,15 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: wear-service
-              servicePort: 80
+              service:
+                name: wear-service
+                port:
+                  number: 80
     - host: watch.my-online-store.com
       http:
         paths:
           - backend:
-              serviceName: watch-service
-              servicePort: 80
+              service:
+                name: watch-service
+                port:
+                  number: 80

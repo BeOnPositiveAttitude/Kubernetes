@@ -7,10 +7,16 @@ spec:
     - http:
         paths:
           - path: /wear
+            pathType: Prefix
             backend:
-              serviceName: wear-service
-              servicePort: 80
+              service:
+                name: wear-service
+                port:
+                  number: 80
           - path: /watch
+            pathType: Prefix
             backend:
-              serviceName: watch-service
-              servicePort: 80
+              service:
+                name: watch-service
+                port:
+                  number: 80
