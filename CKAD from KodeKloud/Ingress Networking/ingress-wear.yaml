@@ -1,0 +1,8 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-wear
+spec:
+  backend:            #куда будет перенаправляться трафик
+    serviceName: wear-service
+    servicePort: 80
