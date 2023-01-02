@@ -138,4 +138,6 @@ Defautl backend - куда пользователь будет перенапр�
 
 Создать Ingress командой: `kubectl create ingress <ingress-name> --rule="host/path=service:port"`
 
-Пример: `kubectl create ingress ingress-test --rule="wear.my-online-store.com/wear*=wear-service:80"`
+Пример хостом: `kubectl create ingress ingress-test --rule="wear.my-online-store.com/wear*=wear-service:80"`
+
+Пример только с URL path: `kubectl create ingress ingress-test --rule="/pay=pay-service:8282"`
