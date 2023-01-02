@@ -135,3 +135,7 @@ Defautl backend - куда пользователь будет перенапр�
 Если не указать имя host как в примере ingress-wear-watch.yaml, то будет считаться значение *
 
 Далее в правилах можно комбинировать domain name + URL path
+
+Создать Ingress командой: `kubectl create ingress <ingress-name> --rule="host/path=service:port"`
+
+Пример: `kubectl create ingress ingress-test --rule="wear.my-online-store.com/wear*=wear-service:80"`
