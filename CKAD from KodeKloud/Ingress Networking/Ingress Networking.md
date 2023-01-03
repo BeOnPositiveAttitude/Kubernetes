@@ -141,3 +141,5 @@ Defautl backend - куда пользователь будет перенапр�
 Пример хостом: `kubectl create ingress ingress-test --rule="wear.my-online-store.com/wear*=wear-service:80"`
 
 Пример только с URL path: `kubectl create ingress ingress-test --rule="/pay=pay-service:8282"`
+
+Пример с двумя URL path: `kubectl create ingress ingress-wear-watch --rule="/wear=wear-service:8080" --rule="/watch=video-service:8080"`
