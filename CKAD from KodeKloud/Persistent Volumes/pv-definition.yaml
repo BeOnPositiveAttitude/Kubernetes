@@ -7,5 +7,5 @@ spec:
     - ReadWriteOnce   #как volume должен быть смонтирован на хосте, может быть еще ReadOnlyMany, ReadWriteMany
   capacity:
     storage: 1Gi
-  hostPath:
+  hostPath:         #этот тип storage не рекомендуется использовать в prod-е
     path: /tmp/data
