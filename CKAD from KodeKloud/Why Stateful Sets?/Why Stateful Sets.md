@@ -30,3 +30,16 @@
 Pod-ы в рамках Stateful Sets создаются поочередно - первый pod должен дойти до состояния Running/Ready прежде чем запустится следующий. Это поможет нам сначала развернуть master, затем slave-1 и slave-2.
 
 В рамках Stateful Sets каждому pod-у назначается уникальный порядковый индекс, начиная с 0 для первого pod-а и так далее, увеличиваясь на 1. Каждый pod получает уникальное имя, которое формируется из индекса + имя самого Stateful Set. Например mysql-0, mysql-1, mysql-2. Соответственно больше нет рандомных имен и мы можем быть уверены, что имя master-а теперь всегда будет mysql-0 и прописывать это имя на slave-ах при настройке репликации. Даже если pod mysql-0 упадет и будет поднят заново, его имя останется прежним.
+
+---
+
+Подытоживая, нам не всегда нужен Stateful Set, выбор зависит от типа используемого нами приложения.
+
+Если нам требуется последовательный запуск pod-ов, если нужны постоянные имена pod-ов и т.д., тогда стоит использовать Stateful Set.
+
+Чтобы создать definition-файл для Stateful Set, нужно создать аналогичный для Deployment definition-файл и изменить `kind` на `StatefulSet`.
+Также требуется указать параметр `serviceName` - имя headless service.
+
+В случае уменьшения количества реплик в Stateful Set, pod-ы начнут удаляться начиная с последнего.
+
+StatefulSets do not provide any guarantees on the termination of pods when a StatefulSet is deleted. To achieve ordered and graceful termination of the pods in the StatefulSet, it is possible to scale the StatefulSet down to 0 prior to deletion.
