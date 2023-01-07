@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: mysql
+  name: mysql
+spec:
+  serviceName: mysql-h   #имя Headless Service
+  replicas: 3
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: mysql
+        name: mysql
+        env:
+        - name: MYSQL_ROOT_PASSWORD
+          value: "Passw0rd"
+        volumeMounts:
+          - mountPath: /var/lib/mysql
+            name: data-volume
+  volumeClaimTemplates:
+  - metadata:
+      name: data-volume
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      storageClassName: google-storage   #имя SC из файла sc-definition.yaml
+      resources:
+        requests:
+          storage: 500Mi
