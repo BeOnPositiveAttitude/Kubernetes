@@ -14,7 +14,7 @@
 
 <img src="apis.png" width="700" height="400"><br>
 
-На схеме выше `/apps`, `/extensions` и т.д. - это API Groups, `/deployments`, `/replicasets` и т.д. - это Resources внутри API Groups, каждый Resource имеет связанный с ним список действий, например `create deployment`, `delete deployment` и т.д. - это Verbs.
+На схеме выше `/apps`, `/extensions` и т.д. - это API Groups, `/deployments`, `/replicasets` и т.д. - это Resources внутри API Group `/apps`, каждый Resource имеет связанный с ним список действий, например `create deployment`, `delete deployment` и т.д. - это Verbs.
 
 Посмотреть доступные API Groups: `curl -k https://kube-master:6443 --key client.key --cert client.crt --cacert ca.crt`
 
