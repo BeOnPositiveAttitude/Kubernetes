@@ -13,3 +13,5 @@
 
 Аналогично проверить для определенного namespace:
 `kubectl auth can-i create pods --as dev-user --namespace test`.
+
+Объекты Roles и RoleBindings действуют в рамках определенного namespace.
