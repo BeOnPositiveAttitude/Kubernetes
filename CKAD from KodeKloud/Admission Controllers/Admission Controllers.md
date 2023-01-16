@@ -17,7 +17,7 @@
 
 Рассмотрим `NamespaceExists` Admission Controller. Если мы отправим запрос на создание pod-а в несуществующем namespace, то получим ошибку: `Error from server (NotFound): namespaces "blue" not found`, т.к. наш запрос, пройдя процессы аутентификации и авторизации, в итоге был отклонен `NamespaceExists` Admission Controller-ом, который включен по умолчанию в кластере.
 
-Также существует Admission Controller `NamespaceAuthProvision`, который не включен по умолчанию. Он автоматически создает namespace, если namespace не существует.
+Также существует Admission Controller `NamespaceAutoProvision`, который не включен по умолчанию. Он автоматически создает namespace, если namespace не существует.
 
 Смотреть список Admission Controllers, включенных по умолчанию:
 
