@@ -58,3 +58,11 @@ spec:
 *An API version in a given track may not be deprecated until a new API version at least as stable is released*.
 
 Это значит, что GA версия может сделать deprecate версии alpha и beta, но не наоборот, alpha версия не может сделать deprecate GA версии. То есть наша версия v2alpha1 должна пройти полный жизненный цикл до stable версии v2, чтобы уже она смогла сделать deprecate версии v1.
+
+Когда K8s кластер обновляется новые версии API добавляются, а старые объявляются deprecated или удаляются. Когда старые версии API удаляются очень важно обновить ваши существующие manifest-файлы до новой версии. Например мы использовали для создания Deployment версию `apps/v1beta1`, а после обновления кластера эта версия API была удалена далее нам нужно использовать версию `apps/v1`. У нас может быть множество yaml-файлов со старой версией `apps/v1beta1`. Чтобы сконвертировать эти yaml-файлы в более новую версию вы можете использовать команду:
+
+`kubectl convert -f <old-file> --output-version <new-api>`
+
+`kubectl convert -f nginx.yaml --output-version apps/v1`
+
+Команда `kubectl convert` недоступна по умолчанию, т.к. это отдельный plugin, который нужно установить [официальная документация](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/)
