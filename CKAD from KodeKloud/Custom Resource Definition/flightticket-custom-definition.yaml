@@ -1,0 +1,32 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: flighttickets.flights.com
+spec:
+  group: flights.com   #API Group, которую мы будем указывать в definition-файлах для создания нашего нового объекта
+  names:
+    kind: FlightTicket
+    singular: flightticket   #в единственном числе
+    plural: flighttickets    #во множественном числе, будет видно в выводе команды kubectl api-resources
+    shortNames:              #alias
+      - ft
+  scope: Namespaced
+  versions:
+    - name: v1             #версия API, alpha, beta или GA
+      served: true
+      storage: true
+      schema:              #параметры в секции spec нашего объекта
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                from:
+                  type: string
+                to:
+                  type: string
+                number:
+                  type: integer
+                  minimum: 1    #ограничиваем возможный диапазон значений
+                  maximum: 10

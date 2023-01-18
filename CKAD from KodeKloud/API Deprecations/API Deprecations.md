@@ -66,3 +66,6 @@ spec:
 `kubectl convert -f nginx.yaml --output-version apps/v1`
 
 Команда `kubectl convert` недоступна по умолчанию, т.к. это отдельный plugin, который нужно установить [официальная документация](https://kubernetes.io/docs/tasks/tools/install-kubectl-macos/)
+
+In Kubernetes versions : X.Y.Z
+Where X stands for major, Y stands for minor and Z stands for patch version.
