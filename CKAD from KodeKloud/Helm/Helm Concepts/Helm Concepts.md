@@ -9,11 +9,11 @@
 Вы можете создать свой собственный Chart или скачать уже готовый с [ArtifactHUB](https://artifacthub.io/). Этот hub называется репозиторием, содержащим Helm Charts. Можно искать нужный нам Chart через веб-интерфейс, а можно через командную строку: `helm search hub wordpress`, hub означает, что поиск будет выполнен в ArtifactHUB (является репозиторием, который поддерживается и развивается сообществом).
 
 Существуют также и другие репозитории, например [Bitnami](https://bitnami.com/stacks/helm). Чтобы искать Charts в других репозиториях, сначала нужно добавить репозиторий в наш локально установленный Helm: `helm repo add bitnami https://charts.bitnami.com/bitnami`. Выполнить поиск по добавленному репозиторию: `helm search repo wordpress`. Смотреть список добавленных репозиториев: `helm repo list`. Скачать, распаковать и установить локально найденный Chart: `helm install [release-name] [chart-name]`. Каждая инсталляция Chart-а называется release, каждый release имеет имя. Например мы можем установить одно и то же приложение, используя один и тот же Chart, несколько раз:
-
-`helm install release-1 bitnami/wordpress`
-`helm install release-2 bitnami/wordpress`
-`helm install release-3 bitnami/wordpress`
-
+```
+helm install release-1 bitnami/wordpress
+helm install release-2 bitnami/wordpress
+helm install release-3 bitnami/wordpress
+```
 Каждый установленный release является отдельной и полностью независимой от других сущностью.
 
 Смотреть список установленных пакетов: `helm list`.
