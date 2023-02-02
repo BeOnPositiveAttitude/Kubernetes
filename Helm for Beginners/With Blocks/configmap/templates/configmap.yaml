@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-appinfo
+data:
+  {{- with .Values.app }}
+    {{- with .ui }}
+    background: {{ .bg }}
+    foreground: {{ .fg }}
+    {{- end }}
+    {{- with .db }}
+    database: {{ .name }}
+    connection: {{ .conn }}
+    {{- end }}
+    release: {{ $.Release.Name }}
+  {{- end }}

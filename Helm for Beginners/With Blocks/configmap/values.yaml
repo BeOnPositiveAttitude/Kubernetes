@@ -1,0 +1,7 @@
+app:
+  ui:
+    bg: red
+    fg: black
+  db:
+    name: "users"
+    conn: "mongodb://localhost:27020/mydb"
