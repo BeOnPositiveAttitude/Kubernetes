@@ -52,5 +52,5 @@ apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: {{ .Release.Name }}-robot-sa
-{{- else }}
+{{- end }}
 ```
