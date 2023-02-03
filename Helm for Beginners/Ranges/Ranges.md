@@ -39,3 +39,18 @@ data:
 ```
 
 Range устанавливает scope при каждой итерации по циклу.
+
+Пример из лабы - список key/value:
+```yaml
+{{- with .Values.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $.Values.serviceAccount.name }}
+  labels:
+    {{- range $key, $val := $.Values.serviceAccount.labels }}
+    {{ $key }}: {{ $val }}
+    {{- end }}
+    app: webapp-color
+{{- end }}
+```

@@ -41,6 +41,23 @@ metadata:
   {{- end }}
 ```
 
+Более удачный пример из лабы:
+```yaml
+apiVersion: v1
+metadata:
+  name: {{ .Values.configMap.name }}
+  namespace: default
+kind: ConfigMap
+data:
+  {{- if eq .Values.environment "production" }}
+    APP_COLOR: pink
+  {{- else if eq .Values.environment "development"}}
+    APP_COLOR: darkblue
+  {{- else}}
+    APP_COLOR: green
+  {{- end }}
+```
+
 Существует множество других функий сравнения:
 
 <img src="screen.png" width="300" height="300"><br>
