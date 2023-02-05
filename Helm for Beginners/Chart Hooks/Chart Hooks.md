@@ -45,4 +45,49 @@ spec:
 ```
 Теперь эта Job будет запускаться только перед фазой обновления в случае upgrade Chart. Аналогично настраиваются другие типы Hooks.
 
-Иногда нам нужно запускать сразу несколько pre-upgrade hooks, например сначала послать нотификацию по e-mail, затем установить баннер на сайте о проводимых работах и в конце выполнить бэкап БД. Как определить очередность выполнения hooks? Мы можем задать weights для каждого hook. Это может быть положительное или отрицательное число. В процессе 
+Иногда нам нужно запускать сразу несколько pre-upgrade hooks, например сначала послать нотификацию по e-mail, затем установить баннер на сайте о проводимых работах и в конце выполнить бэкап БД. Как определить очередность выполнения hooks? Мы можем задать weights для каждого hook. Это может быть положительное или отрицательное число. Helm выстраивает очередность выполнения по возврастанию weights. Например -4, 3, 5. Для этого нужно добавить аннотацию и задать значение в формате string:
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-nginx
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "5"
+spec:
+  template:
+    metadata:
+      name: {{ .Release.Name }}-nginx
+    spec:
+      containers:
+      - image: alpine
+        name: pre-upgrade-backup-job
+        command: [ "/bin/script.sh" ]
+      restartPolicy: Never
+```
+
+Стоит заметить, что можно задать одинковое значение для нескольких hooks. Тогда они будут отсортированы по типу ресурса и далее по имени в порядке возрастания.
+
+Что произойдет, когда бэкап job завершится? Ресурс, созданный с помощью hook, job в нашем случае, останется в кластере. Мы можем настроить его дальнейшнее удаление с помощью hook deletion policies. Для этого нужно добавить аннотацию:
+```yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-nginx
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "5"
+    "helm.sh/hook-delete-policy": hook-succeeded
+spec:
+  template:
+    metadata:
+      name: {{ .Release.Name }}-nginx
+    spec:
+      containers:
+      - image: alpine
+        name: pre-upgrade-backup-job
+        command: [ "/bin/script.sh" ]
+      restartPolicy: Never
+```
+
+`hook-succeeded` - удалит ресурс в случае успешного завершения hook, и соответственно не удалит в случае failure. Это может помочь в дальнейшем дебаге проблемы, т.к. объект останется в кластере `hook-failed` - удалит ресурс даже в случае фейла hook. И наконец политика по умолчанию, если она не определна явно, `before-hook-creation` - удаляет предыдущий ресурс перед запуском нового hook. Когда hook запускается первый раз, никаких объектов еще не создано и удалять нечего. Далее например при обновлении pre-upgrade hook создает job для бэкапа БД. При следующем обновлении pre-upgrade hook удалит старый объект K8s. После удаления старой Job будет создана новая.
