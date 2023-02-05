@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-nginx
+spec:
+  template:
+    metadata:
+      name: {{ .Release.Name }}-nginx
+    spec:
+      containers:
+      - image: alpine
+        name: pre-upgrade-backup-job
+        command: [ "/bin/script.sh" ]
+      restartPolicy: Never
