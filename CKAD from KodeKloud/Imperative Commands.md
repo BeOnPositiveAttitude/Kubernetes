@@ -32,10 +32,12 @@ labels pod-а будут автоматически использованы в 
 
 `kubectl create service nodeport nginx --tcp=80:80 --node-port=30080`
 
-Однако стоит помнить, что при таком способе labels pod-а не будут использованы в селекторе Service
+Однако стоит помнить, что при таком способе labels pod-а не будут использованы в селекторе Service.
 
 Опубликовать Deployment:
 
 `kubectl expose deployment ingress-controller --type=NodePort --port=80 --name=ingress -n ingress-space`
 
-При таком способе labels pod-а внутри Deployment будут автоматически использованы в селекторе Service, но нельзя указать NodePort, потом нужно редактировать Service руками
+При таком способе labels pod-а внутри Deployment будут автоматически использованы в селекторе Service, но нельзя указать NodePort, потом нужно редактировать Service руками.
+
+Скопировать содержимое папки export из pod-а на локальный хост: `kubectl cp namespace/pod:/wiki/data/export /Users/19919937/Downloads/from_k8s_pod`.
