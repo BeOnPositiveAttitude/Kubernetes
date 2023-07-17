@@ -11,3 +11,13 @@
 Проверяем, что ссылка работает: `curl http://$INGRESS_HOST:$INGRESS_PORT/productpage`.
 
 Удалось заставить работать только на версии Istio 1.10.3 (как в уроке) и minikube 1.24.0!!! На свежих версиях ошибка сертификата.
+
+Создадим поток трафика с помощью простого скрипта:
+
+`while sleep 0.01 ; do curl -sS 'http://'"$INGRESS_HOST"':'"$INGRESS_PORT"'/productpage' &> /dev/null ; done`.
+
+Теперь на Kiali Dashboard мы должны увидеть Graph нагрузки.
+
+Теперь искусственно создадим проблему, удалим Deployment: `kubectl delete deployments/productpage-v1`.
+
+На Kiali Dashboard видим красноту, т.к. теперь трафик не поступает на страницу продукта и далее на остальные модули.
