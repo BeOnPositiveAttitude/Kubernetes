@@ -36,7 +36,7 @@ Ingress Gateway управляет всем входящим к сервисам
 
 Однако мы также можем иметь наш собственный набор кастомных gateway-контроллеров.
 
-Наша цель состоит в том, чтобы захватить весь трафик, проходящий через контроллер `istio-ingressgateway` и направить весь трафик идущий к `bookinfo.app` на нашу страницу продукта. Для этого первым делом мы создаем объект Gateway.
+Наша цель состоит в том, чтобы захватить весь трафик, проходящий через контроллер `istio-ingressgateway` и направить весь трафик идущий к `bookinfo.app` на нашу страницу продукта. Для этого первым делом мы создаем объект Gateway. Он обслуживает весь трафик на 80 порту приходящий в K8s-кластер через контроллер `istio-ingressgateway`.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -44,13 +44,13 @@ kind: Gateway
 metadata:
   name: bookinfo-gateway
 spec:
-  selector:
-    istio: ingressgateway
+#   selector:
+#     istio: ingressgateway
   servers:
-  - hosts:
-    - '*'
-    port:
+  - port:
       name: http
       number: 80
       protocol: HTTP
+    hosts:
+    - "bookinfo.app"
 ```
