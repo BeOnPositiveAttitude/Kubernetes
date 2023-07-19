@@ -36,7 +36,9 @@ Ingress Gateway управляет всем входящим к сервисам
 
 Однако мы также можем иметь наш собственный набор кастомных gateway-контроллеров.
 
-Наша цель состоит в том, чтобы захватить весь трафик, проходящий через контроллер `istio-ingressgateway` и направить весь трафик идущий к `bookinfo.app` на нашу страницу продукта. Для этого первым делом мы создаем объект Gateway. Он обслуживает весь трафик на 80 порту приходящий в K8s-кластер через контроллер `istio-ingressgateway`.
+<img src="screen2.png" width="800" height="450"><br>
+
+Наша цель состоит в том, чтобы захватить весь трафик, проходящий через контроллер `istio-ingressgateway` и направить весь трафик идущий к `bookinfo.app` на нашу страницу продукта. Для этого первым делом мы создаем объект Gateway. Он обслуживает весь трафик по 80 порту приходящий в K8s-кластер через контроллер `istio-ingressgateway` с hostname равным `bookinfo.app`.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -44,8 +46,8 @@ kind: Gateway
 metadata:
   name: bookinfo-gateway
 spec:
-#   selector:
-#     istio: ingressgateway
+  selector:
+    istio: ingressgateway
   servers:
   - port:
       name: http
@@ -54,3 +56,13 @@ spec:
     hosts:
     - "bookinfo.app"
 ```
+
+Но какой именно istio-ingress контроллер? Мы имеем три контроллера, два из которых кастомные, только что созданные нами. Для этого добавляется Selector и указывается Label желаемого контроллера. В нашем случае мы хотим использовать дефолтный контроллер `istio-ingressgateway`, поэтому мы задаем Selector равный `istio: ingressgateway` и соответственно игнорируем два кастомных созданных нами контроллера.
+
+Далее мы создаем Gateway `bookinfo-gateway` путем применения данной конфигурации: `kubectl apply -f bookinfo-gateway.yml`.
+
+Для просмотра списка созданных Gateway нужно выполнить команду: `kubectl get gateway`.
+
+Для просмотра детальной информации об определенном Gateway нужно выполнить команду: `kubectl describe gateway bookinfo-gateway`.
+
+Теперь у нас есть объект Gateway `bookinfo-gateway`, созданный для захвата трафика, проходящего через дефолтный контроллер `istio-ingressgateway` от URL `bookinfo.app`.
