@@ -43,3 +43,5 @@
 Справка по конфигу: `kubectl config -h`.
 
 В секции `Contexts` в конфиге также можно указать определенный namespace, в который мы сразу попадем при переключении на этот контекст.
+
+Задать определенный namespace, чтобы все команды выполнялись в нем: `kubectl config set-context --current --namespace=my-namespace`.
