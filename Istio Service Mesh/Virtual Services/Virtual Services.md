@@ -10,6 +10,8 @@ Service `productpage` также обслуживает статический H
 
 Давайте создадим Virtual Service для маршрутизации указанных URL к Service `productpage`. Мы создаем объект с версией API равной `networking.istio.io/v1alpha3`. Это может поменяться в последующих версиях. Поэтому всегда обращайтесь к документации Istio при создании Virtual Services для получения самой свежей поддерживаемой версии API.
 
+Первым делом мы указываем, чтобы только трафик для хоста `bookinfo.app` попадал на Virtual Service. Для этого редактируем секцию `hosts`. Также здесь может быть настроено несколько Gateways. Каким образом мы можем ассоциировать этот Virtual Service с Gateway, созданным для нашего приложения? Для этого мы добавляем секцию `gateways` и указываем имя созданного нами Gateway - `bookinfo-gateway`. И наконец у нас есть секция `http`, где мы добавляем правила маршрутизации. Секция `match` определяет URIs, который должны совпадать. Это URIs, которые мы обсуждали ранее. `exact` означает, что URI совпадает "as is", а `prefix` означает URIs, которые начинаются с заданного URI, например `/static/something` или `/api/v1/products/something`. Весь трафик, подходящий под заданные URI-паттерны, затем маршрутизируется в точку назначения, указанную в секции `route`.
+
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
@@ -17,23 +19,26 @@ metadata:
   name: bookinfo
 spec:
   hosts:
-  - reviews.prod.svc.cluster.local
+  - "bookinfo.app"
+  gateways:
+  - bookinfo-gateway
   http:
-  - name: "reviews-v2-routes"
-    match:
+  - match:
     - uri:
-        prefix: "/wpcatalog"
+        exact: /productpage
     - uri:
-        prefix: "/consumercatalog"
-    rewrite:
-      uri: "/newcatalog"
+        prefix: /static
+    - uri:
+        exact: /login
+    - uri:
+        exact: /logout
+    - uri:
+        prefix: /api/v1/products
     route:
     - destination:
-        host: reviews.prod.svc.cluster.local
-        subset: v2
-  - name: "reviews-v1-route"
-    route:
-    - destination:
-        host: reviews.prod.svc.cluster.local
-        subset: v1
+        host: productpage
+        port:
+          number: 9080
 ```
+
+Теперь у нас есть Virtual Service для Product Page. Весь трафик приходящий через `bookinfo-gateway` с hostname равным `bookinfo.app` теперь попадает на Virtual Service.
