@@ -41,4 +41,4 @@ spec:
           number: 9080
 ```
 
-Теперь у нас есть Virtual Service для Product Page. Весь трафик приходящий через `bookinfo-gateway` с hostname равным `bookinfo.app` теперь попадает на Virtual Service.
+Теперь у нас есть Virtual Service для Product Page. Весь трафик приходящий через `bookinfo-gateway` с hostname равным `bookinfo.app` теперь попадает на Virtual Service. Далее Product Page необходимо обращаться к сервису Reviews. Сначала Product Page обращается к Reviews v1, но позднее мы добавим версии v2 и v3. Каким образом мы можем постепенно добавлять другие версии и направлять только небольшой процент трафика на них и таким образом выполнить тестирование перед переключением всего трафика на новые версии сервиса?
