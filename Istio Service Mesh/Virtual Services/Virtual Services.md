@@ -45,4 +45,67 @@ spec:
 
 В начале мы имеем сервис Product Page взаимодействующий с сервисом Reviews v1. Затем мы пришли с двумя новыми версиями сервиса Reviews - Version 2 и Version 3. Version 2 обладает черными звездами, а Version 3 красными звездами. Мы хотим тестировать эти сервисы с помощью направления небольшого процента трафика на них до тех пор, пока не будем уверены, что они работают как ожидается, а нашим пользователям понравилась фича с новыми звездами.
 
-В обычном мире K8s без Istio или Service Mesh мы развернем микросервис Reviews в формате Deployment. Давайте к примеру скажем, что он имеет 3 реплики.
+В обычном мире K8s без Istio или Service Mesh мы развернем микросервис Reviews в формате Deployment. Давайте к примеру скажем, что он имеет 3 реплики. Эти микросервисы публикуются в рамках кластера с помощью Service типа ClusterIP. Label `app` имеет значение `reviews` и это позволяет Service идентифицировать pod-ы как часть Deployment `reviews`.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reviews-v1
+spec:
+  replicas: 3
+  <...>
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v1
+```
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: reviews
+spec:
+  ports:
+  - name: http
+    port: 9080
+  selector:
+    app: reviews
+  type: ClusterIP
+```
+
+Service направляет трафик ко всем трём pod-ам. Product Page теперь может обращаться к сервису Reviews для получения рецензий на книги. На данный момент 100% трафика идет на сервис Reviews Version 1. Когда мы разворачиваем новую версию сервиса Reviews, например Version 2, мы создаем ее в виде нового Deployment. Но для начала мы создаем только один pod, т.к. не хотим, чтобы все пользователи ходили на новую версию сервиса. Мы используем тот же Label `app` со значением равным `reviews`. Соответственно Service `reviews` "подхватывает" новый pod как часть нового Deployment. Теперь Service имеет четыре endpoint-а. 75% трафика идет на Version 1 и 25% идет на Version 2.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reviews-v2
+spec:
+  replicas: 1
+  <...>
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v1
+```
+
+Далее с выходом третьей версии мы разворачиваем новое приложение Reviews.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reviews-v3
+spec:
+  replicas: 1
+  <...>
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v1
+```
