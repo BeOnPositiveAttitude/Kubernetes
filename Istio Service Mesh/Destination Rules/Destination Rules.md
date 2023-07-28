@@ -42,4 +42,68 @@ spec:
 
 Мы задали версии Version 1 и Version 2 соответственно. Это Labels, установленные на pod-ах для соответствующей версии Deployment `reviews`.
 
-Вот как мы определяем отдельное подмножество (subset) сервисов, чтобы
+Вот так мы определяем отдельное подмножество (subset) сервисов, чтобы иметь возможность контролировать количество трафика, идущего на каждый subset.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reviews-v1
+spec:
+  replicas: 3
+  <...>
+  template:
+    metadata:
+      labels:
+        app: reviews
+        version: v1
+```
+
+По умолчанию Envoy балансирует в round-robin манере. Это может быть настроено через DestinationRule путем указания политики трафика для балансировщика. Укажем для политики трафика значение `simple: PASSTHROUGH`. Трафик будет маршрутизироваться на хост, у которого меньше активных запросов.
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: reviews-destination
+spec:
+  host: reviews
+  trafficPolicy:
+    loadBalancer:
+      simple: PASSTHROUGH
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+```
+
+Существуют также другие простые алгоритмы, например round-robin, random и passthrough.
+
+Что если мы хотим переопределить другую политику балансировки для определенных subsets? Например для subset v2 мы хотим задать политику балансировки random. Для этого мы просто задаем политику трафика на уровне subset и конфигурируем другую политику.
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: reviews-destination
+spec:
+  host: reviews
+  trafficPolicy:
+    loadBalancer:
+      simple: PASSTHROUGH
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+      trafficPolicy:
+        loadBalancer:
+          simple: RANDOM
+```
+
+Таким образом мы можем настроить одну политику балансировки для всех subsets и 
