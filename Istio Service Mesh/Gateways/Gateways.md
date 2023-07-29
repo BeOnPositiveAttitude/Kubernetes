@@ -59,7 +59,7 @@ spec:
 
 Но какой именно istio-ingress контроллер? Мы имеем три контроллера, два из которых кастомные, только что созданные нами. Для этого добавляется Selector и указывается Label желаемого контроллера. В нашем случае мы хотим использовать дефолтный контроллер `istio-ingressgateway`, поэтому мы задаем Selector равный `istio: ingressgateway` и соответственно игнорируем два кастомных созданных нами контроллера.
 
-Далее мы создаем Gateway `bookinfo-gateway` путем применения данной конфигурации: `kubectl apply -f bookinfo-gateway.yml`.
+Далее мы создаем Gateway `bookinfo-gateway` путем применения данной конфигурации: `kubectl apply -f samples/bookinfo/networking/bookinfo-gateway.yml`.
 
 Для просмотра списка созданных Gateway нужно выполнить команду: `kubectl get gateway`.
 
