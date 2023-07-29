@@ -29,7 +29,7 @@ spec:
 EOF
 ```
 
-Чтобы этот Gateway начал работать, нам нужно создать VirtualService для обработки входящего трафика. Важно отметить, что поле `hosts` должно совпадать для Gateway и VirtualService.
+Чтобы этот Gateway начал работать, нам нужно создать VirtualService для обработки входящего трафика. Важно отметить, что поле `hosts` должно совпадать для Gateway и VirtualService. Данный VirtualService cвязан с Gateway `bookinfo-gateway`, который мы только что создали. В конфигурации VirtualService существует несколько match-правил и одно route-правило.
 
 ```bash
 kubectl apply -f - <<EOF
@@ -61,3 +61,5 @@ spec:
           number: 9080
 EOF
 ```
+
+`curl -s -HHost:bookinfo.app http://$INGRESS_HOST:$INGRESS_PORT/productpage | grep -o "<title>.*</title>"`.
