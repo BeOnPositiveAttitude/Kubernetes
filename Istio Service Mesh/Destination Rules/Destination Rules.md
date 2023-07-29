@@ -106,4 +106,54 @@ spec:
           simple: RANDOM
 ```
 
-Таким образом мы можем настроить одну политику балансировки для всех subsets и 
+Таким образом мы можем настроить одну политику балансировки для всех subsets и отдельную для выбранного subset в случае необходимости.
+
+Существует еще много других конфигураций поддерживаемых Destination Rules. Например, для настройки использования клиентом TLS укажите `SIMPLE` TLS:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: reviews-destination
+spec:
+  host: reviews
+  trafficPolicy:
+    tls:
+      mode: SIMPLE
+```
+
+Для настройки mutual TLS, установите mode в `MUTUAL` и укажите путь до файлов сертификатов:
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: reviews-destination
+spec:
+  host: reviews
+  trafficPolicy:
+    tls:
+      mode: MUTUAL
+      clientCertificate: /myclientcert.pem
+      privateKey: /client_private_key.pem
+      caCertificates: /rootcacerts.pem
+```
+
+<img src="screen1.png" width="600" height="400"><br>
+
+Стоит отметить одну важную вещь - поле `host`. Сейчас оно имеет значение `reviews`, это сокращенное имя Service. Когда используются сокращенные имена вместо FQDN-имён, Istio будет интерпретировать сокращенное имя, основываясь на правилах namespace, а не на actual service's namespace. Это может привести к неправильной конфигурации, если ваше Service находится в другом namespace. Чтобы избежать этого рекомендуется использование FQDN-имён вместо сокращенных имён.
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: reviews-destination
+spec:
+  host: reviews.default.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: MUTUAL
+      clientCertificate: /myclientcert.pem
+      privateKey: /client_private_key.pem
+      caCertificates: /rootcacerts.pem
+```
