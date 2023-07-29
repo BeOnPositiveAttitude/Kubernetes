@@ -29,23 +29,35 @@ spec:
 EOF
 ```
 
-Чтобы этот Gateway начал работать, нам нужно создать VirtualService для обработки входящего трафика.
+Чтобы этот Gateway начал работать, нам нужно создать VirtualService для обработки входящего трафика. Важно отметить, что поле `hosts` должно совпадать для Gateway и VirtualService.
 
 ```bash
 kubectl apply -f - <<EOF
 apiVersion: networking.istio.io/v1alpha3
-kind: Gateway
+kind: VirtualService
 metadata:
-  name: bookinfo-gateway
+  name: bookinfo
 spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "bookinfo.app"
+  hosts:
+  - bookinfo.app
+  gateways:
+  - bookinfo-gateway
+  http:
+  - match:
+    - uri:
+        exact: /productpage
+    - uri:
+        prefix: /static
+    - uri:
+        exact: /login
+    - uri:
+        exact: /logout
+    - uri:
+        prefix: /api/v1/products
+    route:
+    - destination:
+        host: productpage
+        port:
+          number: 9080
 EOF
 ```
