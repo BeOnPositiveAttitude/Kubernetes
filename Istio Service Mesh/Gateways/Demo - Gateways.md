@@ -62,4 +62,12 @@ spec:
 EOF
 ```
 
-`curl -s -HHost:bookinfo.app http://$INGRESS_HOST:$INGRESS_PORT/productpage | grep -o "<title>.*</title>"`.
+Мы должны использовать `bookinfo.app` в качестве хоста в нашем запросе. В `curl` мы можем добавить флаг `-H`, чтобы установить для HTTP-заголовка значение `bookinfo.app`.
+
+Команда для проверки: `curl -s -HHost:bookinfo.app http://$INGRESS_HOST:$INGRESS_PORT/productpage | grep -o "<title>.*</title>"` в итоге должна вернуть: `<title>Simple Bookstore App</title>`.
+
+Сейчас наше приложение "Bookinfo" открыто для внешнего трафика с помощью Gateway `bookinfo-gateway`.
+
+Посмотрим секцию IstioConfig в WebUI Kiali. Здесь мы также можем увидеть наш Gateway `bookinfo-gateway` и внести изменения в его конфигурацию с помощью Kiali. Также здесь присутствует VirtualService, который мы только что настроили.
+
+Теперь давайте пойдем в браузер и попробуем ввести hostname. Чтобы сделать это, мы можем добавить IP и hostname в наш файл `/etc/hosts` с помощью команды: `echo -e "$(minikube ip)\tbookinfo.app" | sudo tee -a /etc/hosts`. Здесь `-e` - enable interpretation of backslash escapes, `-a` - append to the given files, do not overwrite.
