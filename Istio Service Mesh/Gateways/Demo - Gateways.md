@@ -71,3 +71,24 @@ EOF
 Посмотрим секцию IstioConfig в WebUI Kiali. Здесь мы также можем увидеть наш Gateway `bookinfo-gateway` и внести изменения в его конфигурацию с помощью Kiali. Также здесь присутствует VirtualService, который мы только что настроили.
 
 Теперь давайте пойдем в браузер и попробуем ввести hostname. Чтобы сделать это, мы можем добавить IP и hostname в наш файл `/etc/hosts` с помощью команды: `echo -e "$(minikube ip)\tbookinfo.app" | sudo tee -a /etc/hosts`. Здесь `-e` - enable interpretation of backslash escapes, `-a` - append to the given files, do not overwrite.
+
+В адресной строке браузера вводим `http://bookinfo.app:$INGRESS_PORT/productpage`, должна открыться страница приложения, в Chrome и Firefox редиректит на https и не открывается, ставить браузер Falcon. Таким образом мы смогли пройти через Gateway, который мы настроили, используя hostname `bookinfo.app`.
+
+Теперь нам нужно перейти обратно в настройки Gateway и вернуть wildcard для hostname, т.к. в процессе прохождения курса нам может понадобиться вернуться к дефолтной конфигурации, используя yaml-файлы из каталога `samples/`.
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: bookinfo-gateway
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      name: http
+      number: 80
+      protocol: HTTP
+    hosts:
+    - "*"
+```
