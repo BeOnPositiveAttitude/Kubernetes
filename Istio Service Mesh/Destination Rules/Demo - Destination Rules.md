@@ -52,4 +52,40 @@ spec:
 
 Удалим `kubectl delete -f reviews.yaml` и применим созданный манифест `kubectl apply -f reviews.yaml`.
 
-Если пойти в Kiali, то новые Labels можно увидеть на вкладке "Workloads". Label `test: beta` появился в Deployment v2 и v3, но не в v1.
+Если пойти в Kiali, то новые Labels можно увидеть на вкладке "Workloads". Label `test: beta` появился в Deployment `reviews-v2` и `reviews-v3`, но не в `reviews-v1`.
+
+На вкладке "Applications" мы можем увидеть, что новый Label также появился на нашем сервисе `reviews`.
+
+Теперь давайте перейдем на вкладку "Istio Config" и создадим наш новый subset в DestinationRule `reviews`. Оставим subset `version: v1` и создадим новый subset `test: beta`. Это поможет нам протестировать две новые различные версии приложения и понять какая окажется предпочтительнее для заказчиков.
+
+```yaml
+...
+spec:
+  host: reviews
+  subsets:
+    - labels:
+        version: v1
+      name: v1
+    - labels:
+        test: beta
+      name: test
+```
+
+Теперь перейдем в VirtualService `reviews` и т.к. мы только что удалили старые subsets `version: v2` и `version: v3`, Kiali предупредит нас, окрашивая в желтый цвет соответствующие строки. Оставим только `subset: v1` и добавим новый `subset: beta` как единый destination. Также необходимо указать каким образом управлять трафиком между ними.
+
+```yaml
+...
+spec:
+  hosts:
+    - reviews
+  http:
+    - route:
+        - destination:
+            host: reviews
+            subset: v1
+          weight: 90
+        - destination:
+            host: reviews
+            subset: beta
+          weight: 10
+```
