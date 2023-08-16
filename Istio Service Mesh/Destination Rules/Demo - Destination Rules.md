@@ -96,7 +96,7 @@ spec:
 
 Переходим на вкладку "Istio Config", выбираем DR "reviews", далее нажимаем "Host" и видим распределение трафика. Запросов на v1 приходит в 9 раз больше, чем на v2 и v3.
 
-Изменим распределение веса трафика еще раз:
+Изменим распределение веса трафика в VirtualService "reviews" еще раз:
 
 ```yaml
 ...
@@ -117,3 +117,52 @@ spec:
 
 Теперь в браузере чаще всего отображаются v2 и v3.
 
+Также мы можем создать политику трафика для `subset: test` в DestinationRule "reviews". Это может быть random loadbalancer. Таким способом мы можем распределять трафик случайный образом в нашем subset.
+
+```yaml
+...
+spec:
+  host: reviews
+  subsets:
+    - labels:
+        version: v1
+      name: v1
+    - labels:
+        test: beta
+      name: test
+      trafficPolicy:
+        loadBalancer:
+          simple: RANDOM
+```
+
+Теперь в браузере версии v2 и v3 меняются в случайном порядке.
+
+Мы можем удалить все созданные ранее subsets и попробовать другую политику трафика в DestinationRule "reviews".
+
+```yaml
+...
+spec:
+  host: reviews
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+```
+
+Теперь все наши приложения Reviews будут работать в round-robin режиме.
+
+Также необходимо удалить эти subsets из VirtualService "reviews".
+
+```yaml
+...
+spec:
+  hosts:
+    - reviews
+  http:
+    - route:
+        - destination:
+            host: reviews
+```
+
+Теперь в браузере версии v1, v2 и v3 меняются в round-robin режиме.
+
+Destination Rules в совокупности с Virtual Services помогают нам конфигурировать сложные политики управления трафиком.
