@@ -71,7 +71,7 @@ spec:
       name: test
 ```
 
-Теперь перейдем в VirtualService `reviews` и т.к. мы только что удалили старые subsets `version: v2` и `version: v3`, Kiali предупредит нас, окрашивая в желтый цвет соответствующие строки. Оставим только `subset: v1` и добавим новый `subset: beta` как единый destination. Также необходимо указать каким образом управлять трафиком между ними.
+Теперь перейдем в VirtualService `reviews` и т.к. мы только что удалили старые subsets `version: v2` и `version: v3`, Kiali предупредит нас, окрашивая в желтый цвет соответствующие строки. Оставим только `subset: v1` и добавим новый `subset: beta` как единый destination. Также необходимо указать каким образом управлять трафиком между ними. Направим на новую тестовую версию приложения всего лишь 10% от общего трафика.
 
 ```yaml
 ...
@@ -86,6 +86,34 @@ spec:
           weight: 90
         - destination:
             host: reviews
-            subset: beta
+            subset: test
           weight: 10
 ```
+
+В браузере мы будем чаще всего видеть v1 и редко v2 и v3. Создадим поток трафика с помощью команды:
+
+`while sleep 1 ; do curl -sS 'http://'"$INGRESS_HOST"':'"$INGRESS_PORT"'/productpage' &> /dev/null ; done`.
+
+Переходим на вкладку "Istio Config", выбираем DR "reviews", далее нажимаем "Host" и видим распределение трафика. Запросов на v1 приходит в 9 раз больше, чем на v2 и v3.
+
+Изменим распределение веса трафика еще раз:
+
+```yaml
+...
+spec:
+  hosts:
+    - reviews
+  http:
+    - route:
+        - destination:
+            host: reviews
+            subset: v1
+          weight: 10
+        - destination:
+            host: reviews
+            subset: test
+          weight: 90
+```
+
+Теперь в браузере чаще всего отображаются v2 и v3.
+
