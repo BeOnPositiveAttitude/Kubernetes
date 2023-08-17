@@ -1,0 +1,132 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: lamp-wp
+  name: lamp-wp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lamp-wp
+  template:
+    metadata:
+      labels:
+        app: lamp-wp
+    spec:
+      containers:
+        - image: webdevops/php-apache:alpine-3-php7
+          name: httpd-php-container
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-root-pwd
+                  key: root_pwd
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-db
+                  key: db_name
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-user
+                  key: db_user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pwd
+                  key: db_pwd
+            - name: MYSQL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-host
+                  key: db_host
+          ports:
+          - containerPort: 80
+          volumeMounts:
+            - name: config
+              mountPath: /opt/docker/etc/php/php.ini
+              subPath: php.ini
+        - image: mysql:5.6
+          name: mysql-container
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-root-pwd
+                  key: root_pwd
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-db
+                  key: db_name
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-user
+                  key: db_user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-pwd
+                  key: db_pwd
+            - name: MYSQL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-host
+                  key: db_host
+          ports:
+          - containerPort: 3306
+      volumes:
+        - name: config
+          configMap:
+            name: php-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: lamp-wp
+  name: lamp-service
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30008
+  selector:
+    app: lamp-wp
+  type: NodePort
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: lamp-wp
+  name: mysql-service
+spec:
+  ports:
+  - name: mysql
+    port: 3306
+    protocol: TCP
+    targetPort: 3306
+  selector:
+    app: lamp-wp
+  type: ClusterIP
+
+
+kubectl create secret generic mysql-root-pwd --from-literal=root_pwd=Passw0rd_
+
+kubectl create secret generic mysql-db --from-literal=db_name=mysql-demo-db
+
+kubectl create secret generic mysql-user --from-literal=db_user=demo-user
+
+kubectl create secret generic mysql-pwd --from-literal=db_pwd=SuperPass
+
+kubectl create secret generic mysql-host --from-literal=db_host=mysql-service
