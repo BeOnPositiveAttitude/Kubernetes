@@ -130,3 +130,6 @@ kubectl create secret generic mysql-user --from-literal=db_user=demo-user
 kubectl create secret generic mysql-pwd --from-literal=db_pwd=SuperPass
 
 kubectl create secret generic mysql-host --from-literal=db_host=mysql-service
+
+# важно в качестве MYSQL_HOST указать название Service "mysql-service"!!!
+# секреты можно было объединить в один
