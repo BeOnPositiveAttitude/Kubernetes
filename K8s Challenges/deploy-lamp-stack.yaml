@@ -122,14 +122,141 @@ spec:
 
 
 kubectl create secret generic mysql-root-pwd --from-literal=root_pwd=Passw0rd_
-
 kubectl create secret generic mysql-db --from-literal=db_name=mysql-demo-db
-
 kubectl create secret generic mysql-user --from-literal=db_user=demo-user
-
 kubectl create secret generic mysql-pwd --from-literal=db_pwd=SuperPass
-
 kubectl create secret generic mysql-host --from-literal=db_host=mysql-service
 
 # важно в качестве MYSQL_HOST указать название Service "mysql-service"!!!
 # секреты можно было объединить в один
+
+
+
+k create secret generic mysql-root-pass --from-literal=password=R00t
+k create secret generic mysql-user-pass --from-literal=username=kodekloud_sam --from-literal=password=LQfKeWWxWD
+k create secret generic mysql-db-url --from-literal=database=kodekloud_db6
+k create secret generic mysql-host --from-literal=host=mysql-service
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: lemp-wp
+  name: lemp-wp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lemp-wp
+  template:
+    metadata:
+      labels:
+        app: lemp-wp
+    spec:
+      containers:
+        - image: webdevops/php-nginx:alpine-3-php7
+          name: nginx-php-container
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-root-pass
+                  key: password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-db-url
+                  key: database
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-user-pass
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-user-pass
+                  key: password
+            - name: MYSQL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-host
+                  key: host
+          ports:
+          - containerPort: 80
+          volumeMounts:
+            - name: config
+              mountPath: /opt/docker/etc/php/php.ini
+              subPath: php.ini
+        - image: mysql:5.6
+          name: mysql-container
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-root-pass
+                  key: password
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-db-url
+                  key: database
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-user-pass
+                  key: username
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-user-pass
+                  key: password
+            - name: MYSQL_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-host
+                  key: host
+          ports:
+          - containerPort: 3306
+      volumes:
+        - name: config
+          configMap:
+            name: php-config
+
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: lemp-wp
+  name: lemp-service
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30008
+  selector:
+    app: lemp-wp
+  type: NodePort
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: lemp-wp
+  name: mysql-service
+spec:
+  ports:
+  - name: mysql
+    port: 3306
+    protocol: TCP
+    targetPort: 3306
+  selector:
+    app: lemp-wp
+  type: ClusterIP
