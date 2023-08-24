@@ -10,7 +10,7 @@
 
 Мы можем настроить таймаут либо для сервиса Details, чтобы падал он, либо мы можем настроить таймаут для сервиса Product Page, чтобы он падал быстрее, чем вечно ждать ответа от сервиса Details.
 
-Ниже представлены сервис `details` и сервис `bookinfo`, который направляет трафик к Product Page.
+Ниже представлены сервис `details` и сервис `bookinfo`, который направляет трафик к Product Page. Мы хотим добавить таймаут для сервиса Product Page, чтобы  запросы, занимающие более трех секунд, отклонялись. Для этого мы добавили опцию `timeout` и задали значение 3 секунды.
 
 ```yaml
 apiVersion: networking.istio.io/v1alpha3
@@ -39,4 +39,26 @@ spec:
         host: productpage
         port:
           number: 9080
+    timeout: 3s
+```
+
+Как нам выполнить тестирование, если приложение работает отлично? Так как у нас мало трафика и сервис Details также работает превосходно, мы хотим чтобы он упал. Как мы узнали из прошлой лекции, можно cымитиpoвaть падение с помощью fault injection. Для этого добавим секцию `fault` в сервис `details` с фиксированной задержкой в 5 секунд для 50% трафика.
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: details
+spec:
+  hosts:
+    - details
+  http:
+  - route:
+    - destination:
+        host: details
+        subset: v1
+    fault:
+      delay:
+        fixedDelay: 5s
+        percent: 50
 ```
