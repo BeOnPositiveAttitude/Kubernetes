@@ -11,3 +11,32 @@
 Мы можем настроить таймаут либо для сервиса Details, чтобы падал он, либо мы можем настроить таймаут для сервиса Product Page, чтобы он падал быстрее, чем вечно ждать ответа от сервиса Details.
 
 Ниже представлены сервис `details` и сервис `bookinfo`, который направляет трафик к Product Page.
+
+```yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: bookinfo
+spec:
+  hosts:
+  - "bookinfo.app"
+  gateways:
+  - bookinfo-gateway
+  http:
+  - match:
+    - uri:
+        exact: /productpage
+    - uri:
+        prefix: /static
+    - uri:
+        exact: /login
+    - uri:
+        exact: /logout
+    - uri:
+        prefix: /api/v1/products
+    route:
+    - destination:
+        host: productpage
+        port:
+          number: 9080
+```
