@@ -1,0 +1,168 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: drupal-mysql-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /drupal-mysql-data
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: drupal-mysql-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 3Gi
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: mysql
+  name: drupal-mysql
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+      - image: mysql:5.7
+        name: mysql-container
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials
+                key: root_pass
+          - name: MYSQL_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials
+                key: db_name
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials
+                key: username
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials
+                key: user_pass
+          - name: MYSQL_HOST
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials
+                key: db_hostname
+        volumeMounts:
+        - name: mysql-vol
+          mountPath: /var/lib/mysql
+        ports:
+        - containerPort: 3306
+      volumes:
+      - name: mysql-vol
+        persistentVolumeClaim:
+          claimName: drupal-mysql-pvc
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: drupal
+  name: drupal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drupal
+  template:
+    metadata:
+      labels:
+        app: drupal
+    spec:
+      containers:
+      - image: drupal:8.6
+        name: drupal-container
+        ports:
+        - containerPort: 80
+        env:
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials
+                key: root_pass
+          - name: MYSQL_DATABASE
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials
+                key: db_name
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials
+                key: username
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials
+                key: user_pass
+          - name: MYSQL_HOST
+            valueFrom:
+              secretKeyRef:
+                name: mysql-credentials
+                key: db_hostname
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: drupal
+  name: drupal-service
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+    nodePort: 30095
+  selector:
+    app: drupal
+  type: NodePort
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: mysql
+  name: drupal-mysql-service
+spec:
+  ports:
+  - port: 3306
+    protocol: TCP
+    targetPort: 3306
+  selector:
+    app: mysql
+  type: ClusterIP
+
+
+
+
+kubectl create secret generic mysql-credentials --from-literal=root_pass=sP3bAja4qX --from-literal=db_name=drupal_db --from-literal=username=drupal_user --from-literal=user_pass=5ZfqoDxeOB --from-literal=db_hostname=drupal-mysql-service
+
