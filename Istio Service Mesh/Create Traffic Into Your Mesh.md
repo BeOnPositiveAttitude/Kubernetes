@@ -12,6 +12,10 @@
 
 Удалось заставить работать только на версии Istio 1.10.3 (как в уроке) и minikube 1.24.0!!! На свежих версиях ошибка сертификата.
 
+Istio 1.13.0 is officially supported on Kubernetes versions 1.20 to 1.23.
+
+На Win10 ставил minikube v1.23.0. Соответственно версия K8s v1.22.1. 
+
 Создадим поток трафика с помощью простого скрипта:
 
 `while sleep 0.01 ; do curl -sS 'http://'"$INGRESS_HOST"':'"$INGRESS_PORT"'/productpage' &> /dev/null ; done`.
