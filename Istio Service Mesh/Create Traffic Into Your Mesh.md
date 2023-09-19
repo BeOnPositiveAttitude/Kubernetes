@@ -20,6 +20,10 @@ Istio 1.13.0 is officially supported on Kubernetes versions 1.20 to 1.23.
 
 `while sleep 0.01 ; do curl -sS 'http://'"$INGRESS_HOST"':'"$INGRESS_PORT"'/productpage' &> /dev/null ; done`.
 
+Здесь опции curl следующие:
+- `-s, --silent` - silent mode
+- `-S, --show-error` - show error even when `-s` is used
+
 Теперь на Kiali Dashboard мы должны увидеть Graph нагрузки.
 
 Теперь искусственно создадим проблему, удалим Deployment: `kubectl delete deployments/productpage-v1`.
