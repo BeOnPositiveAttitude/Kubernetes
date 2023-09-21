@@ -19,7 +19,7 @@ spec:
       delay:
         percentage:
           value: 0.1
-        fixedDelay: 5s
+        fixedDelay: 5s    # Istio заставит ждать сервис my-service в течение 5 секунд прежде чем вернуть ответ другом сервису
     route:
     - destination:
         host: my-service
