@@ -75,11 +75,11 @@ spec:
 
 Проверим совпадают ли они: `diff -s /tmp/root-cert.crt.txt /tmp/pod-root-cert.crt.txt`.
 
+Получаем сообщение `Files root-cert.crt.txt and pod-root-cert.crt.txt are identical`.
+
 Мы убедились, что Istio использует наш корневой сертификат в трафике Mesh-а.
 
 Второй шаг состоит в том, чтобы убедиться, что CA-сертификат также совпадает.
-
-Получаем сообщение `Files root-cert.crt.txt and pod-root-cert.crt.txt are identical`.
 
 Сначала "сдампим" CA-сертификат, созданный в начале уроке:
 
