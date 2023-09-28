@@ -21,3 +21,9 @@
 Далее перейдем в каталог `localcluster-cacerts` и создадим секрет, содержащий созданные нами промежуточные сертификаты:
 
 `kubectl create secret generic cacerts -n istio-system --from-file=ca-cert.pem --from-file=ca-key.pem --from-file=cert-chain.pem --from-file=root-cert.pem`
+
+Теперь установим Istio обратно, чтобы центр сертификации Istio (Certificate Authority) прочитал сертификаты и ключ из файла секрета:
+
+`istioctl install --set profile=demo`
+
+Также установим обратно Kiali, Grafana и Prometheus: `kubectl apply -f samples/addons`.
