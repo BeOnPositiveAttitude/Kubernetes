@@ -22,3 +22,5 @@ POD: lamp-wp-56c7c454fc-s7xf5
 Далее можно удобно использовать полученные переменные, например: `kubectl logs -f $POD -c $HTTP`.
 
 Посмотреть переменные окружения в контейнере: `kubectl exec -it $POD -c $HTTP -- env | grep -i mysql`.
+
+При наличии нескольких контекстов можно посмотреть объекты из другого контекста: `kubectl get nodes --context cluster2`.
