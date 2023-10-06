@@ -25,3 +25,12 @@
 When it comes to network policies, *Weave* has a clear advantage as it provides built-in support. *Flannel*, on the other hand, requires an additional third-party tool to enforce network policies.
 
 Choosing between *Flannel* and *Weave* depends on your specific needs. If network policies are a crucial (ключевая) part of your Kubernetes security strategy and you prefer a simple built-in solution, then *Weave* is a good choice. However, if you are focused on simplicity and are willing (готовы) to integrate additional tools for network policy support, then *Flannel* may be suitable.
+
+---
+---
+
+After applying the default deny policy, you'll observe a contrast in behavior between the two clusters due to the network policy support.
+
+**Cluster 1 (Flannel)**: *Flannel* doesn't natively support network policies. As a result, even after deploying the network policy, the connectivity between pods in Cluster 1 will remain open.
+
+**Cluster 2 (Weave-Net)**: *Weave-Net* supports network policies, so the connectivity will be denied by the policy, and your pods will NOT be able to communicate with each other.
