@@ -36,6 +36,25 @@ In this example, we are selecting the entire `pre-prod` namespace in the ingress
 
 This would mean that that the `middleware` pod, along with any other existing or future pods that are deployed in the `pre-prod` namespace would be able to connect to the `mysql` pod in the `production` namespace.
 
+Пример из лабы. Разрешить входящий трафик ко всем pod-ам в нэймспейсе `alpha-prod` из нэймспейса с Label `function: logging`.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-alpha-logger
+  namespace: alpha-prod
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              function: logging
+```
+
 ### Scenario 3: Allowing Traffic to Specific Pods from All Namespaces
 
 In some cases, you might want to allow traffic from all namespaces to certain pods within a namespace. For instance, the `frontend` pods in our `production` namespace might need to be accessible from pods across all namespaces.
@@ -53,3 +72,25 @@ Let's say you have a `logging` namespace with a `log-aggregator` pod that needs 
 <img src="screen4.png" width="900" height="500"><br>
 
 To do this, we can combine `namespaceSelector` and the `podSelector` in the ingress rules to target specific pods in specific namespaces.
+
+Пример из лабы. Разрешить входящий трафик ко всем pod-ам в нэймспейсе `beta-prod` от pod-ов c Label `role: logger-1` из нэймспейса с Label `function: logging`.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-beta-logger-1
+  namespace: beta-prod
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              function: logging
+          podSelector:
+            matchLabels:
+              role: logger-1
+```
