@@ -122,3 +122,151 @@ spec:
         matchLabels:
           kubernetes.io/metadata.name: jonin
 ```
+
+Пример из лабы:
+
+```yaml
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: jonin-to-genin
+  namespace: jonin
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: genin
+      podSelector:
+        matchLabels:
+          rank: genin
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: charms-and-students
+  namespace: charms
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          hogwarts: admitted
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: charms-no-egress
+  namespace: charms
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: charms
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-allow-all
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      i-am: dumbledore
+  policyTypes:
+  - Egress
+  - Ingress
+  egress:
+  - {}
+  ingress:
+  - {}
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: potions-rules
+  namespace: potions
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          class: potions
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          class: potions
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: potions-port-rule
+  namespace: potions
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: darkarts
+    ports:
+    - protocol: TCP
+      port: 80
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: darkarts-magic
+  namespace: darkarts
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          i-am: dumbledore
+      namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: default
+  egress:
+    - to:
+        - ipBlock:
+            cidr: 10.0.0.0/24
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+```
