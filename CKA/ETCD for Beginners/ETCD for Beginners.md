@@ -96,4 +96,12 @@ API version: 2            #версия API
 ```bash
 ETCDCTL_API=3 ./etcdctl version   #при таком способе нужно будет указывать переменную в каждой команде
 
+export ETCDCTL_API=3              #при таком способе нужно один раз задать переменную в оболочке
+./etcdctl version
 ```
+
+Также стоит отметить, что в v3 `version` - это команда, а в v2 `--version` - это опция.
+
+Команда set в v3 заменена на put: `./etcdctl put key1 value1`.
+
+Для извлечения сохраненных данных команда та же: `./etcdctl get key1`.
