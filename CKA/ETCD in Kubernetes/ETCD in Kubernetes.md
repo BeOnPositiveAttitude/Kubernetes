@@ -25,3 +25,39 @@ K8s хранит данные в определенной структуре к�
 В high availability окружении у вас будет несколько master-нод в кластере, поэтому у вас несколько экземпляров etcd, распространенных по mater-нодам. В этом случае необходимо убедиться, что экземпляры etcd знают друг о друге. Достигается это с помощью параметра `--initial-cluster` в конфигурации сервиса etcd. Здесь вы должны указать различные экземпляры etcd.
 
 <img src="image-2.png" width="900" height="450"><br>
+
+---
+---
+
+For example, etcdctl version 2 supports the following commands:
+
+```bash
+etcdctl backup
+etcdctl cluster-health
+etcdctl mk
+etcdctl mkdir
+etcdctl set
+```
+
+Whereas the commands are different in version 3:
+
+```bash
+etcdctl snapshot save
+etcdctl endpoint health
+etcdctl get
+etcdctl put
+```
+
+When the API version is not set, it is assumed to be set to version 2.
+
+Apart from that, you must also specify the path to certificate files so that etcdctl can authenticate to the etcd API Server. The certificate files are available in the etcd-master at the following path:
+
+```bash
+--cacert /etc/kubernetes/pki/etcd/ca.crt
+--cert /etc/kubernetes/pki/etcd/server.crt
+--key /etc/kubernetes/pki/etcd/server.key
+```
+
+So for the commands, I showed in the previous video to work you must specify the etcdctl API version and path to certificate files. Below is the final form:
+
+`kubectl exec etcd-controlplane -n kube-system -- sh -c "ETCDCTL_API=3 etcdctl get / --prefix --keys-only --limit=10 --cacert /etc/kubernetes/pki/etcd/ca.crt --cert /etc/kubernetes/pki/etcd/server.crt --key /etc/kubernetes/pki/etcd/server.key"`
