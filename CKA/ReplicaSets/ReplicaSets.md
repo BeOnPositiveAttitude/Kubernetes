@@ -88,19 +88,16 @@ selector:
     tier: front-end
 ```
 
-Replication Controller не будет создавать новые pod-ы, если уже существует соответствующее число pod-ов с labels указанными в RC definition файле
-должны ли мы в этом случае в RS definition файле описывать секцию template (характеристики pod-ов), если pod-ы уже были созданы ранее и нам не требуется их создавать заново? Ответ - да, нужно. Т.к. если какой-либо pod упадет, RS должна поднять новый pod и для этого должна быть описана секция template
+Предположим есть три существующих pod-а, которые уже были созданы ранее и нам нужно создать Replica Set, чтобы мониторить эти pod-ы  и гарантированно иметь три запущенных pod-а одновременно. Когда создан Replication Controller, он не будет разворачивать новые экземпляры pod-ов, т.к. три из них с соответствующими labels уже созданы. В этом случае действительно ли нам нужно описывать секцию `template` в спецификации Replica Set, хотя мы и не ожидаем, что Replica Set будет создавать новые pod-ы? Ответ - да, нужно. Т.к. если какой-либо pod упадет в будущем, Replica Set должна создать новый pod, чтобы поддерживать желаемое число pod-ов, и для этого должна быть определена секция `template`.
 
-чтобы изменить количество реплик, можно отредактировать RS definition файл и выполнить команду "kubectl replace -f replicaset-definition.yaml"
-второй способ изменить количество реплик:
-kubectl scale --replicas=6 -f replicaset-definition.yaml
-kubectl scale replicaset myapp-replicaset --replicas=6   #type=replicaset, name=myapp-replicaset
+Чтобы изменить количество реплик, можно отредактировать definition-файл и выполнить команду: `kubectl replace -f replicaset-definition.yaml`.
 
-при этом количество реплик в самом RS definition файле не изменится
+Второй способ изменить количество реплик: `kubectl scale --replicas=6 -f replicaset-definition.yaml`. При этом количество реплик в самом definition-файле не изменится.
 
-kubectl delete replicaset myapp-replicaset   #удалить RS и pod-ы созданные этой RS
-kubectl replace -f replicaset-definition.yaml   #обновить RS
+Или еще вариант: `kubectl scale replicaset myapp-replicaset --replicas=6`, где `replicaset` - это тип объекта, `myapp-replicaset` - название Replica Set.
 
-если мы вручную создадим pod с label, который указан в селекторе RS, то pod будет сразу удален, т.к. RS будет поддерживать заданное число реплик
+Удалить Replica Set: `kubectl delete replicaset myapp-replicaset`. Также будут удалены и соответствующие pod-ы.
 
-kubectl edit rs myapp-replicaset   #редактировать налету
+Если мы вручную создадим pod с label, который указан в селекторе Replica Set, то pod будет сразу удален, т.к. Replica Set будет поддерживать заданное число реплик.
+
+Редактировать Replica Set: `kubectl edit rs myapp-replicaset`.
