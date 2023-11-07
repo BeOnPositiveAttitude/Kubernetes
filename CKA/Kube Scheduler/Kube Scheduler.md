@@ -18,4 +18,10 @@
 
 Когда вы запускаете scheduler как сервис, нужно указывать его конфигурационный файл.
 
-Как посмотреть серверные опции kube-scheduler? Kubeadm разворачивает kube-scheduler в виде pod-а в namespace `kube-system` на master-ноде.
+Как посмотреть серверные опции kube-scheduler? Kubeadm разворачивает kube-scheduler в виде pod-а в namespace `kube-system` на master-ноде. Вы можете посмотреть опции в pod definition-файле по пути:
+
+`cat /etc/kubernetes/manifests/kube-scheduler.yaml`
+
+Также вы можете посмотреть запущенный процесс и действующие опции с помощью листинга процессов на master-ноде и поиске kube-scheduler:
+
+<img src="image-2.png" width="600" height="70"><br>
