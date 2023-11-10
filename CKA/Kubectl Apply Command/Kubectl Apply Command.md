@@ -19,3 +19,5 @@ Last applied configuration помогает нам понимать, какие 
 Ссылка на [документацию](https://kubernetes.io/docs/tasks/manage-kubernetes-objects/declarative-config/)
 
 Local file хранится в нашей системе локально, live object configuration хранится в памяти K8s. Где хранится JSON-файл с last applied configuration? Он хранится в live object configuration в самом K8s-кластере в виде аннотации `last-applied-configuration`. Помните, что это делается только при использовании команды `kubectl apply`. Команды `kubectl create` и `kubectl replace` не хранят last applied configuration. Соответственно не нужно смешивать императивный и декларативный подходы при управлении объектами в K8s.
+
+<img src="image-1.png" width="400" height="350"><br>
