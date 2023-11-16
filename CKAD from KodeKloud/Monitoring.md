@@ -27,3 +27,5 @@ Kubelet также содержит субкомпонент cAdvisor (Container
 Далее понадобится некоторое время для сбора метрик кластера и далее можно дать команду:
 
 `kubectl top node` или `kubectl top pod`
+
+Сортировать по памяти и вывести первый результат: `kubectl top node --sort-by='memory' --no-headers | head -1`

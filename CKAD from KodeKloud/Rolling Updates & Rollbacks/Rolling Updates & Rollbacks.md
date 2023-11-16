@@ -20,6 +20,8 @@
 
 `kubectl apply -f deployment-definition.yaml`
 
+Это вызовет новый rollout (выкатывание) и будет создан новый deployment revision.
+
 Или можно обновить версию образа для запущенного Deployment (при этом в yaml файле ничего не изменится), nginx - имя контейнера, nginx:1.9.1 - имя образа:
 
 `kubectl set image deployment/myapp-deployment nginx=nginx:1.9.1`
