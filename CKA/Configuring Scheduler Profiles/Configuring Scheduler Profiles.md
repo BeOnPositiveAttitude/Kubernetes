@@ -60,8 +60,76 @@ description: "This priority class should be used for XYZ service pods only."
 
 <img src="image-1.png" width="1000" height="300"><br>
 
-По сути, вы можете использовать свой код в любом месте путем создания собственного плагина и его подключения в соответствующей extension point.
+По сути, вы можете использовать свой код в любом месте путем создания собственного плагина и его подключения к соответствующей extension point.
 
 Некоторые плагины охватывают несколько extension points, некоторые действуют только в пределах определенной extension point.
 
 <img src="image-2.png" width="1000" height="400"><br>
+
+В предыдущем уроке мы говорили о деплое трех отдельных schedulers. 
+
+**scheduler-config.yaml**
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+profiles:
+- schedulerName: default-scheduler
+```
+
+**my-scheduler-config.yaml**
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+profiles:
+- schedulerName: my-scheduler
+```
+
+**my-scheduler-2-config.yaml**
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+profiles:
+- schedulerName: my-scheduler-2
+```
+
+Все три являются отдельными бинарными файлами, запущенными с отдельными конфиг-файлами. Т.к. все это отдельные процессы, то требуются дополнительные усилия по их обслуживанию и, что более важно, возможно наступление состояния гонки (race condition) при принятии scheduling решений. Например один scheduler может запланировать нагрузку на ноду, не зная при этом, что другие scheduler-ы одновременно запланировали нагрузку на эту же ноду.
+
+С релизом K8s 1.18 появилась функция поддержки нескольких профилей одного scheduler. Теперь вы можете настроить несколько профилей для одного scheduler-а с помощью добавления нескольких записей в список профилей в его конфиг-файле, и для каждого профиля указывая отдельное имя scheduler-а.
+
+**my-scheduler-2-config.yaml**
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+profiles:
+- schedulerName: my-scheduler-2
+- schedulerName: my-scheduler-3
+- schedulerName: my-scheduler-4
+```
+
+Это создает отдельный профиль для каждого scheduler, который выступает как отдельный scheduler, за исключением того, что теперь несколько scheduler-ов запускаются как один и тот же бинарный файл.
+
+Далее для каждого профиля мы можем настроить плагины нужным нам способом. В секции `plugin` указываются extension points и плагины, которые необходимо включить или отключить.
+
+**my-scheduler-2-config.yaml**
+```yaml
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+profiles:
+- schedulerName: my-scheduler-2
+  plugins:
+    score:
+      disabled:
+        - name: TaintToleration
+      enabled:
+        - name: MyCustomPluginA
+        - name: MyCustomPluginB
+- schedulerName: my-scheduler-3
+  plugins:
+    preScore:
+      disabled:
+        - name: '*'   #отключены все preScore плагины
+    score:
+      disabled:
+        - name: '*'   #отключены все score плагины
+- schedulerName: my-scheduler-4
+```
