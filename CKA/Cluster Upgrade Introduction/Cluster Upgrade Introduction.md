@@ -59,3 +59,82 @@ K8s в любой момент поддерживает только после�
 Далее переходим к worker-ам. Сначала нужно переместить нагрузку с первого worker-а на другие ноды. Команда: `kubectl drain node-1` позволит мягко завершить все pod-ы на ноде и выполнить их перезапуск на других нодах. Также данная команда "оцепляет" (cordon) ноду и помечает ее как unschedulable. Таким образом на нее не будут планироваться новые pod-ы. Затем обновляем пакеты kubeadm и kubelet на worker-нодах: `apt-get upgrade -y kubeadm=1.12.0-00` и `apt-get upgrade -y kubelet=1.12.0-00`. Далее с помощью команды: `kubeadm upgrade node config --kubelet-version v1.12.0` обновляем конфигурацию ноды для новой версии kubelet. Перезапускаем сервис: `systemctl restart kubelet`. Нода обновлена до новой версии. Далее нужно сделать ноду доступной для размещения нагрузки: `kubectl uncordon node-1`. Аналогичные шаги выполняем для других worker-нод.
 
 Ссылка на [документацию](https://kubernetes.io/docs/tasks/administer-cluster/kubeadm/kubeadm-upgrade/) по обновлению кластера.
+
+Выводим ноду в maintenance: `kubectl drain controlplane --ignore-daemonsets`.
+
+Определяем версию ОС: `cat /etc/*release*`.
+
+Далее выполняем команды: `apt update` и `apt-cache madison kubeadm`. Команда `apt-cache madison` пытается имитировать формат вывода и часть функций инструмента управления архивами Debian - Madison. Ниже ее вывод:
+
+```bash
+   kubeadm |  1.28.2-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
+   kubeadm |  1.28.1-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
+   kubeadm |  1.28.0-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
+   kubeadm |  1.27.6-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
+   kubeadm |  1.27.5-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
+   kubeadm |  1.27.4-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
+   kubeadm |  1.27.3-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
+   kubeadm |  1.27.2-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
+   kubeadm |  1.27.1-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
+   kubeadm |  1.27.0-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
+   kubeadm |  1.26.9-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
+```
+
+Выбираем из списка нужную нам версию.
+
+```bash
+apt-mark unhold kubeadm && \
+apt-get update && apt-get install -y kubeadm='1.27.0-00' && \
+apt-mark hold kubeadm
+```
+
+Когда мы пометили какой-либо пакет командой `apt-mark hold`, то при запуске команды `apt upgrade` увидим следующее:
+
+```bash
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+Calculating upgrade... Done
+The following packages have been kept back:
+  containerd.io kubeadm   # пакет удержан от обновления
+The following packages will be upgraded:
+  apt apt-transport-https
+```
+
+Проверяем версию обновленного пакета: `kubeadm version`. Смотрим план: `kubeadm upgrade plan`.
+
+Выполняем обновление control plane компонентов: `kubeadm upgrade apply v1.27.0`.
+
+Далее обновляем kubelet и kubectl:
+
+```bash
+apt-mark unhold kubelet kubectl && \
+apt-get update && apt-get install -y kubelet='1.27.0-00' kubectl='1.27.0-00' && \
+apt-mark hold kubelet kubectl
+```
+
+Перезапускаем службу kubelet:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+```
+
+Снимаем оцепление с ноды: `kubectl uncordon controlplane`.
+
+Переходим к worker-у. Выполняем команду с master-а: `kubectl drain node01 --ignore-daemonsets`.
+
+Подключаемся по ssh к ноде: `ssh node01`.
+
+Обновляем пакет kubeadm: `apt-get install -y kubeadm='1.27.0-00'`.
+
+Обновляем конфигурацию ноды: `kubeadm upgrade node`.
+
+Обновляем пакет kubelet: `apt-get install -y kubelet='1.27.0-00'`.
+
+Перезапускаем службу kubelet:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl restart kubelet
+```
