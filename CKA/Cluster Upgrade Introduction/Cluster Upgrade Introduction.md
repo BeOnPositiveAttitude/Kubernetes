@@ -130,7 +130,7 @@ sudo systemctl restart kubelet
 
 Обновляем конфигурацию ноды: `kubeadm upgrade node`.
 
-Обновляем пакет kubelet: `apt-get install -y kubelet='1.27.0-00'`.
+Обновляем пакеты kubelet и kubectl: `apt-get install -y kubelet='1.27.0-00' kubectl='1.27.0-00'`.
 
 Перезапускаем службу kubelet:
 
