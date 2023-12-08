@@ -18,3 +18,9 @@
 Для этого нужно использовать объекты ClusterRoles и ClusterRoleBindings.
 
 Отметим, что ClusterRole можно создать и для namespaced ресурса. В таком случае пользователь будет иметь доступ к заданному типу ресурса (например pods) во всех namespace-ах кластера.
+
+Создать ClusterRole: `kubectl create clusterrole node-admin --verb=get,delete --resource=nodes`.
+
+Создать ClusterRoleBinding (смапить созданную выше роль на пользователя michelle):
+
+`kubectl create clusterrolebinding michelle-binding --clusterrole=node-admin --user=michelle`

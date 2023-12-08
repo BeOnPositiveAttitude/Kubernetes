@@ -98,8 +98,6 @@ snapshot save /opt/snapshot-pre-boot.db
 
 Т.к. pod etcd изменился, он будет автоматически перезапущен, а также pod-ы kube-controller-manager и kube-scheduler.
 
-Note 1: As the ETCD pod has changed it will automatically restart, and also kube-controller-manager and kube-scheduler.
-
 Командой `watch "crictl ps | grep etcd"` можно смотреть статус перезапуска pod-ов.
 
 ---
@@ -117,3 +115,34 @@ ETCDCTL_API=3 etcdctl \
 --key=/etc/etcd/pki/etcd-key.pem \
 member list
 ```
+---
+---
+
+В случае если сервер etcd является внешним по отношению к кластеру K8s, шаги восстановление из snapshot следующие.
+
+Восстанавливаемся из snapshot в новую директорию:
+
+`ETCDCTL_API=3 etcdctl --endpoints=https://127.0.0.1:2379 --cacert=/etc/etcd/pki/ca.pem --cert=/etc/etcd/pki/etcd.pem --key=/etc/etcd/pki/etcd-key.pem snapshot restore /opt/cluster2.db --data-dir /var/lib/etcd-data-new`
+
+Редактируем файл сервиса: `/etc/systemd/system/etcd.service` и меняем значение `--data-dir` на новое:
+
+```bash
+[Unit]
+Description=etcd key-value store
+Documentation=https://github.com/etcd-io/etcd
+After=network.target
+
+[Service]
+User=etcd
+Type=notify
+ExecStart=/usr/local/bin/etcd \
+  --name etcd-server \
+  --data-dir=/var/lib/etcd-data-new \
+...
+```
+
+Рекурсивно меняем владельца новой директории на etcd: `chown -R etcd:etcd /var/lib/etcd-data-new`.
+
+В конце перезапускаем сервис: `systemctl daemon-reload` и `service etcd restart`.
+
+(Optional): It is recommended to restart controlplane components (e.g. kube-scheduler, kube-controller-manager, kubelet) to ensure that they don't rely on some stale data.
