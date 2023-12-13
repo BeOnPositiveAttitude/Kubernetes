@@ -10,4 +10,4 @@ spec:
       securityContext:
         runAsUser: 1000
         capabilities:
-          add: ["MAC_ADMIN"]
+          add: ["MAC_ADMIN", "SYS_TIME"]
