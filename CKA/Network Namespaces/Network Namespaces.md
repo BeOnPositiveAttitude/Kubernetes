@@ -118,4 +118,41 @@ ip -n blue addr add 192.168.15.2/24 dev veth-blue
 ```bash
 ip -n red link set veth-red up
 ip -n blue link set veth-blue up
+
+ip link set veth-red-br up
+ip link set veth-blue-br up
 ```
+
+Теперь контейнеры могут достучаться друг до друга по сети:
+
+```bash
+aidar@ubuntu-vm:~$ ip netns exec red ping 192.168.15.2
+PING 192.168.15.2 (192.168.15.2) 56(84) bytes of data.
+64 bytes from 192.168.15.2: icmp_seq=1 ttl=64 time=0.240 ms
+64 bytes from 192.168.15.2: icmp_seq=2 ttl=64 time=0.080 ms
+64 bytes from 192.168.15.2: icmp_seq=3 ttl=64 time=0.236 ms
+
+aidar@ubuntu-vm:~$ ip netns exec blue ping 192.168.15.1
+PING 192.168.15.1 (192.168.15.1) 56(84) bytes of data.
+64 bytes from 192.168.15.1: icmp_seq=1 ttl=64 time=0.206 ms
+64 bytes from 192.168.15.1: icmp_seq=2 ttl=64 time=0.073 ms
+64 bytes from 192.168.15.1: icmp_seq=3 ttl=64 time=0.113 ms
+```
+
+Для основного хоста назначен IP `192.168.1.2` и, если мы попытаемся с хоста проверить связность с одним из интерфейсов, находящихся в namespace, то увидим, что связность отсутствует.
+
+Т.к. `v-net-0` по сути является обычным интерфейсом, то чтобы настроить сетевую связность между хостом и namespace, нужно всего лишь назначить IP-адрес на этот интерфейс:
+
+`ip addr add 192.168.15.5/24 dev v-net-0`
+
+Теперь мы можем пинговать интерфейс namespace с хоста:
+
+```bash
+aidar@ubuntu-vm:~$ ping 192.168.15.1
+PING 192.168.15.1 (192.168.15.1) 56(84) bytes of data.
+64 bytes from 192.168.15.1: icmp_seq=1 ttl=64 time=0.213 ms
+64 bytes from 192.168.15.1: icmp_seq=2 ttl=64 time=0.102 ms
+64 bytes from 192.168.15.1: icmp_seq=3 ttl=64 time=0.187 ms
+```
+
+Однако важно понимать, что вся эта сеть является приватной и ограничена в пределах хоста. Из namespaces вы не сможете получить доступ во внешний мир, а также никто извне не сможет получить доступ к приложениям внутри namespace. Единственная дверь во внешний мир - это ethernet-порт на хосте. Как мы можем настроить bridge для доступа к LAN сети через ethernet-порт? Предположим существует еще один хост с адресом `192.168.1.3`, подключенный к LAN сети.
