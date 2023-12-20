@@ -73,7 +73,7 @@ ip -n blue link set veth-blue up
 
 Но!!! Сначала редактируем файл `/lib/systemd/network/99-default.link`, комментируем в нем строку `MACAddressPolicy=persistent`.
 
-Перезапускаем сервис (непонятно обязательно или нет): `systemctl restart systemd-networkd`.
+Перезапускаем сервис (непонятно обязательно или нет): `systemctl restart systemd-networkd`. Если этого не сделать, то bridge-интерфейс не сможет подняться и будет в статусе `NO-CARRIER`.
 
 Что касается нашего хоста, то для него это всего лишь другой интерфейс, как например `eth0`.
 
