@@ -64,17 +64,53 @@ aidar@ubuntu-vm:~$ ip addr
 Чтобы созданные Docker-ом namespaces были видны в выводе команды `ip netns ls` (по умолчанию их не видно), нужно сделать следующее:
 
 ```bash
-docker ps   #получаем Id контейнера
-docker inspect -f '{{.State.Pid}}' container_id   #получаем PID процесса, запущенного контейнером на хосте
-touch /var/run/netns/$container_id   #создаем файл с именем равным Id контейнера
-mount -o bind /proc/$pid/ns/net /var/run/netns/$container_id   #монтируем
+sandboxKey=$(docker container inspect container_id --format '{{ .NetworkSettings.SandboxKey }}')   #получаем полный путь до namespace Docker
+netns=$(basename "$sandboxKey")   #с помощью утилиты basename отсекаем путь и получаем только имя namespace
+sudo ln -s $sandboxKey /var/run/netns/$netns   #создаем символическую ссылку на namespace Docker в общем каталоге namespace-ов ОС
 ```
 
 Теперь проверяем созданный Docker-ом namespace:
 
 ```bash
 aidar@ubuntu-vm:~$ ip netns ls
-ddd5b2c1a746
+155c21828608 (id: 0)
+```
+
+Имя namespace начинается с `155c21828608`. Узнать имя namespace, ассоциированного с каждым контейнером, можно из вывода команды `docker inspect container_id`:
+
+```json
+"NetworkSettings": {
+    "Bridge": "",
+    "SandboxID": "155c21828608acf64d7de848d11f822ac206e96b654c2fa4d5c908b025f95351",
+    "SandboxKey": "/var/run/docker/netns/155c21828608",
+```
+
+Каким образом Docker подключает контейнер или его network namespace к bridge-сети? Важное напоминание, когда мы говорим контейнер или network namespace (созданный Docker-ом для этого контейнера), то имеем ввиду одну и то же. Docker создает виртуальный кабель с двумя интерфейсами на обоих концах. Проверим это. Выполним команду `ip link` на Docker хосте, из которой видно, что один интерфейс кабеля подключен к локальному bridge `docker0`.
+
+```bash
+aidar@ubuntu-vm:~$ ip link
+7: vetha78aec1@if6: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue master docker0 state UP mode DEFAULT group default
+    link/ether d6:55:a5:de:36:f6 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+```
+
+Выполним эту же команду, но уже в созданном Docker-ом namespace, и увидим другой конец кабеля, подключенный к namespace:
+
+```bash
+aidar@ubuntu-vm:~$ ip -n 155c21828608 link
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN mode DEFAULT group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+6: eth0@if7: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP mode DEFAULT group default
+    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+```
+
+Интерфейс так же получает IP-адрес из заданного диапазона:
+
+```bash
+aidar@ubuntu-vm:~$ ip -n 155c21828608 addr
+6: eth0@if7: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc noqueue state UP group default
+    link/ether 02:42:ac:11:00:02 brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 172.17.0.2/16 brd 172.17.255.255 scope global eth0
+       valid_lft forever preferred_lft forever
 ```
 
 когда мы устанавливаем Docker, он автоматически создает три сети: bridge, none и host
