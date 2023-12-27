@@ -18,4 +18,49 @@ K8s ожидает, что каждый pod получит свой собств
 
 Ноды являются частью внешней сети `192.168.1.0/24`. Соответственно ноды имеют адреса `192.168.1.11`, `192.168.1.12` и `192.168.1.13`.
 
-Когда создаются контейнеры, K8s создает для них network namespaces. Для включения связности между ними, мы подключаем эти namespace к bridge-сети.
+Когда создаются контейнеры, K8s создает для них network namespaces. Для включения связности между ними, мы подключаем эти namespace к сети.
+
+Для этого мы создаем bridge-сеть (на каждой ноде): `ip link add v-net-0 type bridge` и затем включаем ее: `ip link set dev v-net-0 up`.
+
+Мы решили, что каждая bridge-сеть будет находится в своей собственной подсети, например `10.244.1.0/24`, `10.244.2.0/24`, `10.244.3.0/24`. Теперь назначаем IP-адреса на bridge-интерфейсы:
+
+```bash
+ip addr add 10.244.1.1/24 dev v-net-0
+ip addr add 10.244.2.1/24 dev v-net-0
+ip addr add 10.244.3.1/24 dev v-net-0
+```
+
+Мы создали основу. Оставшиеся шаги выполняются для каждого контейнера, каждый раз когда создается новый контейнер. Напишем для этого скрипт. Далее мы сможем запускать его для каждого контейнера.
+
+
+Затем подключаем один конец кабеля к контейнеру, а другой к bridge.
+
+```bash
+# Создаем виртуальный сетевой кабель или pipe
+ip link add veth-green type veth peer name veth-green-br
+ip link add veth-yellow type veth peer name veth-yellow-br
+
+# Подключаем один конец кабеля к namespace
+ip link set veth-green netns green
+ip link set veth-yellow netns yellow
+
+# Другой конец кабеля подключаем к bridge
+ip link set veth-green-br master v-net-0
+ip link set veth-yellow-br master v-net-0
+
+# Включаем интерфейсы внутри namespace
+ip -n green link set dev veth-green up
+ip -n yellow link set dev veth-yellow up
+
+# Включаем интерфейсы, подключенные bridge
+ip link set dev veth-green-br up
+ip link set dev veth-yellow-br up
+
+# Назначаем IP-адресы на интерфейсы внутри namespace
+ip -n green addr add 10.244.1.2/24 dev veth-green
+ip -n yellow addr add 10.244.2.2/24 dev veth-yellow
+
+# Прописываем маршрут для шлюза по умолчанию
+```
+
+
