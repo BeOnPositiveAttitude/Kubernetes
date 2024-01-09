@@ -12,4 +12,12 @@
 
 <img src="image-1.png" width="600" height="350"><br>
 
-Помните как мы ранее говорили о namespaces? Все в пределах одного namespace обращаются друг к другу только лишь по имени, а к кому-либо в другом namespace, используя полное имя/фамилию.
+Помните как мы ранее говорили о namespaces? Все в пределах одного namespace обращаются друг к другу только лишь по имени, а к кому-либо в другом namespace, используя полное имя/фамилию. Т.к. в данном случае pod `test` и pod `web`, а также связанный с ним Service `web-service` находятся в одном namespace `default`, вы можете довольно просто достигнуть `web-service` из pod-а `test`, используя только лишь имя Service `web-service.`
+
+<img src="image-2.png" width="600" height="350"><br>
+
+Давайте предположим, что `web-service` находится в отдельном namespace `apps`. Чтобы теперь обратиться к нему из namespace `default`, вы должны сказать `web-service.apps`. "Фамилией" Service является название namespace. Таким образом здесь `web-service` - это имя Service, `apps` - имя namespace.
+
+<img src="image-3.png" width="700" height="400"><br>
+
+Для каждого namespace DNS-сервер создает поддомен. Все Services сгруппированы вместе в другой поддомен, названный `svc`.
