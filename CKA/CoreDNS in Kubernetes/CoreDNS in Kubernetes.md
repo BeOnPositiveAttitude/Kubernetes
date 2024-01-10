@@ -32,4 +32,12 @@ K8s реализует DNS таким же образом. Он разворач
 
 <img src="image-3.png" width="300" height="100"><br>
 
-Как только pod-ы сконфигурированы с правильным nameserver, вы можете разрешить другие pod-ы и Services.
+Как только pod-ы сконфигурированы с правильным nameserver, вы можете разрешить другие pod-ы и Services. Вы можете обращаться к Service `web-service` по именам:
+- `web-service`
+- `web-service.default`
+- `web-service.default.svc`
+- `web-service.default.svc.cluster.local`
+
+Если вы попытаетесь вручную выполнить lookup `web-service` с помощью утилиты nslookup или host, она вернет FQDN `web-service.default.svc.cluster.local`.
+
+<img src="image-4.png" width="500" height="70"><br>
