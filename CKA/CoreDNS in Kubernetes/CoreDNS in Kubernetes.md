@@ -58,3 +58,11 @@ search default.svc.cluster.local svc.cluster.local cluster.local
 Однако стоит отметить, что файл содержит запись `search` только для Service. Поэтому вы не сможете достигнуть pod-а таким же способом. Для этого нужно указывать FQDN pod-а.
 
 <img src="image-5.png" width="500" height="200"><br>
+
+---
+---
+
+Скачать CoreDNS: `wget https://github.com/coredns/coredns/releases/download/v1.11.1/coredns_1.11.1_linux_amd64.tgz`.
+
+Распаковываем архив: `tar -xzvf coredns_1.11.1_linux_amd64.tgz`.
+
