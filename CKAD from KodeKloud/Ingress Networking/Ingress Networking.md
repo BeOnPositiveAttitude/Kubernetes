@@ -96,39 +96,146 @@ Nginx Controller разворачивается всего лишь как Deplo
 
 Это специальный билд Nginx, используемый в качестве Ingress Controller в K8s и он имеет свой набор требований.
 
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-ingress-controller
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: nginx-ingress
+  template:
+    metadata:
+      labels:
+        name: nginx-ingress
+    spec:
+      containers:
+        - name: nginx-ingress-controller
+          image: quay.io/repository/kubernetes-ingress-controller/nginx-ingress-controller:0.21.0
+          args:
+            - /nginx-ingress-controller
+            - --configmap=$(POD_NAMESPACE)/nginx-configuration
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          ports:
+            - name: http
+              containerPort: 80
+            - name: https
+              containerPort: 443
+```
+
 Внутри образа сама программа находится по пути `/nginx-ingress-controller`, соответственно мы должны передать эту команду для запуска сервиса Nginx контроллера.
 
-Также мы можем создать ConfigMap с конфигурацией Nginx, это не является обязательным условием для запуска, но в дальнейшем это упростит нам процесс изменения настроек в конфигурации.
+Как известно Nginx имеет набор настроек, таких как пути для хранения лог-файлов, keep-alive treshold, SSL, таймауты сессий и др. Чтобы отделить конфигурационные данные от образа контроллера Nginx, вы должны создать объект ConfigMap и передать их туда.
 
-Еще нам нужно указать две environment variables, содержащие имя pod-а и имя namespace, в котором он развернут, т.к. они нужны сервису Nginx для чтения данных конфигурации из pod-а; а также порты используемые Ingress контроллером
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-configuration
+```
 
-Далее нам нужно создать Service типа NodePort для того, чтобы выставить Ingress во внешний мир, пример в файле
+Важно понимать, что на данном этапе объект ConfigMap не обязательно должен иметь какие-либо записи. Подойдет и пустой объект. Но его создание упростит нам в дальнейшем процесс изменения настроек в конфигурации. Нужно будет лишь добавить их в ConfigMap и можно не беспокоиться об изменении конфигурационных файлов Nginx.
 
-Как мы уже говорили Ingress имеет дополнительную встроенную логику для мониторинга кластера на предмет новых Ingress Resources и настройки Nginx сервера соответственно, для этого нужен Service Account с соответствующими permissions
+Еще нам нужно указать две environment variables, содержащие имя pod-а и имя namespace, в котором он развернут, т.к. они нужны сервису Nginx для чтения данных конфигурации из pod-а; а также порты используемые Ingress контроллером.
 
----
+Далее нам нужно создать Service типа NodePort для того, чтобы выставить Ingress во внешний мир, пример в файле `nginx-service.yaml`.
 
-Ingress Resources - это набор правил и конфигураций, применяемых на Ingress Controller
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-ingress
+spec:
+  type: NodePort
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+      name: http
+    - port: 443
+      targetPort: 443
+      protocol: TCP
+      name: https
+  selector:
+    name: nginx-ingress
+```
 
-Например мы можем настроить правила таким образом, чтобы весь входящий трафик перенаправлялся на одно приложение или на разные приложения в зависимости от URL, например www.my-online-store.com/wear для одного приложения и www.my-online-store.com/watch для другого
+Как мы уже говорили Ingress имеет дополнительную встроенную логику для мониторинга кластера на предмет новых Ingress Resources и настройки Nginx сервера соответственно, для этого нужен Service Account с соответствующими permissions (Roles и RoleBindings).
 
-Или мы можем маршрутизировать трафик в зависимости от введенного доменного имени - wear.my-online-store.com и watch.my-online-store.com соответственно
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: nginx-ingress-serviceaccount
+```
 
-Пример Ingress Resources представлен в файле ingress-wear.yaml
+Ingress Resources - это набор правил и конфигураций, применяемых на Ingress Controller.
 
-Трафик маршрутизируется к Service приложения, а не напрямую к pod-у
+Например мы можем настроить правила таким образом, чтобы весь входящий трафик перенаправлялся на одно приложение или на разные приложения в зависимости от URL, например `www.my-online-store.com/wear` для одного приложения и `www.my-online-store.com/watch` для другого.
 
-Смотреть Ingress: `kubectl get ingress`
+Или мы можем маршрутизировать трафик в зависимости от введенного доменного имени - `wear.my-online-store.com` и `watch.my-online-store.com` соответственно.
+
+Пример простейшего Ingress Resources представлен в файле `ingress-wear.yaml`. В случае если у нас всего один backend, то на самом деле не нужны какие-либо правила.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-wear
+spec:
+  backend:
+    serviceName: wear-service
+    servicePort: 80
+```
+
+Трафик маршрутизируется к Service приложения, а не напрямую к pod-у.
+
+Смотреть Ingress Resources: `kubectl get ingress`.
 
 Предположим мы хотим создать правила согласно схеме ниже, чтобы трафик перенаправлялся на соответствующие ресурсы:
 
 <img src="rules.png" width="1000" height="600"><br>
 
-Пример перенаправления трафика в зависимости от введенного URL path - в файле ingress-wear-watch.yaml
+Пример перенаправления трафика в зависимости от введенного URL path - в файле `ingress-wear-watch.yaml`.
 
-Defautl backend - куда пользователь будет перенаправлен, если введет URL не соответствующий ни одному правилу
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-wear-watch
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /wear
+            pathType: Prefix
+            backend:
+              service:
+                name: wear-service
+                port:
+                  number: 80
+          - path: /watch
+            pathType: Prefix
+            backend:
+              service:
+                name: watch-service
+                port:
+                  number: 80
+```
 
-Посмотреть его можно в выводе команды: `kubectl describe ingress ingress-wear-watch`
+Defautl backend - куда пользователь будет перенаправлен, если введет URL не соответствующий ни одному правилу.
+
+Посмотреть его можно в выводе команды: `kubectl describe ingress ingress-wear-watch`.
 
 Важно создать Service с таким именем - default-http-backend
 
