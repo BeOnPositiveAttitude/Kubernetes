@@ -233,22 +233,47 @@ spec:
                   number: 80
 ```
 
-Defautl backend - куда пользователь будет перенаправлен, если введет URL не соответствующий ни одному правилу.
+Default backend - куда пользователь будет перенаправлен, если введет URL не соответствующий ни одному правилу.
 
 Посмотреть его можно в выводе команды: `kubectl describe ingress ingress-wear-watch`.
 
-Важно создать Service с таким именем - default-http-backend
+Важно создать Service с таким именем - `default-http-backend`.
 
-Пример перенаправления трафика в зависимости от введенного domain name - в файле ingress-wear-watch2.yaml
+Пример перенаправления трафика в зависимости от введенного domain name - в файле `ingress-wear-watch2.yaml`.
 
-Если не указать имя host как в примере ingress-wear-watch.yaml, то будет считаться значение *
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-wear-watch
+spec:
+  rules:
+    - host: wear.my-online-store.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: wear-service
+                port:
+                  number: 80
+    - host: watch.my-online-store.com
+      http:
+        paths:
+          - backend:
+              service:
+                name: watch-service
+                port:
+                  number: 80
+```
 
-Далее в правилах можно комбинировать domain name + URL path
+Если не указывать параметр `host`, как в предыдущем примере `ingress-wear-watch.yaml`, то для него будет принято значение `*`, т.е. через это правило принимается весь входящий трафик без необходимости соответствия какому-либо hostname.
 
-Создать Ingress командой: `kubectl create ingress <ingress-name> --rule="host/path=service:port"`
+Далее в правилах можно комбинировать domain name + URL path.
 
-Пример хостом: `kubectl create ingress ingress-test --rule="wear.my-online-store.com/wear*=wear-service:80"`
+Создать Ingress командой: `kubectl create ingress <ingress-name> --rule="host/path=service:port"`.
 
-Пример только с URL path: `kubectl create ingress ingress-test --rule="/pay=pay-service:8282"`
+Пример хостом: `kubectl create ingress ingress-test --rule="wear.my-online-store.com/wear*=wear-service:80"`.
 
-Пример с двумя URL path: `kubectl create ingress ingress-wear-watch --rule="/wear=wear-service:8080" --rule="/watch=video-service:8080"`
+Пример только с URL path: `kubectl create ingress ingress-test --rule="/pay=pay-service:8282"`.
+
+Пример с двумя URL path: `kubectl create ingress ingress-wear-watch --rule="/wear=wear-service:8080" --rule="/watch=video-service:8080"`.
