@@ -71,6 +71,8 @@ ip -n blue link set veth-blue up
 
 Для создания внутренней bridge-сети, мы добавляем новый интерфейс на наш хост: `ip link add v-net-0 type bridge`.
 
+Посмотреть интерфейсы типа bridge в системе: `ip addr show type bridge`.
+
 Но!!! Сначала редактируем файл `/lib/systemd/network/99-default.link`, комментируем в нем строку `MACAddressPolicy=persistent`.
 
 Перезапускаем сервис (непонятно обязательно или нет): `systemctl restart systemd-networkd`. Если этого не сделать, то bridge-интерфейс не сможет подняться и будет в статусе `NO-CARRIER`.
