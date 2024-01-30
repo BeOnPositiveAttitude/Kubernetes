@@ -8,7 +8,7 @@
 
 Выполняем на всех нодах кластера.
 
-## Forwarding IPv4 and letting iptables see bridged traffic
+### Forwarding IPv4 and letting iptables see bridged traffic
 
 ```bash
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
@@ -61,3 +61,68 @@ sudo apt-get install containerd.io
 
 systemctl status containerd
 ```
+
+On Linux, control groups are used to constrain resources that are allocated to processes.
+
+Both the kubelet and the underlying container runtime need to interface with control groups to enforce resource management for pods and containers and set resources such as cpu/memory requests and limits. To interface with control groups, the kubelet and the container runtime need to use a cgroup driver. **It's critical that the kubelet and the container runtime use the same cgroup driver and are configured the same**.
+
+There are two cgroup drivers available:
+- cgroupfs
+- systemd
+
+Если в ОС используется система инициализации systemd, тогда вам нужно использовать systemd cgroup driver.
+
+Проверить какая система инициализации используется: `ps -p 1`.
+
+Удаляем содержимое файла `/etc/containerd/config.toml` и добавляем следующее (не вариант, контейнеры начинают циклически падать через некоторое время):
+
+```bash
+[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
+    SystemdCgroup = true
+```
+
+Используем вариант из Hard Way, создаем дефолтный конфиг и включаем systemd cgroup driver:
+
+`containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/' | sudo tee /etc/containerd/config.toml`
+
+Перезапускаем службу: `sudo systemctl restart containerd`.
+
+Настраиваем клиент crictl. Прописываем endpoint-ы в файле `/etc/crictl.yaml`:
+
+```
+runtime-endpoint: unix:///var/run/containerd/containerd.sock
+image-endpoint: unix:///var/run/containerd/containerd.sock
+```
+
+### Installing kubeadm, kubelet and kubectl
+
+```bash
+sudo apt-get update
+# apt-transport-https may be a dummy package; if so, you can skip that package
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+
+# If the folder `/etc/apt/keyrings` does not exist, it should be created before the curl command, read the note below.
+# sudo mkdir -p -m 755 /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# This overwrites any existing configuration in /etc/apt/sources.list.d/kubernetes.list
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+```
+
+Далее инициализируем control plane, выполняем только на мастере:
+
+`sudo kubeadm init --pod-network-cidr=10.244.0.0/16 --apiserver-advertise-address=MASTER_NODE_IP`
+
+Создаем kubeconfig:
+
+```bash
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+
