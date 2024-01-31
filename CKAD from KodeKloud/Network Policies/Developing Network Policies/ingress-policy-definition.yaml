@@ -14,7 +14,7 @@ spec:
         - podSelector:
             matchLabels:
               name: api-pod   #Labels pod-а от которого разрешается входящий трафик на наш pod с БД
-          namespaceSelector:  #если мы хотим разрешить доступ до нашего pod-а с БД из какого-либо namespace-а, указываем Labels этого namespace, предварительно этот Labels нужно повесить на namespace; если при этом не указать podSelector выше, тогда все pod-ы из этого namespace будут иметь доступ до БД. podSelector и namespaceSelector работают как логическое AND, то есть доступ будет разрешен pod-ам с Label=api-pod И находящимся в namespace с Label=prod
+          namespaceSelector:  #если мы хотим разрешить доступ до нашего pod-а с БД из какого-либо namespace-а, указываем Label этого namespace, предварительно этот Label нужно повесить на namespace; если при этом не указать podSelector выше, тогда все pod-ы из этого namespace будут иметь доступ до БД. podSelector и namespaceSelector работают как логическое AND, то есть доступ будет разрешен pod-ам с Label name=api-pod И находящимся в namespace с Label name=prod
             matchLabels:
               name: prod
         - ipBlock:
