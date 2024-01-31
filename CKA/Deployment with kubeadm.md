@@ -93,6 +93,10 @@ There are two cgroup drivers available:
 ```
 runtime-endpoint: unix:///var/run/containerd/containerd.sock
 image-endpoint: unix:///var/run/containerd/containerd.sock
+timeout: 0
+debug: false
+pull-image-on-create: false
+disable-pull-on-run: false
 ```
 
 ### Installing kubeadm, kubelet and kubectl
@@ -125,4 +129,30 @@ mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
+
+Ставим CNI Weave.
+
+Скачиваем манифест weave: `wget https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s.yaml`.
+
+И прописываем для контейнера `weave` необходимую переменную `IPALLOC_RANGE` (по умолчанию ее там нет):
+
+```yaml
+      containers:
+        - name: weave
+          env:
+            - name: IPALLOC_RANGE
+              value: 10.244.0.0/16
+```
+
+Применяем манифест через команду apply.
+
+Далее подключаем к мастеру worker-ноды.
+
+Если потеряли команду join, то сгенерировать заново можно так: `kubeadm token create --print-join-command`.
+
+Выполняем на каждой worker-ноде:
+
+`sudo kubeadm join 192.168.56.11:6443 --token h45kmq.ofvxgdeqtyrphk5f --discovery-token-ca-cert-hash sha256:f50e91a12b95071fdefbe5af01f277adcf39f88471c8b4a4280814f05274310c`
+
+Готово, можно пробовать запускать тестовый pod.
 
