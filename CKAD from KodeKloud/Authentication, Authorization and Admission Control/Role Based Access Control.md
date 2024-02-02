@@ -17,3 +17,5 @@
 Можно выполнить любую команду с опцией `--as` для проверки, например `kubectl --as dev-user get pods`
 
 Объекты Roles и RoleBindings действуют в рамках определенного namespace.
+
+`kubectl auth can-i get namespaces --as=system:serviceaccount:default:green-sa-cka22-arch`

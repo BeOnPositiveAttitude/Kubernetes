@@ -29,3 +29,5 @@ Kubelet также содержит субкомпонент cAdvisor (Container
 `kubectl top node` или `kubectl top pod`
 
 Сортировать по памяти и вывести первый результат: `kubectl top node --sort-by='memory' --no-headers | head -1`
+
+`kubectl top pods -A --context cluster1 --no-headers | sort -nr -k4 | head -1`
