@@ -1,44 +1,77 @@
-Persistent Volumes и Persistent Volume Claims - два отдельных объекта в K8s namespace
+Persistent Volumes и Persistent Volume Claims - два отдельных объекта в K8s namespace.
 
-Администратор создает набор Persistent Volumes, а пользователи создают Persistent Volume Claims, чтобы использовать storage
+Администратор создает набор Persistent Volumes, а пользователи создают Persistent Volume Claims, чтобы использовать storage.
 
-Как только создан Persistent Volume Claims, K8s связывает Persistent Volume с Claim, основываясь на запросе и свойствах volume
+Как только создан Persistent Volume Claims, K8s связывает Persistent Volume с Claim, основываясь на запросе и свойствах volume.
 
-Каждый Persistent Volume Claim связан с одним Persistent Volume
+Каждый Persistent Volume Claim связан с одним Persistent Volume.
 
-В процессе связывания K8s пытается найти Persistent Volume, соответствующий емкости, запрошенной в Claim, а также другим параметрам - Access Modes, Volume Modes, Storage Class и т.д.
+В процессе связывания K8s пытается найти Persistent Volume соответствующий емкости, запрошенной в Claim, а также другим параметрам - Access Modes, Volume Modes, Storage Class и т.д.
 
-В случае если для Claim найдено несколько возможных совпадений, но мы хотим определенный volume, возможно использовать Labels & Selectors
+В случае если для Claim найдено несколько возможных совпадений, но мы хотим определенный volume, возможно использовать Labels & Selectors.
 
 Для PV указываем Labels:
-```
+
+```yaml
 labels:
   name: my-pv
 ```
 
 Для PVC указываем Selector:
-```
+
+```yaml
 selector:
   matchLabels:
     name: my-pv
 ```
 
-Стоит заметить, что меньший Claim может быть связан с бОльшим Volume, если удовлетворяют все остальные критерии и нет более подходящих вариантов. В этом случае другие Claims не могут использовать оставшееся место в этом Volume
+Стоит заметить, что меньший Claim может быть связан с бОльшим Volume, если удовлетворяют все остальные критерии и нет более подходящих вариантов. В этом случае другие Claims не могут использовать оставшееся место в этом Volume.
 
-Это отношение один-к-одному между Claims и Volumes
+Это отношение один-к-одному между Claims и Volumes.
 
-В случае если для Persistent Volume Claim не нашлось подходящего Volume, этот PVC останется в статусе Pending до тех пор пока в кластере не появятся новые подходящие Volumes
+В случае если для Persistent Volume Claim не нашлось подходящего Volume, этот PVC останется в статусе Pending до тех пор пока в кластере не появятся новые подходящие Volumes.
 
-Как только в кластере появится новый подходящий Volume, тогда PVC автоматически будет связан с этим новым Volume
+Как только в кластере появится новый подходящий Volume, тогда PVC автоматически будет связан с этим новым Volume.
+
+Пример PVC:
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: myclaim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 500Mi
+```
 
 Смотреть PVC: `kubectl get pvc`
 
-Пример PVC приведен в файле pvc-definition.yaml, в предыдущем уроке мы определили PV в файле pv-definition.yaml, в итоге AccessModes совпадают, запрошенная в Claim емкость 500Mi, емкость Volume 1Gi, но т.к. более подходящих Volumes нет, поэтому PVC будет связан с PV
+Пример PVC приведен в файле `pvc-definition.yaml`, в предыдущем уроке мы определили PV в файле `pv-definition.yaml`.
 
-Удалить PVC: `kubectl delete pvc myclaim`
+```yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-vol1
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  hostPath:
+    path: /tmp/data
+```
 
-Что произойдет с нижестоящим Persistent Volume, если будет удален PVC? Вы можете определить это поведение с помощью параметра `persistentVolumeReclaimPolicy`, по умолчанию он имеет значение `Retain`. Это означает, что PV будет храниться, пока не будет удален администратором, при этом он недоступен для переиспользования другими PVC или может быть удален автоматически (значение `Delete`)
+В итоге AccessModes совпадают, запрошенная в Claim емкость 500Mi, емкость Volume 1Gi, но т.к. более подходящих Volumes нет, поэтому PVC будет связан с PV.
 
-Соответственно при удалении PVC будет удален и Volume, а место на конечном storage device будет освобождено
+Удалить PVC: `kubectl delete pvc myclaim`.
 
-Третий вариант значения этой политики `Recycle`, данные в Volume будут очищены перед тем как сделать его доступным для других PVC
+Что произойдет с нижестоящим Persistent Volume, если будет удален PVC? Вы можете определить это поведение с помощью параметра `persistentVolumeReclaimPolicy`, по умолчанию он имеет значение `Retain`. Это означает, что PV будет храниться, пока не будет удален администратором, при этом он недоступен для переиспользования другими PVC.
+
+Либо он может быть удален автоматически, если значение `persistentVolumeReclaimPolicy` равно `Delete`. Соответственно при удалении PVC будет удален и Volume, а место на конечном storage device будет освобождено.
+
+Третий вариант значения политики `persistentVolumeReclaimPolicy` может быть установлен равным `Recycle`. Данные в Volume будут очищены перед тем как сделать его доступным для других PVC.
