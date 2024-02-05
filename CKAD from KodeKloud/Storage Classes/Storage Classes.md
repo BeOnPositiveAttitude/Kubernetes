@@ -96,3 +96,18 @@ spec:
 Важно помнить, что PV все равно создается, просто мы делаем это не в ручную, это происходит автоматически с помощью Storage Class.
 
 Далее приведены примеры Storage Class definition файлов для GCE - Silver, Gold, Platinum, поэтому они так называются - Storage Class.
+
+В лабе есть задание - уже создан PV с прописанным в нем StorageClass `local-storage`, нужно создать PVC с соответствующими параметрами, чтобы связать PVC и PV.
+
+После создания PVC остается висеть в статусе `Pending`, т.к. StorageClass `local-storage` использует `VolumeBindingMode` со значением `WaitForFirstConsumer`.
+
+Это значит, что до тех пор пока не будет создан Pod, использующий наш PVC, процесс binding-а не произойдет.
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: delayed-volume-sc
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+```
