@@ -1,68 +1,77 @@
-В K8s cуществует два типа аккаунтов - user account (для людей) и service account (для приложений)
+В K8s существует два типа аккаунтов - user account (для людей) и service account (для приложений).
 
-Например Jenkins может использовать service account для деплоя приложений в кластере
+Например Jenkins может использовать service account для деплоя приложений в кластере.
 
-Создать service account:
+Создать service account: `kubectl create serviceaccount dashboard-sa`.
 
-`kubectl create serviceaccount dashboard-sa`
+Смотреть service accounts: `kubectl get serviceaccount` и `kubectl describe serviceaccount dashboard-sa`.
 
-Смотреть service accounts:
+При создании service account раньше (до версии K8s 1.22) также создавался токен, который и использовался внешними приложениями для взаимодействия с API кластера.
 
-`kubectl get serviceaccount` и `kubectl describe serviceaccount dashboard-sa`
+Токен хранился в формате Secret, соответственно посмотреть токен можно было командой: `kubectl describe secret dashboard-sa-token-kbbdm`.
 
-При создании service account раньше (до версии K8s 1.22) также создавался токен, который и использовался внешними приложениями для взаимодействия с API кластера
+Имя секрета бралось из вывода команда `kubectl describe serviceaccount dashboard-sa`.
 
-Токен хранился в формате Secret, соответственно посмотреть токен можно было командой:
+Далее мы могли использовать этот токен в запросе к API: `curl https://192.168.56.70:6443/api -insecure --header "Authorization: Bearer eyJhbG..."`.
 
-`kubectl describe secret dashboard-sa-token-kbbdm`
+Создаем service account => назначаем соответствующие права с помощью RBAC => экспортируем токен для использования внешним приложением.
 
-Имя секрета бралось из вывода команда `kubectl describe serviceaccount dashboard-sa`
+В случае если приложение расположено в том же кластере K8s, тогда нужно было смонтировать Secret с токеном в качестве volume внутри нашего pod-а.
 
-Создаем service account => назначаем соответствующие права => экспортируем токен для использования внешним приложением
+Для каждого namespace автоматические создается service account с именем `default`.
 
-В случае если приложение расположено в нашем же кластере K8s, тогда нужно было смонтировать Secret с токеном в качестве volume внутри нашего pod-а
+При создании pod-а токен service account-а с именем `default` автоматически монтируется как volume к этому pod-у.
 
-Для каждого namespace автоматические создается service account с именем default
-
-При создании pod-а токен service account-а с именем default автоматически монтируется как volume к этому pod-у
-
-Внутри pod-а Secret монтируется по пути /var/run/secrets/kubernetes.io/serviceaccount
+Внутри pod-а Secret монтируется по пути `/var/run/secrets/kubernetes.io/serviceaccount`.
 
 Если заглянуть внутрь, увидим три файла:
 
-```
+```bash
 kubectl exec -it nginx -- ls /var/run/secrets/kubernetes.io/serviceaccount
+
 ca.crt  namespace  token
 ```
 
-Можем увидеть содержимое токен для доступа к Kubernetes API:
-`kubectl exec -it nginx -- cat /var/run/secrets/kubernetes.io/serviceaccount/token`
+Можем увидеть содержимое токена для доступа к Kubernetes API: `kubectl exec -it nginx -- cat /var/run/secrets/kubernetes.io/serviceaccount/token`.
 
-Важно помнить, что default service account имеет сильные ограничения, у него есть доступ только к основным запросам к API
+Важно помнить, что default service account имеет сильные ограничения, у него есть доступ только к основным запросам к API.
 
-Мы можем указать использовать другой service account в спецификации pod-а в поле serviceAccountName, пример в файле pod-definition.yaml
+Мы можем указать использовать другой service account в спецификации pod-а в поле `serviceAccountName`, пример в файле `pod-definition.yaml`.
 
-Изменить service account у бегущего pod-а нельзя, только удалить и создать заново
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: my-kubernetes-dashboard
+spec:
+  containers:
+    - name: my-kubernetes-dashboard
+      image: busybox
+  serviceAccountName: dashboard-sa   #можно указать использование другого service account вместо дефолтного
+  #automountServiceAccountToken: false   #либо можно вообще отключить автоматическое монтирование токена service account default
+```
 
-В случае Deployment, мы можем изменить спецификацию pod-а и это приведет к новому rollout
+Изменить service account у бегущего pod-а нельзя, только удалить и создать заново.
 
-Установить новый service account для Deployment командой:
+В случае Deployment, мы можем изменить спецификацию pod-а и это приведет к новому rollout.
 
-`kubectl set serviceaccount deploy/web-dashboard dashboard-sa`
+Установить новый service account для Deployment командой: `kubectl set serviceaccount deploy/web-dashboard dashboard-sa`.
 
-Важно помнить, что K8s по умолчанию автоматически монтирует default service account, если явно не указать другое
+Важно помнить, что K8s по умолчанию автоматически монтирует default service account, если явно не указать другое.
 
-**Начиная с версии K8s 1.22 были внесены существенные изменения в механизм service accounts**
+**Начиная с версии K8s 1.22 были внесены существенные изменения в механизм service accounts**.
 
-KEP - Kubernetes Enhancement Proposal
+Распарсить токен можно командой: `jq -R 'split(".") | select(length > 0) | .[0],.[1] | @base64d | fromjson' <<< eyJhbG...`, либо на [сайте](https://jwt.io).
 
-Был введен механизм TokenRequestAPI
+*KEP - Kubernetes Enhancement Proposal*.
 
-Пример в файле pod.yaml
+Был введен механизм TokenRequestAPI.
 
-В прошлом до версии K8s 1.22 когда создавался service account, автоматически создавался Secret с токеном, который не имел expiration date, и был "not bound to any audience"
+Пример в файле `pod.yaml`.
 
-После введения механизма TokenRequestAPI у токена появилась expiration data и он стал "bound to any audience"
+В прошлом до версии K8s 1.22 когда создавался service account, автоматически создавался Secret с токеном, который не имел expiration date, и был "not bound to any audience".
+
+После введения механизма TokenRequestAPI у токена появилась expiration data и он стал "bound to any audience".
 
 Начиная с версии 1.24 при создании service account, Secret с токеном теперь не создается автоматически
 
