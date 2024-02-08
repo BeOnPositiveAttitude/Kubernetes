@@ -73,12 +73,12 @@ spec:
 
 После введения механизма TokenRequestAPI у токена появилась expiration data и он стал "bound to any audience".
 
-Начиная с версии 1.24 при создании service account, Secret с токеном теперь не создается автоматически
+Начиная с версии 1.24 при создании service account, Secret с токеном теперь не создается автоматически.
 
 Токен теперь нужно генерировать отдельно командой:
 
-`kubectl create token dashboard-sa`, где dashboard-sa - имя service account
+`kubectl create token dashboard-sa`, где dashboard-sa - имя service account.
 
-По умолчанию срок действия токен - 1 час, но это можно переопределить в команде создания токена
+По умолчанию срок действия токен - 1 час, но это можно переопределить в команде создания токена.
 
-Если же нам нужно создать service account старым способом с бесконечным токеном, мы должны создать definition файл secret-definition.yaml
+Если же нам нужно создать service account старым способом с бесконечным токеном, мы должны создать definition файл `secret-definition.yaml`.
