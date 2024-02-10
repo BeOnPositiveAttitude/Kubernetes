@@ -120,17 +120,31 @@ sudo systemctl daemon-reload
 sudo systemctl restart kubelet
 ```
 
-Снимаем оцепление с ноды: `kubectl uncordon controlplane`.
+Снимаем оцепление с master-ноды: `kubectl uncordon controlplane`.
+
+Важное замечание! Если нужно, чтобы рабочая нагрузка с worker-ноды переехала на master-ноду, нужно убрать Taints с master-ноды!
 
 Переходим к worker-у. Выполняем команду с master-а: `kubectl drain node01 --ignore-daemonsets`.
 
 Подключаемся по ssh к ноде: `ssh node01`.
 
-Обновляем пакет kubeadm: `apt-get install -y kubeadm='1.27.0-00'`.
+Обновляем пакет kubeadm:
+
+```bash
+apt-mark unhold kubeadm && \
+apt-get update && apt-get install -y kubeadm='1.27.0-00' && \
+apt-mark hold kubeadm
+```
 
 Обновляем конфигурацию ноды: `kubeadm upgrade node`.
 
-Обновляем пакеты kubelet и kubectl: `apt-get install -y kubelet='1.27.0-00' kubectl='1.27.0-00'`.
+Обновляем пакеты kubelet и kubectl:
+
+```bash
+apt-mark unhold kubelet kubectl && \
+apt-get update && apt-get install -y kubelet='1.27.0-00' kubectl='1.27.0-00' && \
+apt-mark hold kubelet kubectl
+```
 
 Перезапускаем службу kubelet:
 
@@ -138,3 +152,5 @@ sudo systemctl restart kubelet
 sudo systemctl daemon-reload
 sudo systemctl restart kubelet
 ```
+
+Снимаем оцепление с worker-ноды: `kubectl uncordon node01`.
