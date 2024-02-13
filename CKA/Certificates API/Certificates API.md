@@ -30,12 +30,12 @@ spec:
   - system:authenticated
   usages:
   # перечисляются варианты использования учетной записи
-  - digital signature
-  - key encipherment
-  - server auth
-  request:
-  # здесь указывается содержимое файла jane.csr, закодированное в формате base64
-        LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0KTUlJQ1ZEQ0NBVHdDQVFBd0R6RU5NQXNHQTFVRUF3d0VhbUZ1WlRDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRApnZ0VQQURDQ0FRb0NnZ0VCQU5JUDl0M3NsSDNWM3JpWWdRTUZmejNTNTlsQW9Qay8xOWlRWXRKMzF3OG9qdGhlCkZYZEYrZzQ4VEowc0tFSzBqV2VUdFZTOEtseVZWWDVZUEV5RlpyaWRhWUpPRmFzeDYzdWFWRVNPcGl1RWNNeGIKTW1EMXFsbG84T0hTVHNRTWRQakdLcFlFeWczdXZzQzlqcjdDckxnNW9xKzdFY01JOTI3U3JDMFVVVmFvZnk4QQpYYkpTV1laWlZZeEptdUNLYSswa1ZxdllqS1lFQ05EcmpCdXE4UDk0ZEYzRW9mNGE1SGkxVXhDQTRJNlE1dlVYCnA3dER3eHd2L3BwWmVIaUVMcE9Ed3p3UTlBdTVxU09jUkp2UmlrOXppM2pqQUowaXdCRDVCazBTbUJ6NlFnY3QKdDBrTVhRZGRxd1ZBUlQxNTk4bWVZZndOUVlWbDkycnN0NStyZ01FQ0F3RUFBYUFBTUEwR0NTcUdTSWIzRFFFQgpDd1VBQTRJQkFRQTBtSGtFM012NGFvWjlaUldqcitIWGQrcmVpbXBPR0kzVEl2WFUveEVCbWJPVTNvSmt0RmxPCnBMVCs4VWRjeHB1UTVjYndGMXE2ZmlhN25tWm5GVTc5Y0ZKaUF4WTlNekFmeEtybnlJMnlvVmxCaU16S3EwYWwKbGdyZ01FekhqaXVzc3NHeUROL09zeEIvazlzenc2Y003b0ptUGlsSThzMFJuTW51akREUUNybUkrMVhSS3JDWQpnUS9TVmdZK3Y0NDArVDllUVQ5R2FGMlBIQWFuVkVnbkVTQXBMZHhucFRvUnhtWU9DdGQzNW5oenBrdnViSkVKClN4TWdKMFJJRkdvWXZtSElvOHQ1cnVsUHJ3VStEL2lrK29oSEN1N0I3TXlTcmhWN3BHcXo2SHBoVCswMCtKNm0KR3R2TE9idjhPRGp6Sm13Smg0b3dXNXNFQzdUNVNwbXUKLS0tLS1FTkQgQ0VSVElGSUNBVEUgUkVRVUVTVC0tLS0tCg==
+  # - digital signature
+  # - key encipherment
+  # - server auth
+  - client auth
+  request: # здесь указывается содержимое файла jane.csr, закодированное в формате base64
+  signerName: kubernetes.io/kube-apiserver-client
 ```
 
 Закодировать содержимое CSR в base64: `cat jane.csr | base64 | tr -d "\n"`. Здесь команда `tr -d "\n"` удаляет (-d=delete) символы переноса строки.
