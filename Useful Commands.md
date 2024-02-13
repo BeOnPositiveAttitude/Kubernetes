@@ -24,3 +24,7 @@ POD: lamp-wp-56c7c454fc-s7xf5
 Посмотреть переменные окружения в контейнере: `kubectl exec -it $POD -c $HTTP -- env | grep -i mysql`.
 
 При наличии нескольких контекстов можно посмотреть объекты из другого контекста: `kubectl get nodes --context cluster2`.
+
+Смотреть лимиты ресурсов по контейнерам в pod-е:
+
+`kubectl get pods -n devns -o custom-columns='POD_NAME:.metadata.name, CPU_LIMITS:.spec.containers[*].resources.limits.cpu, MEMORY_LIMITS:.spec.containers[*].resources.limits.memory'`
