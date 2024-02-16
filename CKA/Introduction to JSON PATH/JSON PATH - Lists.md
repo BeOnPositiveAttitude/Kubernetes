@@ -9,3 +9,20 @@
 Получить последний элемент списка:
 
 <img src="image-14.png" width="900" height="500"><br>
+
+В лабе сработал только вариант `'$[-1:]'`.
+
+Пример из лабы. Получить представленный ниже результат из файла `input.json`:
+
+```json
+[
+  "Magna Nec Corp.",
+  "Egestas Corporation",
+  "Est Congue Associates",
+  "Non Cursus Inc.",
+  "Elit Fermentum Associates",
+  "Consectetuer Adipiscing Elit Limited"
+]
+```
+
+Решение: `cat input.json | jpath '$[-8:-2]'`.
