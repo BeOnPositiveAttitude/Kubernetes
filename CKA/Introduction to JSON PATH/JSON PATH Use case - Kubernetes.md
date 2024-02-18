@@ -42,3 +42,11 @@ node01  4
 Также можно задать опцию для сортировки результатов:
 
 <img src="image-21.png" width="900" height="500"><br>
+
+`kubectl get nodes -o jsonpath='{.items[*].metadata.name}'`
+
+`kubectl get pv --sort-by=.spec.capacity.storage`
+
+`kubectl get pv -o custom-columns=NAME:.metadata.name,CAPACITY:.spec.capacity.storage --sort-by=.spec.capacity.storage`
+
+`kubectl config view --kubeconfig=my-kube-config -o jsonpath='{$.contexts[?(@.context.user=="aws-user")].name}'`
