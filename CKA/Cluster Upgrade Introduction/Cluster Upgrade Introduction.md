@@ -80,6 +80,13 @@ K8s в любой момент поддерживает только после�
    kubeadm |  1.26.9-00 | http://apt.kubernetes.io kubernetes-xenial/main amd64 Packages
 ```
 
+Если в выводе команды `apt-cache madison kubeadm` не находим нужную версию, значит нужно обновить ссылку в репозитории:
+
+```bash
+nano /etc/apt/sources.list.d/kubernetes.list
+deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /
+```
+
 Выбираем из списка нужную нам версию.
 
 ```bash

@@ -50,3 +50,5 @@ node01  4
 `kubectl get pv -o custom-columns=NAME:.metadata.name,CAPACITY:.spec.capacity.storage --sort-by=.spec.capacity.storage`
 
 `kubectl config view --kubeconfig=my-kube-config -o jsonpath='{$.contexts[?(@.context.user=="aws-user")].name}'`
+
+`kubectl -n admin2406 get deploy -o custom-columns=DEPLOYMENT:.metadata.name,CONTAINER_IMAGE:.spec.template.spec.containers[*].image,READY_REPLICAS:.status.readyReplicas,NAMESPACE:.metadata.namespace --sort-by=.metadata.name`
