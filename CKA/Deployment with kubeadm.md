@@ -1,5 +1,7 @@
 Инструкция по установке кластера с помощью kubeadm доступна по [ссылке](https://github.com/kodekloudhub/certified-kubernetes-administrator-course).
 
+Скачать Vagrant по [ссылке](https://hashicorp-releases.yandexcloud.net/vagrant/).
+
 В Vagrantfile нужно добавить одну строку: `ENV['VAGRANT_SERVER_URL'] = 'https://vagrant.elab.pro'`.
 
 [Ссылка](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/) на официальную документацию.
