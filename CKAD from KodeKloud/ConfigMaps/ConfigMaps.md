@@ -51,3 +51,29 @@ spec:
 #         configMap:
 #           name: app-config     # вставить как volume
 ```
+
+Пример монтирования ConfigMap в качестве volume:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod1
+spec:
+  containers:
+  - image: nginx:alpine
+    name: container1
+    env:
+    - name: TREE1
+      valueFrom:
+        configMapKeyRef:
+          name: trauerweide
+          key: tree
+    volumeMounts:
+    - name: config-vol
+      mountPath: /etc/birke
+  volumes:
+  - name: config-vol
+    configMap:
+      name: birke
+```

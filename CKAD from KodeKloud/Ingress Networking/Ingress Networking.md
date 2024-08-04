@@ -277,3 +277,39 @@ spec:
 Пример только с URL path: `kubectl create ingress ingress-test --rule="/pay=pay-service:8282"`.
 
 Пример с двумя URL path: `kubectl create ingress ingress-wear-watch --rule="/wear=wear-service:8080" --rule="/watch=video-service:8080"`.
+
+Если при обращении к целевому хосту будет указываться порт, например http://world.universe.mine:30080, указывать этот порт в поле `host` при создании Ingress Rule не нужно!
+
+Также иногда может требоваться указание Ingress Class:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: world
+  namespace: world
+  annotations:
+    # this annotation removes the need for a trailing slash when calling urls
+    # but it is not necessary for solving this scenario
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx # k get ingressclass
+  rules:
+  - host: "world.universe.mine"
+    http:
+      paths:
+      - path: /europe
+        pathType: Prefix
+        backend:
+          service:
+            name: europe
+            port:
+              number: 80
+      - path: /asia
+        pathType: Prefix
+        backend:
+          service:
+            name: asia
+            port:
+              number: 80
+```
