@@ -143,3 +143,46 @@ spec:
 Введем имя пользователя `testuser` и случайный пароль. После входа мы должны увидеть reviews v3 (версию с красными звездочками).
 
 Важен порядок следования route в манифесте VS. Если первым указать default route, то все запросы сразу будут идти на него, игнорируя созданные match-правила.
+
+**Задание с Killercoda.**
+
+Update the `notification` virtual service resource to add a route based on matching query parameter. If the request contains query parameter `testing=true` then route the request to `v2` , otherwise to `v1` .
+
+*http default route:*
+
+- host: `notification-service`
+- subset: `v1`
+
+*http query param match request route:*
+
+- query param key: `testing`
+- query key value: `true`
+- query value match type: `exact`
+- destination host: `notification-service`
+- destination subset: `v2`
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+ name: notification
+spec:
+ hosts:
+ - notification-service
+ http:
+ - match:
+   - queryParams:
+      testing:
+       exact: "true"
+   route:
+   - destination:
+      host: notification-service
+      subset: v2
+
+ - route:
+   - destination:
+       host: notification-service
+       subset: v1
+```
+
+Пример запроса для проверки: `kubectl exec -it tester -- curl -s -X POST http://notification-service/notify?testing=true`.
