@@ -69,3 +69,22 @@ spec:
 По итогу видим, что наш сервис смог обработать всего лишь 46 запросов.
 
 На вкладке Graph в Kiali видим, что у сервиса Product Page имеются проблемы, из-за строго настроенного circuit breaker.
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+ name: notification
+spec:
+  host: notification-service
+  trafficPolicy:
+    outlierDetection:
+      baseEjectionTime: 3m
+      consecutive5xxErrors: 2
+      interval: 1m
+      maxEjectionPercent: 100
+  subsets:
+  - name: default
+    labels:
+      version: v3
+```
