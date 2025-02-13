@@ -41,6 +41,7 @@ data:
 Range устанавливает scope при каждой итерации по циклу.
 
 Пример из лабы - список key/value:
+
 ```yaml
 {{- with .Values.serviceAccount.create }}
 apiVersion: v1
@@ -53,4 +54,47 @@ metadata:
     {{- end }}
     app: webapp-color
 {{- end }}
+```
+
+Итоговый результат:
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webapp-sa
+  labels:
+    mode: proxy
+    tier: frontend
+    type: web
+    app: webapp-color
+```
+
+Если бы мы написали первое, что приходит в голову:
+
+```yaml
+{{- with .Values.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $.Values.serviceAccount.name }}
+  labels:
+  {{- range $.Values.serviceAccount.labels }}
+    {{ . }}
+  {{- end }}
+    app: webapp-color
+{{- end }}
+```
+
+То получили только значения без ключей:
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: webapp-sa
+  labels:
+    proxy
+    frontend
+    web
 ```
