@@ -8,6 +8,8 @@ ConfigMaps используются для передачи конфигурац
 
 Создать ConfigMap из имеющегося файла: `kubectl create configmap app-config --from-file=app_config.properties`.
 
+You can pass in the `--from-file` argument multiple times to create a ConfigMap from multiple data sources.
+
 Смотреть ConfigMap: `kubectl get configmaps` и `kubectl describe configmaps`.
 
 Пример ConfigMap:
