@@ -21,6 +21,8 @@ spec:
         type: Directory
 ```
 
+Which statements best describe `hostPath` volume type? You either need to run your process as `root` in a privileged container or modify the file permissions on the host to be able to write to a `hostPath`.
+
 Когда у нас большая инфрастуктура с множеством пользователей, разворачивающих большое количество pod-ов, каждый пользователь будет вынужден конфигурировать storage для каждого pod-а в рамках своего pod definition файла.
 
 Плюс каждый раз, когда будет происходить изменение storage, пользователи должны будут внести соответствующие изменения во всех pod-ах.
@@ -50,3 +52,10 @@ spec:
 ```
 
 Смотреть Persistent Volumes: `kubectl get pv`.
+
+### Access Modes
+
+- `ReadWriteOnce` - the volume can be mounted as **read-write** by a **single** node. `ReadWriteOnce` access mode still can allow multiple pods to access (read from or write to) that volume when the pods are running on the same node.
+- `ReadOnlyMany` - the volume can be mounted as **read-only** by **many** nodes.
+- `ReadWriteMany` - the volume can be mounted as **read-write** by **many** nodes.
+- `ReadWriteOncePod` - the volume can be mounted as **read-write** by a **single** Pod. Use `ReadWriteOncePod` access mode if you want to ensure that only one pod across the whole cluster can read that PVC or write to it.

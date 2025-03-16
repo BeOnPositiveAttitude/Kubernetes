@@ -70,3 +70,5 @@ spec:
 - Weave-net
 
 Мы можем создавать Network Policies даже если сетевое решение не поддерживает их, в таком случае они просто не будут применяться.
+
+Kubernetes Network Policies can control traffic flow at the OSI layer 3 or 4.
