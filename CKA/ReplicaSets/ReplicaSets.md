@@ -90,14 +90,40 @@ selector:
 
 Предположим есть три существующих pod-а, которые уже были созданы ранее и нам нужно создать Replica Set, чтобы мониторить эти pod-ы  и гарантированно иметь три запущенных pod-а одновременно. Когда создан Replication Controller, он не будет разворачивать новые экземпляры pod-ов, т.к. три из них с соответствующими labels уже созданы. В этом случае действительно ли нам нужно описывать секцию `template` в спецификации Replica Set, хотя мы и не ожидаем, что Replica Set будет создавать новые pod-ы? Ответ - да, нужно. Т.к. если какой-либо pod упадет в будущем, Replica Set должна создать новый pod, чтобы поддерживать желаемое число pod-ов, и для этого должна быть определена секция `template`.
 
-Чтобы изменить количество реплик, можно отредактировать definition-файл и выполнить команду: `kubectl replace -f replicaset-definition.yaml`.
+Чтобы изменить количество реплик, можно отредактировать definition-файл и выполнить команду:
 
-Второй способ изменить количество реплик: `kubectl scale --replicas=6 -f replicaset-definition.yaml`. При этом количество реплик в самом definition-файле не изменится.
+```shell
+kubectl replace -f replicaset-definition.yaml
+```
 
-Или еще вариант: `kubectl scale replicaset myapp-replicaset --replicas=6`, где `replicaset` - это тип объекта, `myapp-replicaset` - название Replica Set.
+Второй способ изменить количество реплик:
 
-Удалить Replica Set: `kubectl delete replicaset myapp-replicaset`. Также будут удалены и соответствующие pod-ы.
+```shell
+kubectl scale --replicas=6 -f replicaset-definition.yaml
+```
+
+При этом количество реплик в самом definition-файле не изменится.
+
+Или еще вариант:
+
+```shell
+kubectl scale replicaset myapp-replicaset --replicas=6
+```
+
+Здесь `replicaset` - это тип объекта, `myapp-replicaset` - название Replica Set.
+
+Удалить Replica Set:
+
+```shell
+kubectl delete replicaset myapp-replicaset
+```
+
+Также будут удалены и соответствующие pod-ы.
 
 Если мы вручную создадим pod с label, который указан в селекторе Replica Set, то pod будет сразу удален, т.к. Replica Set будет поддерживать заданное число реплик.
 
-Редактировать Replica Set: `kubectl edit rs myapp-replicaset`.
+Редактировать Replica Set:
+
+```shell
+kubectl edit rs myapp-replicaset
+```
