@@ -28,7 +28,7 @@ Mounts:      <none>
 Volumes:
 ```
 
-Записать команду, использованную для обновления Deployment в поле Change-Cause:
+Записать команду, использованную для обновления Deployment в поле Change-Cause (по сути данное поле представляет из себя запись в блоке `annotations`):
 ```
 controlplane $ kubectl set image deployment nginx nginx=nginx:1.17 --record
 Flag --record has been deprecated, --record will be removed in the future
@@ -82,3 +82,5 @@ deployment.apps/nginx rolled back
 controlplane $ kubectl describe deployments. nginx | grep -i image:
 Image: nginx:1.16
 ```
+
+Предположим, что при редактировании Deployment мы по ошибке указали несуществующий образ, например `nginx:does-not-exist`. Т.к. по умолчанию используется стратегия обновления `RollingUpdate`, K8s удалит одну реплику (при условии, что у нас их несколько, например 6), попытается создать несколько новых и в итоге застопорится. Оставшиеся 5 реплик при этом останутся работать на старой версии, обеспечивая тем самым непрерывный доступ к нашему приложению. Таким образом последующие реплики не будут пересоздаваться, т.к. возникла проблема уже с первой.
