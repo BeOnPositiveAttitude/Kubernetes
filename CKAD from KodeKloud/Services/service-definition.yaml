@@ -5,12 +5,9 @@ metadata:
 spec:
   type: NodePort
   ports:
-    - targetPort: 80   #порт pod-а
-      port: 80         #порт объекта Service
-      nodePort: 30008  #порт ноды кластера
+    - targetPort: 80   # порт pod-а
+      port: 80         # порт объекта Service
+      nodePort: 30008  # порт ноды кластера
   selector:
     app: myapp         #label нужного нам pod-а
     type: front-end
-# обязательным является только поле port, если не указать targetPort, то он будет равен значению поля port
-# если не указать поле nodePort, то будет выбран доступный порт из диапазона 30000-32767
-
