@@ -4,18 +4,16 @@ metadata:
   name: simple-webapp-color
 spec:
   containers:
-    - name: simple-webapp-color
-      image: simple-webapp-color
-      ports:
-        - containerPort: 8080
-      env:
-        - name: APP_COLOR
-          value: pink
-#      env:
-#        - name: APP_COLOR
-#          valueFrom:
-#            configMapKeyRef:   #также возможно указание на ConfigMap
-#      env:
-#        - name: APP_COLOR
-#          valueFrom:
-#            secretKeyRef:   #или на Secret
+  - name: simple-webapp-color
+    image: simple-webapp-color
+    ports:
+    - containerPort: 8080
+    env:
+    - name: APP_COLOR
+      value: pink
+    - name: APP_COLOR_1
+      valueFrom:
+        configMapKeyRef:   # также возможно указание на ConfigMap
+    - name: APP_COLOR_2
+      valueFrom:
+        secretKeyRef:   # или на Secret
