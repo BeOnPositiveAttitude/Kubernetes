@@ -4,9 +4,17 @@ ConfigMaps используются для передачи конфигурац
 
 Существует два способа создания ConfigMap - императивный и декларативный: `kubectl create configmap` и `kubectl create -f`.
 
-Создать ConfigMap передав key/value пару непосредственно в команде: `kubectl create configmap app-config --from-literal=APP_COLOR=blue --from-literal=APP_MOD=prod`.
+Создать ConfigMap передав key/value пару непосредственно в команде:
 
-Создать ConfigMap из имеющегося файла: `kubectl create configmap app-config --from-file=app_config.properties`.
+```shell
+$ kubectl create configmap app-config --from-literal=APP_COLOR=blue --from-literal=APP_MOD=prod
+```
+
+Создать ConfigMap из имеющегося файла:
+
+```shell
+$ kubectl create configmap app-config --from-file=app_config.properties
+```
 
 You can pass in the `--from-file` argument multiple times to create a ConfigMap from multiple data sources.
 
@@ -24,7 +32,9 @@ data:
   APP_MOD: prod
 ```
 
-Пример использования ConfigMap в pod-е:
+Примеры использования ConfigMap в pod-е.
+
+В данном варианте **все** переменные из ConfigMap будут импортированы в environment variables:
 
 ```yaml
 apiVersion: v1
@@ -35,23 +45,36 @@ metadata:
     name: simple-webapp-color
 spec:
   containers:
-    - name: simple-webapp-color
-      image: simple-webapp-color
-      ports:
-        - containerPort: 8080
-      envFrom:
-        - configMapRef:
-            name: app-config   # все key/value из ConfigMap выше прилетят как environment variables
-#     env:
-#       - name: APP_COLOR   # имя environment variable в приложении
-#         valueFrom:
-#           configMapKeyRef:     # вставить только одну определенную key/value пару из ConfigMap
-#             name: app-config
-#             key: APP_COLOR    # имя environment variable в ConfigMap
-#     volumes:
-#       - name: app-config-volume
-#         configMap:
-#           name: app-config     # вставить как volume
+  - name: simple-webapp-color
+    image: simple-webapp-color
+    ports:
+    - containerPort: 8080
+    envFrom:
+    - configMapRef:
+        name: app-config
+```
+
+Вариант, когда нужно импортировать только определенные переменные из ConfigMap:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: simple-webapp-color
+  labels:
+    name: simple-webapp-color
+spec:
+  containers:
+  - name: simple-webapp-color
+    image: simple-webapp-color
+    ports:
+    - containerPort: 8080
+    env:
+    - name: APP_COLOR        # имя environment variable в приложении
+      valueFrom:
+        configMapKeyRef:
+          name: app-config   # имя ConfigMap
+          key: APP_COLOR     # название переменной в ConfigMap
 ```
 
 Пример монтирования ConfigMap в качестве volume:
