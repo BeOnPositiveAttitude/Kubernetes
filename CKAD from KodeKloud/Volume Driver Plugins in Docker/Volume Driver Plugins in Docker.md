@@ -1,6 +1,6 @@
 Volumes не управляются с помощью storage drivers, они управляются с помощью volume driver plugins.
 
-Volume driver plugin по умолчанию - local, он помогает создавать volumes на Docker-хосте и сохраняет их данные в `/var/lib/docker/volumes`.
+Volume driver plugin по умолчанию - `local`, он помогает создавать volumes на Docker-хосте и сохраняет их данные в каталоге `/var/lib/docker/volumes`.
 
 Существует множество других volume driver plugins, которые позволяют создавать volumes в решениях сторонних вендоров:
 - Azure File Storage
@@ -23,6 +23,8 @@ Volume driver plugin по умолчанию - local, он помогает со
 
 Мы можем указать определенный volume driver при запуске контейнера (например для Amazon EBS):
 
-`docker run -it --name mysql --volume-driver rexray/ebs --mount src=ebs-vol,target=/var/lib/mysql mysql`
+```shell
+$ docker run -it --name mysql --volume-driver rexray/ebs --mount src=ebs-vol,target=/var/lib/mysql mysql
+```
 
 Это создаст контейнер и приаттачит volume из AWS Cloud.

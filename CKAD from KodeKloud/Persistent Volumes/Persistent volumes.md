@@ -7,18 +7,18 @@ metadata:
   name: random-number-generator
 spec:
   containers:
-    - name: alpine
-      image: alpine
-      command: ["/bin/sh","-c"]
-      args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
-      volumeMounts:
-        - mountPath: /opt     #куда volume будет смонтирован внутри контейнера
-          name: data-volume   #имя volume из "списка" ниже
+  - name: alpine
+    image: alpine
+    command: ["/bin/sh","-c"]
+    args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
+    volumeMounts:
+    - mountPath: /opt     # куда volume будет смонтирован внутри контейнера
+      name: data-volume   # имя volume из списка ниже
   volumes:
-    - name: data-volume
-      hostPath:            #директория на ноде, не рекомендуется использовать этот тип, если в кластере несколько нод, т.к. в этом случае указанная папка должна существовать на всех нодах кластера и иметь одинаковый контент
-        path: /data
-        type: Directory
+  - name: data-volume
+    hostPath:            # директория на ноде, не рекомендуется использовать этот тип, если в кластере несколько нод, т.к. в этом случае указанная папка должна существовать на всех нодах кластера и иметь одинаковый контент
+      path: /data
+      type: Directory
 ```
 
 Which statements best describe `hostPath` volume type? You either need to run your process as `root` in a privileged container or modify the file permissions on the host to be able to write to a `hostPath`.
@@ -44,10 +44,10 @@ metadata:
   name: pv-vol1
 spec:
   accessModes:
-    - ReadWriteOnce   #как volume должен быть смонтирован на хосте, может быть еще ReadOnlyMany, ReadWriteMany
+  - ReadWriteOnce   # как volume должен быть смонтирован на хосте, может быть еще ReadOnlyMany, ReadWriteMany
   capacity:
     storage: 1Gi
-  hostPath:         #этот тип storage не рекомендуется использовать в prod-е
+  hostPath:         # этот тип storage не рекомендуется использовать в prod-е
     path: /tmp/data
 ```
 

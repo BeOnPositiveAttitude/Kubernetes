@@ -4,19 +4,15 @@ metadata:
   name: random-number-generator
 spec:
   containers:
-    - name: alpine
-      image: alpine
-      command: ["/bin/sh","-c"]
-      args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
-      volumeMounts:
-        - mountPath: /opt     #куда volume будет смонтирован внутри контейнера
-          name: data-volume   #имя volume из "списка" ниже
+  - name: alpine
+    image: alpine
+    command: ["/bin/sh","-c"]
+    args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
+    volumeMounts:
+    - mountPath: /opt     # куда volume будет смонтирован внутри контейнера
+      name: data-volume   # имя volume из "списка" ниже
   volumes:
-    - name: data-volume
-      hostPath:            #директория на ноде, не рекомендуется использовать этот тип, если в кластере несколько нод, т.к. в этом случае указанная папка должна существовать на всех нодах кластера и иметь одинаковый контент
-        path: /data
-        type: Directory
-#   - name: data-volume
-#     awsElasticBlockStore:   #пример выделения volume в AWS EBS
-#       volumeID: <volume-id>
-#       fsType: ext4
+  - name: data-volume
+    hostPath:            # директория на ноде, не рекомендуется использовать этот тип, если в кластере несколько нод, т.к. в этом случае указанная папка должна существовать на всех нодах кластера и иметь одинаковый контент
+      path: /data
+      type: Directory
