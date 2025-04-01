@@ -7,12 +7,12 @@ spec:
     matchLabels:
       role: db       #Labels pod-а к которому применяется Network Policy
   policyTypes:
-    - Ingress
+  - Ingress
   ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              name: api-pod   #Labels pod-а от которого разрешается входящий трафик на наш pod с БД
-      ports:
-        - protocol: TCP
-          port: 3306
+  - from:
+    - podSelector:
+        matchLabels:
+          name: api-pod   #Labels pod-а от которого разрешается входящий трафик на наш pod с БД
+    ports:
+    - protocol: TCP
+      port: 3306

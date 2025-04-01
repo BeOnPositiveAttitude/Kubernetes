@@ -8,17 +8,17 @@ spec:
     matchLabels:
       role: db       #Labels pod-а к которому применяется Network Policy
   policyTypes:
-    - Ingress
+  - Ingress
   ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              name: api-pod   #Labels pod-а от которого разрешается входящий трафик на наш pod с БД
-          namespaceSelector:  #если мы хотим разрешить доступ до нашего pod-а с БД из какого-либо namespace-а, указываем Label этого namespace, предварительно этот Label нужно повесить на namespace; если при этом не указать podSelector выше, тогда все pod-ы из этого namespace будут иметь доступ до БД. podSelector и namespaceSelector работают как логическое AND, то есть доступ будет разрешен pod-ам с Label name=api-pod И находящимся в namespace с Label name=prod
-            matchLabels:
-              name: prod
-        - ipBlock:
-            cidr: 192.168.5.10/32   #когда вне кластера у нас есть ВМ (например для бекапов), мы можем разрешить доступ с определенного ip; здесь уже работает как логическое OR, то есть доступ будет разрешен pod-ам из блока выше ИЛИ ВМ с указанным ip
-      ports:
-        - protocol: TCP
-          port: 3306       #на какой порт нашего pod-а с БД разрешается входящий трафик
+  - from:
+    - podSelector:
+        matchLabels:
+          name: api-pod   #Labels pod-а от которого разрешается входящий трафик на наш pod с БД
+      namespaceSelector:  #если мы хотим разрешить доступ до нашего pod-а с БД из какого-либо namespace-а, указываем Label этого namespace, предварительно этот Label нужно повесить на namespace; если при этом не указать podSelector выше, тогда все pod-ы из этого namespace будут иметь доступ до БД. podSelector и namespaceSelector работают как логическое AND, то есть доступ будет разрешен pod-ам с Label name=api-pod И находящимся в namespace с Label name=prod
+        matchLabels:
+          name: prod
+    - ipBlock:
+        cidr: 192.168.5.10/32   #когда вне кластера у нас есть ВМ (например для бекапов), мы можем разрешить доступ с определенного ip; здесь уже работает как логическое OR, то есть доступ будет разрешен pod-ам из блока выше ИЛИ ВМ с указанным ip
+    ports:
+    - protocol: TCP
+      port: 3306       #на какой порт нашего pod-а с БД разрешается входящий трафик

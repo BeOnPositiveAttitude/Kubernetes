@@ -8,20 +8,20 @@ spec:
     matchLabels:
       role: db
   policyTypes:
-    - Ingress
-    - Egress
+  - Ingress
+  - Egress
   ingress:
-    - from:
-        - podSelector:
-            matchLabels:
-              name: api-pod
-      ports:
-        - protocol: TCP
-          port: 3306
+  - from:
+    - podSelector:
+        matchLabels:
+          name: api-pod
+    ports:
+    - protocol: TCP
+      port: 3306
   egress:
-    - to:               #разрешить исходящий трафик от pod-а с БД к ВМ (например для бекапов)
-        - ipBlock:
-            cidr: 192.168.5.10/32
-      ports:
-        - protocol: TCP
-          port: 80
+  - to:               #разрешить исходящий трафик от pod-а с БД к ВМ (например для бекапов)
+    - ipBlock:
+        cidr: 192.168.5.10/32
+    ports:
+    - protocol: TCP
+      port: 80

@@ -11,7 +11,7 @@ spec:
   - Egress
   - Ingress
   ingress:
-    - {}
+  - {}
   egress:
   # разрешить исходящий трафик до pod-ов БД по порту 3306
   - to:
