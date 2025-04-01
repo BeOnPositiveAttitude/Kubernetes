@@ -9,7 +9,7 @@ spec:
   capacity:
     storage: 500Mi
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   gcePersistentDisk:
     pdName: pd-disk
     fsType: ext4
@@ -22,7 +22,7 @@ metadata:
   name: myclaim
 spec:
   accessModes:
-    - ReadWriteOnce
+  - ReadWriteOnce
   resources:
     requests:
       storage: 500Mi
@@ -35,34 +35,32 @@ metadata:
   name: random-number-generator
 spec:
   containers:
-    - name: alpine
-      image: alpine
-      command: ["/bin/sh","-c"]
-      args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
-      volumeMounts:
-        - mountPath: /opt
-          name: data-volume
+  - name: alpine
+    image: alpine
+    command: ["/bin/sh","-c"]
+    args: ["shuf -i 0-100 -n 1 >> /opt/number.out;"]
+    volumeMounts:
+    - mountPath: /opt
+      name: data-volume
   volumes:
-    - name: data-volume
-      persistentVolumeClaim:
-        claimName: myclaim
+  - name: data-volume
+    persistentVolumeClaim:
+      claimName: myclaim
 ```
 
 Мы создаем PV из Google Cloud Persistent Disk. Проблема в том, что прежде чем создать PV, мы должны сначала вручную создать диск в Google CLoud командой:
 
-`gcloud beta compute disks create --size 1GB --region us-east1 pd-disk`, где `pd-disk` - имя диска в Google Cloud, которое мы указали в PV.
+```shell
+$ gcloud beta compute disks create --size 1GB --region us-east1 pd-disk
+```
 
-Каждый раз когда приложению требуется storage, мы должны вручную создать диск в Google Cloud, вручную создать PV definition файл.
+Здесь `pd-disk` - имя диска в Google Cloud, которое мы указали в PV.
 
-Это называется *static provisioning of volumes*.
+Каждый раз когда приложению требуется storage, мы должны вручную создать диск в Google Cloud, вручную создать PV definition файл. Это называется *static provisioning of volumes*.
 
-Было бы удобно, если бы volumes выделялись автоматически, когда это нужно приложению.
+Было бы удобно, если бы volumes выделялись автоматически, когда это нужно приложению. Для этого существуют Storage Classes, где мы можем определить provisioner, например Google storage, который может автоматически выделять storage в Google Cloud и монтировать его к pod-ам, когда появился соответствующий claim. Это называется *dynamic provisioning of volumes*.
 
-Для этого существуют Storage Classes, где мы можем определить provisioner, например Google storage, который может автоматически выделять storage в Google Cloud и аттачить его к pod-ам, когда появился соответствующий claim.
-
-Это называется *dynamic provisioning of volumes*.
-
-Для этого нужно создать объект Storage Class, пример в файле sc-definition.yaml.
+Для этого нужно создать объект Storage Class, пример в файле `sc-definition.yaml`.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
@@ -86,8 +84,8 @@ metadata:
   name: myclaim
 spec:
   accessModes:
-    - ReadWriteOnce
-  storageClassName: google-storage   #имя SC из файла sc-definition.yaml
+  - ReadWriteOnce
+  storageClassName: google-storage   # имя SC из файла sc-definition.yaml
   resources:
     requests:
       storage: 500Mi
@@ -97,11 +95,7 @@ spec:
 
 Далее приведены примеры Storage Class definition файлов для GCE - Silver, Gold, Platinum, поэтому они так называются - Storage Class.
 
-В лабе есть задание - уже создан PV с прописанным в нем StorageClass `local-storage`, нужно создать PVC с соответствующими параметрами, чтобы связать PVC и PV.
-
-После создания PVC остается висеть в статусе `Pending`, т.к. StorageClass `local-storage` использует `VolumeBindingMode` со значением `WaitForFirstConsumer`.
-
-Это значит, что до тех пор пока не будет создан Pod, использующий наш PVC, процесс binding-а не произойдет.
+В лабе есть задание - уже создан PV с прописанным в нем StorageClass `local-storage`, нужно создать PVC с соответствующими параметрами, чтобы связать PVC и PV. После создания PVC остается висеть в статусе `Pending`, т.к. StorageClass `local-storage` использует `VolumeBindingMode` со значением `WaitForFirstConsumer`. Это значит, что до тех пор пока не будет создан Pod, использующий наш PVC, процесс binding-а не произойдет.
 
 ```yaml
 apiVersion: storage.k8s.io/v1
