@@ -27,4 +27,12 @@ POD: lamp-wp-56c7c454fc-s7xf5
 
 Смотреть лимиты ресурсов по контейнерам в pod-е:
 
-`kubectl get pods -n devns -o custom-columns='POD_NAME:.metadata.name, CPU_LIMITS:.spec.containers[*].resources.limits.cpu, MEMORY_LIMITS:.spec.containers[*].resources.limits.memory'`
+```shell
+$ kubectl get pods -n devns -o custom-columns='POD_NAME:.metadata.name, CPU_LIMITS:.spec.containers[*].resources.limits.cpu, MEMORY_LIMITS:.spec.containers[*].resources.limits.memory'
+```
+
+Патчим конфигмапу:
+
+```shell
+$ kubectl patch configmap/test --type merge -p '{"data":{"foo":"bar"}}'
+```
