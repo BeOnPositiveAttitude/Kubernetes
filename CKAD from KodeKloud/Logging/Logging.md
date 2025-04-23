@@ -27,3 +27,17 @@ kubectl logs -f event-simulator-pod -c event-simulator
 ```shell
 kubectl logs -l app=nginx
 ```
+
+Если наше приложение по каким-либо причинами не выводит временные метки в лог, то мы можем добавить их самостоятельно:
+
+```shell
+kubectl logs event-simulator-pod --timestamps
+```
+
+Посмотреть лог за последние секунды/минуты/часы:
+
+```shell
+kubectl logs event-simulator-pod --since=5s
+kubectl logs event-simulator-pod --since=30m
+kubectl logs event-simulator-pod --since=1h
+```
