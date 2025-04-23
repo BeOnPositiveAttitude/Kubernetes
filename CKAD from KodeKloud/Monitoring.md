@@ -1,33 +1,34 @@
-Как мониторить потребление ресурсов в K8s или что еще более важно, что именно мониторить?
+Как мониторить потребление ресурсов в K8s или что еще более важно, что именно мониторить? Допустим мы хотим знать количество нод в кластере, сколько из них "healthy", утилизацию CPU, RAM, дисков и сети. Также мы хотим знать количество pod-ов и их метрики - потребление CPU и RAM.
 
-Допустим мы хотим знать количество нод в кластере, сколько из них "healthy", утилизацию CPU, RAM, дисков и сети
+Изначально K8s не поставляется со встроенным решением для мониторинга. Существуют сторонние проекта для мониторинга K8s - Metrics Server, Prometheus, Elastic Stack, DATADOG, Dynatrace. В данном курсе рассматривается только Metrics Server.
 
-Также мы хотим значть количество pod-ов и их метрики - потребление CPU и RAM
+Heapster - один из первоначальных проектов для мониторинга K8s, но сейчас он уже Deprecated и одна из его версий сформировалась в Metrics Server.
 
-Изначально K8s не поставляется со встроенным решением для мониторинга
+На один кластер K8s нужен один Metrics Server.
 
-Существуют сторонние проекта для мониторинга K8s - Metrics Server, Prometheus, Elastic Stack, DATADOG, Dynatrace
+Metrics Server - это in-memory решение, то есть данные не хранятся на диске, соответственно нельзя посмотреть исторические данные.
 
-В данном курсе рассматривается только Metrics Server
+K8s запускает на каждой ноде кластера агент kubelet, который получает инструкции от API мастера и запускает pod-ы на нодах. Kubelet также содержит субкомпонент cAdvisor (Container Advisor), который отвечает за сбор performance-метрик с pod-ов и их публикацию через kubelet API, чтобы они были доступны для Metrics Server.
 
-Heapster - один из первоначальных проектов для мониторинга K8s, но сейчас он уже Deprecated и одна из его версий сформировалась в Metrics Server
+Для включения metrics server в minikube: `minikube addons enable metrics-server`.
 
-На один кластер K8s нужен один Metrics Server
+Для остальных:
 
-Metrics Server - это in-memory решение, то есть данные не хранятся на диске, соответственно нельзя посмотреть исторические данные
+```shell
+$ git clone https://github.com/kubernetes-incubator/metrics-serve
+$ kubectl create -f deploy/1.8+/
+```
 
-K8s запускает на каждой ноде кластера агент kubelet, который получает инструкции от API мастера и запускает pod-ы на нодах
+Далее понадобится некоторое время для сбора метрик кластера и далее можно выполнить команду:
 
-Kubelet также содержит субкомпонент cAdvisor (Container Advisor), который отвечает за сбор performance-метрик с pod-ов и их публикацию через kubelet API, чтобы они были доступны для metrics server
+```shell
+$ kubectl top node
+$ kubectl top pod
+```
 
-Для включения metrics server в minikube: `minikube addons enable metrics-server`
+Сортировать по памяти и вывести первый результат:
 
-Для остальных `git clone https://github.com/kubernetes-incubator/metrics-serve` и `kubectl create -f deploy/1.8+/`
-
-Далее понадобится некоторое время для сбора метрик кластера и далее можно дать команду:
-
-`kubectl top node` или `kubectl top pod`
-
-Сортировать по памяти и вывести первый результат: `kubectl top node --sort-by='memory' --no-headers | head -1`
-
-`kubectl top pods -A --context cluster1 --no-headers | sort -nr -k4 | head -1`
+```shell
+$ kubectl top node --sort-by='memory' --no-headers | head -1
+$ kubectl top pods -A --context cluster1 --no-headers | sort -nr -k4 | head -1
+```
