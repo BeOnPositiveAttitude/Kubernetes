@@ -1,4 +1,4 @@
-Пример роли приведен в файле developer-role.yaml.
+Пример роли приведен в файле `developer-role.yaml`.
 
 ```yaml
 apiVersion: rbac.authorization.k8s.io/v1
@@ -40,13 +40,33 @@ roleRef:
 Смотреть имеем ли мы права на определенные действия в кластере: `kubectl auth can-i create deployments`.
 
 Если мы как администраторы выдали пользователю набор permissions и хотим проверить все ли работает под этим пользователем:
-`kubectl auth can-i create pods --as dev-user`.
+
+```shell
+$ kubectl auth can-i create pods --as dev-user
+```
 
 Аналогично проверить для определенного namespace:
-`kubectl auth can-i create pods --as dev-user --namespace test`.
 
-Можно выполнить любую команду с опцией `--as` для проверки, например `kubectl --as dev-user get pods`
+```shell
+$ kubectl auth can-i create pods --as dev-user --namespace test
+```
+
+Можно выполнить любую команду с опцией `--as` для проверки, например `kubectl --as dev-user get pods`.
 
 Объекты Roles и RoleBindings действуют в рамках определенного namespace.
 
-`kubectl auth can-i get namespaces --as=system:serviceaccount:default:green-sa-cka22-arch`
+Проверка прав для сервис-аккаунта:
+
+```shell
+$ kubectl auth can-i get namespaces --as=system:serviceaccount:default:green-sa-cka22-arch
+```
+
+Смотреть под каким пользователем мы сейчас залогинены и в какие группы входим: `kubectl auth whoami`.
+
+Стандартный вывод команды `kubectl auth can-i` подразумевает односложный ответ - "да/нет". Чтобы понять причину полученного ответа, можно поднять verbosity:
+
+```shell
+$ kubectl auth can-i delete pods -v=10
+```
+
+Однако важно помнить, что RBAC устроен по принципу "запрещено все, что не разрешено явно".
