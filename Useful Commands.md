@@ -36,3 +36,9 @@ $ kubectl get pods -n devns -o custom-columns='POD_NAME:.metadata.name, CPU_LIMI
 ```shell
 $ kubectl patch configmap/test --type merge -p '{"data":{"foo":"bar"}}'
 ```
+
+Посмотреть pod-ы, расположенные на определенной ноде:
+
+```shell
+$ kubectl get po -A --field-selector spec.nodeName=node01
+```

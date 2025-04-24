@@ -22,10 +22,16 @@ kubectl logs -f event-simulator-pod
 kubectl logs -f event-simulator-pod -c event-simulator
 ```
 
-Предположим у нас есть Deployment с двумя pod-ами, и мы хотим посмотреть логи сразу двух этих pod-ов. В этом случае можно указать их общий label:
+Предположим у нас есть Deployment с двумя pod-ами, и мы хотим посмотреть логи сразу двух этих pod-ов. В этом случае можно указать общий для этих **pod-ов** label:
 
 ```shell
 kubectl logs -l app=nginx
+```
+
+Можно смотреть логи deployment:
+
+```shell
+kubectl logs deploy/frontend
 ```
 
 Если наше приложение по каким-либо причинами не выводит временные метки в лог, то мы можем добавить их самостоятельно:
