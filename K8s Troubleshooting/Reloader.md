@@ -32,3 +32,36 @@ spec:
             - secretRef:
                 name: my-secret
 ```
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: testing
+  name: testing
+  annotations:
+    reloader.stakater.com/auto: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: testing
+  template:
+    metadata:
+      labels:
+        app: testing
+    spec:
+      containers:
+      - image: busybox
+        name: test-container
+        command:
+        - "sleep"
+        - "3600"
+        env:
+        - name: TEST_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: test-cm
+              key: foo1
+```
