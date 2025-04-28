@@ -70,3 +70,9 @@ $ kubectl auth can-i delete pods -v=10
 ```
 
 Однако важно помнить, что RBAC устроен по принципу "запрещено все, что не разрешено явно".
+
+Проверить, может ли пользователь `Bob`, являющийся членом группы `interns`, смотреть секреты в namespace.
+
+```shell
+$ kubectl -n development auth can-i get secrets --as-group=interns --as=Bob
+```
