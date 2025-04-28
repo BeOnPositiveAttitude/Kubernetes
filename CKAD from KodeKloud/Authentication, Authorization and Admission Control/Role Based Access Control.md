@@ -76,3 +76,11 @@ $ kubectl auth can-i delete pods -v=10
 ```shell
 $ kubectl -n development auth can-i get secrets --as-group=interns --as=Bob
 ```
+
+- A. `ClusterRoleBindings` cannot reference `Roles`.
+- B. Creating the `RoleBinding` in a namespace other than the subjects' allows the subject to have roles in other namespaces.
+- C. Adding the namespace under the `roleRef` in a `RoleBinding` allows binding subjects to roles in other namespaces.
+- D. `RoleBinding` and `ServiceAccounts` must exist in the same namespace.
+- E. `RoleBindings` connect `ClusterRoles`, but they only give access to the namespace defined in the binding.
+
+Верные ответы: A, B, E.
