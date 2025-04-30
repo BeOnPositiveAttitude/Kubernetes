@@ -21,6 +21,13 @@ kubectl rollout history deployment/myapp-deployment
 - `Recreate` - сначала убить все контейнеры со старой версией приложения и затем поднять новые, приводит к простою, не является дефолтной стратегией
 - `RollingUpdate` - поочередно обновлять контейнер за контейнером, не приводит к простою. Если не указать Deployment Strategy явно, то будет использована именно `RollingUpdate`
 
+
+`.spec.strategy.rollingUpdate.maxUnavailable` is an optional field that specifies the maximum number of Pods that can be unavailable during the update process. The value can be an absolute number (for example, `5`) or a percentage of desired Pods (for example, `10%`).
+
+`.spec.strategy.rollingUpdate.maxSurge` is an optional field that specifies the maximum number of Pods that can be created over the desired number of Pods. The value can be an absolute number (for example, `5`) or a percentage of desired Pods (for example, `10%`).
+
+Here are some Rolling Update Deployment examples that use the maxUnavailable and maxSurge:
+
 Как выполнить обновление приложения? Можно отредактировать yaml-файл и выполнить команду:
 
 ```shell
