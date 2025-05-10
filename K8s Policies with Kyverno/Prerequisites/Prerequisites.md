@@ -25,3 +25,78 @@ Kyverno - это policy enforcement engine, который позволяет н
 <img src="image-2.png" width="1000" height="300"><br>
 
 Теперь когда Admission Controller получает запрос, то на этапах Mutating Admission (изменение исходного запроса) и Validating Admission (проверка запроса) он будет обращаться к Kyverno с помощью настроенного webkook.
+
+Установка Kyverno: https://kyverno.io/docs/installation/methods/
+
+```shell
+$ helm repo add kyverno https://kyverno.github.io/kyverno/
+$ helm repo update
+$ helm install kyverno kyverno/kyverno -n kyverno --create-namespace
+```
+
+Создадим простой Deployment:
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx
+    # team: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: container1
+        image: nginx
+```
+
+И политику Kyverno, которая требует наличия label с названием команды, создавшей манифест:
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: require-deployment-team-label
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: require-deployment-team-label
+    match:
+      any:
+      - resources:
+          kinds:
+          - Deployment
+    validate:
+      message: "you must have label `team` for all deployments"
+      pattern:
+        metadata:
+          labels:
+            team: "?*"   # как минимум один символ в значении label "team"
+```
+
+Секция `validationFailureAction` может принимать следующие значения:
+- `Audit` - в случае несоответствия заданным правилам создание ресурса разрешается, но будет создан специальный отчет
+- `Enforce` - в случае несоответствия заданным правилам создание ресурса запрещается
+
+The `validationFailureAction` attribute controls admission control behaviors for resources that are not compliant with a policy. If the value is set to `Enforce`, resource creation or updates are blocked when the resource does not comply. When the value is set to `Audit`, a policy violation is logged in a `PolicyReport` or `ClusterPolicyReport` but the resource creation or update is allowed.
+
+Если мы попытаемся создать наш тестовый Deployment без label `team`, то получим ошибку:
+
+```shell
+Error from server: error when creating "STDIN": admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Deployment/default/nginx-deployment was blocked due to the following policies 
+
+require-deployment-team-label:
+  require-deployment-team-label: 'validation error: you must have label `team` for
+    all deployments. rule require-deployment-team-label failed at path /metadata/labels/team/'
+```
