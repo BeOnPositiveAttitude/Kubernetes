@@ -100,3 +100,134 @@ require-deployment-team-label:
   require-deployment-team-label: 'validation error: you must have label `team` for
     all deployments. rule require-deployment-team-label failed at path /metadata/labels/team/'
 ```
+
+Создадим еще одну политику Kyverno, которая требует наличия как минимум трех реплик в Deployment:
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: minimum-replicas
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: minimum-replicas
+    match:
+      any:
+      - resources:
+          kinds:
+          - Deployment
+    validate:
+      message: "Must have at minimum of 3 replicas in a deployment"
+      pattern:
+        spec:
+          replicas: ">=3"
+```
+
+Если мы попытаемся создать наш тестовый Deployment с одной репликой, то получим ошибку:
+
+```shell
+Error from server: error when creating "STDIN": admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Deployment/default/nginx-deployment was blocked due to the following policies 
+
+minimum-replicas:
+  minimum-replicas: 'validation error: Must have at minimum of 3 replicas in a deployment.
+    rule minimum-replicas failed at path /spec/replicas/'
+```
+
+Создадим политику Kyverno, которая запрещает использование тэга `latest` (отсутствие тэга запрещается в том числе). Т.е. обязательно должен быть указан тэг образа в формате `nginx:1.23.0`.
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: no-latest-tag-policy
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: Require image tag
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Must use an image tag"
+      pattern:
+        spec:
+          containers:
+          - image: "*:*"
+  - name: Don't allow latest tag
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Can't use latest tag"
+      pattern:
+        spec:
+          containers:
+          - image: "!*:latest"
+```
+
+Если мы попытаемся создать наш тестовый Deployment без указания тэга образа, то получим ошибку:
+
+```shell
+Error from server: error when creating "deploy.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Deployment/default/nginx-deployment was blocked due to the following policies 
+
+no-latest-tag-policy:
+  autogen-Require image tag: 'validation error: Must use an image tag. rule autogen-Require
+    image tag failed at path /spec/template/spec/containers/0/image/'
+```
+
+Если мы попытаемся создать наш тестовый Deployment без с тэгом `latest`, то получим ошибку:
+
+```shell
+Error from server: error when creating "deploy.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Deployment/default/nginx-deployment was blocked due to the following policies 
+
+no-latest-tag-policy:
+  autogen-Don't allow latest tag: 'validation error: Can''t use latest tag. rule autogen-Don''t
+    allow latest tag failed at path /spec/template/spec/containers/0/image/'
+```
+
+Создадим политику Kyverno, которая запрещает использование публичых registry:
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: deny-public-registries
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: deny-public-registries
+    match:
+      any:
+      - resources:
+          kinds:
+          - Pod
+    validate:
+      message: "Unknown image registry"
+      pattern:
+        spec:
+          containers:
+          - image: "kodekloud.io/*"
+```
+
+Если мы попытаемся создать наш тестовый Deployment с образом из публичного registry (Docker Hub), то получим ошибку:
+
+```shell
+Error from server: error when creating "deploy.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+
+resource Deployment/default/nginx-deployment was blocked due to the following policies 
+
+deny-public-registries:
+  autogen-deny-public-registries: 'validation error: Unknown image registry. rule
+    autogen-deny-public-registries failed at path /spec/template/spec/containers/0/image/'
+```
