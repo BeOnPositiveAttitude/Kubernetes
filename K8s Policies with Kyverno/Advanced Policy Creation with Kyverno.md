@@ -1,0 +1,141 @@
+## Understanding Network Policies with Kyverno
+
+Kyverno allows you to define and enforce network policies directly, making it easier to manage and apply these policies across your clusters.
+
+### Example: Restricting Pod Communications
+
+To restrict communication between pods, you can define a Kyverno policy that specifies allowed or denied traffic patterns. Here's a basic example:
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-pod-communication
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+  - name: default-deny
+    match:
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "All pod communications are denied by default."
+      pattern:
+        spec:
+          =(containers):
+            - =(ports):
+                - !exists
+```
+
+This policy enforces that no pod can communicate with another unless explicitly allowed. It's a "deny all" approach, which is a secure default posture:
+
+- `=(containers)`: Matches all containers in the pod (the `=` prefix means "match all elements in the array")
+
+- `=(ports)`: Within each container, looks at all ports definitions
+
+- `!exists`: The policy requires that ports **DO NOT exist** (the `!` negates the exists check)
+
+## Enforcing Resource Quotas with Kyverno
+
+Kyverno can enforce resource quotas by ensuring that every deployed resource specifies limits and requests for CPU and memory.
+
+### Example: Enforcing Default Resource Limits
+
+Here's how you can enforce default resource limits for pods:
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-default-resource-limits
+spec:
+  rules:
+  - name: set-default-resource-limits
+    match:
+      resources:
+        kinds:
+        - Pod
+    mutate:
+      patchStrategicMerge:
+        spec:
+          containers:
+          - (name): "*"
+            resources:
+              limits:
+                memory: "256Mi"
+                cpu: "500m"
+              requests:
+                memory: "128Mi"
+                cpu: "250m"
+```
+
+This policy ensures that every pod has default resource limits and requests set, promoting fair resource usage across all applications.
+
+## Managing Secrets with Kyverno
+
+Kyverno can enforce policies around secret creation, usage, and access, ensuring that secrets are handled securely within your Kubernetes clusters.
+
+### Example: Restricting Secret Access
+
+To restrict access to secrets, you can create a policy that specifies which namespaces or users can access certain secrets:
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-secret-access
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: limit-secret-access
+    match:
+      resources:
+        kinds:
+        - Secret
+    validate:
+      message: "Access to secrets is restricted."
+      deny:
+        conditions:
+        - key: "{{request.operation}}"
+          operator: Equals
+          value: "CREATE"
+        - key: "{{request.namespace}}"
+          operator: NotEquals
+          value: "approved-namespace"
+```
+
+This policy prevents the creation of secrets outside of the `approved-namespace`, ensuring that sensitive information is tightly controlled.
+
+### Exercise 1
+
+This policy ensures that pods cannot communicate with each other internally by enforcing strict security contexts, disabling host networking, and setting DNS policy to limit internal communications.
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-pod-communication
+spec:
+  rules:
+  - name: restrict-internal-communication
+    match:
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "Pods should not be able to communicate with each other internally."
+      pattern:
+        spec:
+          containers:
+          - securityContext:
+              capabilities:
+                drop:
+                - ALL
+              allowPrivilegeEscalation: false
+          hostNetwork: false
+          hostPID: false
+          hostIPC: false
+          dnsPolicy: ClusterFirstWithHostNet
+```
