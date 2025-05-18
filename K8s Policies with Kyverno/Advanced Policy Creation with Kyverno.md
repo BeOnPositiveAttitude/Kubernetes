@@ -37,6 +37,16 @@ This policy enforces that no pod can communicate with another unless explicitly 
 
 - `!exists`: The policy requires that ports **DO NOT exist** (the `!` negates the exists check)
 
+In Kyverno, the `=(containers):` syntax is part of a conditional filter used in policies to dynamically match and process resources based on their structure. Let's break it down:
+
+- The `=` symbol indicates that Kyverno should evaluate the expression dynamically (like a variable or a loop).
+
+- `(containers)` refers to a **JMESPath (JSON Matching Expression) query** that extracts the containers array from a Kubernetes resource (e.g., a Pod or Deployment).
+
+- The `:` at the end signifies the start of a loop, meaning Kyverno will process each container in the array individually.
+
+- `=(containers):` is a **JMESPath-based loop** for processing arrays in Kubernetes resources.
+
 ## Enforcing Resource Quotas with Kyverno
 
 Kyverno can enforce resource quotas by ensuring that every deployed resource specifies limits and requests for CPU and memory.
@@ -138,4 +148,64 @@ spec:
           hostPID: false
           hostIPC: false
           dnsPolicy: ClusterFirstWithHostNet
+```
+
+### Exercise 2
+
+Implement a validation Kyverno policy named `enforce-default-resource-limits` to enforce that every pod has resource limits of 256Mi and 500m and requests of 128Mi and 250m set for CPU and memory.
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: enforce-default-resource-limits
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: validate-resource-requests-limits
+    match:
+      resources:
+        kinds:
+        - Pod
+    validate:
+      message: "Resource requests and limits must be set to memory: 128Mi/256Mi and CPU: 250m/500m."
+      pattern:
+        spec:
+          containers:
+          - resources:
+              limits:
+                memory: "256Mi"
+                cpu: "500m"
+              requests:
+                memory: "128Mi"
+                cpu: "250m"
+```
+
+### Exercise 3
+
+To ensure only authorized and controlled namespace to expose services to external traffic, configure a Kyverno policy named `limit-service-loadbalancer` to only allow LoadBalancer services in the `web-services` namespace.
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: limit-service-loadbalancer
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: limit-service-loadbalancer
+    match:
+      resources:
+        kinds:
+        - Service
+    validate:
+      message: "Only LB allowed."
+      deny:
+        conditions:
+        - key: "{{request.operation}}"
+          operator: Equals
+          value: "CREATE"
+        - key: "{{request.namespace}}"
+          operator: NotEquals
+          value: "web-services"
 ```
