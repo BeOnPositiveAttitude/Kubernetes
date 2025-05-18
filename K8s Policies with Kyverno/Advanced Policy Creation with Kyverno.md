@@ -208,4 +208,7 @@ spec:
         - key: "{{request.namespace}}"
           operator: NotEquals
           value: "web-services"
+        - key: "{{ request.object.data.team }}"
+          operator: Equals
+          value: LoadBalancer
 ```
