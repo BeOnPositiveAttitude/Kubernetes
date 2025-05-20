@@ -47,6 +47,8 @@ In Kyverno, the `=(containers):` syntax is part of a conditional filter used in 
 
 - `=(containers):` is a **JMESPath-based loop** for processing arrays in Kubernetes resources.
 
+https://kyverno.io/docs/policy-types/cluster-policy/validate/#anchors
+
 ## Enforcing Resource Quotas with Kyverno
 
 Kyverno can enforce resource quotas by ensuring that every deployed resource specifies limits and requests for CPU and memory.
@@ -193,13 +195,39 @@ metadata:
 spec:
   validationFailureAction: Enforce
   rules:
-  - name: limit-service-loadbalancer
+  - name: restrict-loadbalancer-services
     match:
       resources:
         kinds:
         - Service
     validate:
-      message: "Only LB allowed."
+      message: "LoadBalancer services are only allowed in the web-services namespace."
+      pattern:
+        metadata:
+          namespace: "web-services"
+        spec:
+          type: "LoadBalancer"
+```
+
+По итогу политика запрещает создание сервиса например типа ClusterIP в namespace `default`. Некорректная работа.
+
+Возможно этот вариант более правильный:
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: limit-service-loadbalancer
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: restrict-loadbalancer-services
+    match:
+      resources:
+        kinds:
+        - Service
+    validate:
+      message: "LoadBalancer services are only allowed in the web-services namespace."
       deny:
         conditions:
         - key: "{{request.operation}}"
@@ -208,7 +236,63 @@ spec:
         - key: "{{request.namespace}}"
           operator: NotEquals
           value: "web-services"
-        - key: "{{ request.object.data.team }}"
+        - key: "{{ request.object.spec.type }}"
           operator: Equals
           value: LoadBalancer
+```
+
+### Exercise 4
+
+Create a Kyverno policy named `mandatory-labels` to ensure that all new Pods and Deployments have a `department` label. The `department` label must have a value from the predefined list: `finance`, `engineering`, `marketing`, `sales`, `hr`. The policy should enforce this requirement. You can make use of preconditions rules for this.
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: mandatory-labels
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: mandatory-labels
+    match:
+      resources:
+        kinds:
+        - Pod
+        - Deployment
+    validate:
+      message: "Must have department label"
+      pattern:
+        metadata:
+          labels:
+            department: "?*"
+    preconditions:
+      all:
+      - key: "{{ request.object.metadata.labels.department }}"
+        operator: In
+        value: ["finance", "engineering", "marketing", "sales", "hr"]
+```
+
+### Exercise 5
+
+Implement a policy `restrict-node-port` that prohibits the use of NodePort services cluster-wide.
+
+```yaml
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-node-port
+spec:
+  validationFailureAction: Enforce
+  rules:
+  - name: disallow-nodeport-services
+    match:
+      resources:
+        kinds:
+        - Service
+    validate:
+      message: "NodePort services are not allowed in this cluster."
+      pattern:
+        metadata:
+          spec:
+            type: "!NodePort"
 ```
