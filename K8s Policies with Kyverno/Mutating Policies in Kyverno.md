@@ -42,6 +42,10 @@ spec:
                 +(cpu): "250m"
 ```
 
+A variation of an anchor is to add a field value if it is not already defined. This is done by using the add anchor (short for "add if not present" anchor) with the notation `+(...)` for the tag.
+
+https://release-1-9-0.kyverno.io/docs/writing-policies/mutate/#add-if-not-present-anchor
+
 ### 2. Automatically Add Labels
 
 Labels are key-value pairs used for organizing and selecting Kubernetes objects. This policy adds specific labels to every resource for better management.

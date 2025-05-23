@@ -29,6 +29,10 @@ spec:
                 - !exists
 ```
 
+Kyverno can validate existing resources in the cluster that may have been created before a policy was created. This can be useful when evaluating the potential effects some new policies will have on a cluster prior to changing them to `Enforce` mode. The application of policies to existing resources is referred to as background scanning and is enabled by default unless `spec.background` is set to `false`.
+
+https://kyverno.io/docs/policy-reports/background/
+
 This policy enforces that no pod can communicate with another unless explicitly allowed. It's a "deny all" approach, which is a secure default posture:
 
 - `=(containers)`: Matches all containers in the pod (the `=` prefix means "match all elements in the array")

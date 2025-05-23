@@ -110,7 +110,7 @@ spec:
         kinds:
         - Namespace
     validate:
-      message: ""Namespaces must have labels. Please add labels to the namespace."
+      message: "Namespaces must have labels. Please add labels to the namespace."
       pattern:
         metadata:
           labels:
