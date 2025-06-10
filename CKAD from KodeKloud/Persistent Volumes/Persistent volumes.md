@@ -59,3 +59,7 @@ spec:
 - `ReadOnlyMany` - the volume can be mounted as **read-only** by **many** nodes.
 - `ReadWriteMany` - the volume can be mounted as **read-write** by **many** nodes.
 - `ReadWriteOncePod` - the volume can be mounted as **read-write** by a **single** Pod. Use `ReadWriteOncePod` access mode if you want to ensure that only one pod across the whole cluster can read that PVC or write to it.
+
+### Про опцию монтирования `subPath`
+
+https://kubernetes.io/docs/concepts/storage/volumes/#using-subpath
