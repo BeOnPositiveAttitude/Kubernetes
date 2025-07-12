@@ -76,3 +76,81 @@ $ istioctl kube-inject -f bookinfo.yaml | kubectl apply -f -
 ```shell
 $ istioctl validate file.yaml
 ```
+
+### Demo
+
+Установка приложения bookinfo:
+
+```shell
+$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.11/samples/bookinfo/platform/kube/bookinfo.yaml
+```
+
+Скачиваем утилиту `istioctl`:
+
+```shell
+$ curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.18.2 sh -
+```
+
+Далее добавляем новую директорию в PATH:
+
+```shell
+$ cd istio-1.18.2
+$ export PATH=$PWD/bin:$PATH
+```
+
+Ставим core-компоненты istio:
+
+```shell
+$ istioctl install --set profile=demo -y
+```
+
+Выполняем валидацию:
+
+```shell
+$ istioctl analyze -n default
+Info [IST0102] (Namespace default) The namespace is not enabled for Istio injection. Run 'kubectl label namespace default istio-injection=enabled' to enable it, or 'kubectl label namespace default istio-injection=disabled' to explicitly mark it as not needing injection.
+```
+
+Вешаем label на namespace для добавления sidecar-контейнеров istio:
+
+```shell
+$ kubectl label namespace default istio-injection=enabled
+```
+
+Пересоздадим pod-ы нашего приложения:
+
+```shell
+$ kubectl delete -f https://raw.githubusercontent.com/istio/istio/release-1.11/samples/bookinfo/platform/kube/bookinfo.yaml
+$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.11/samples/bookinfo/platform/kube/bookinfo.yaml
+```
+
+Теперь попробуем включить istio только для определенной нагрузки.
+
+Создаем namespace и тестовый pod:
+
+```shell
+$ kubectl create ns db
+$ kubectl -n db run redis-no-proxy --image=redis
+```
+
+Создадим манифест-файл `pod.yaml` для второго аналогичного pod-а:
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    run: redis
+  name: redis
+  namespace: db
+spec:
+  containers:
+  - image: redis
+    name: redis
+```
+
+Инжектируем istio на лету:
+
+```shell
+$ istioctl kube-inject -f pod.yaml | kubectl apply -f -
+```
