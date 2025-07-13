@@ -154,3 +154,42 @@ spec:
 ```shell
 $ istioctl kube-inject -f pod.yaml | kubectl apply -f -
 ```
+
+### Установка с помощью Helm
+
+Добавляем новый репозиторий:
+
+```shell
+$ helm repo add istio https://istio-release.storage.googleapis.com/charts
+$ helm repo update
+```
+
+Устанавливаем CRD:
+
+```shell
+$ helm install istio-base istio/base --namespace istio-system --version 1.18.2 --create-namespace --set profile=demo
+```
+
+Устанавливаем istiod:
+
+```shell
+$ helm install istiod istio/istiod --namespace istio-system --version 1.18.2 --set profile=demo --set pilot.resources.requests.memory=128Mi --set pilot.resources.requests.cpu=250m
+```
+
+Устанавливаем gateway:
+
+```shell
+$ helm install istio-ingress istio/gateway --namespace istio-ingress --version 1.18.2 --create-namespace
+```
+
+Вешаем label на namespace для добавления sidecar-контейнеров istio:
+
+```shell
+$ kubectl label namespace default istio-injection=enabled
+```
+
+Проверяем:
+
+```shell
+$ kubectl run redis --image=redis
+```
