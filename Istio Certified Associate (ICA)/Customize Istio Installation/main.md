@@ -10,10 +10,12 @@ Istio Operator дает большую гибкость в настройке у
 Установить istio из кастомного профиля:
 
 ```shell
-$ istioctl install -f default.yaml
+$ istioctl install -f default.yaml -y
 ```
 
-Документация: https://istio.io/latest/docs/reference/config/istio.operator.v1alpha1/
+Документация по istio-оператору: https://istio.io/latest/docs/reference/config/istio.operator.v1alpha1/
+
+Документация по кастомизации конфигурации: https://istio.io/latest/docs/setup/additional-setup/customize-installation/
 
 Также можно кастомизировать установку с помощью helm. Для этого нужно вывести используемые values:
 
@@ -40,7 +42,7 @@ $ istioctl profile dump default -o yaml > default.yaml
 Вносим необходимые изменения и применяем:
 
 ```shell
-$ istioctl upgrade -f default.yaml
+$ istioctl upgrade -f default.yaml -y
 ```
 
 Аналогично с помощью helm:
@@ -62,4 +64,36 @@ $ istioctl uninstall --set profile=default purge
 $ helm uninstall istio-ingress -n istio-ingress
 $ helm uninstall istiod -n istio-system
 $ helm uninstall istio-base -n istio-system
+```
+
+### Demo
+
+Делаем дамп профиля:
+
+```shell
+$ istioctl profile dump demo -o yaml > custom-profile.yaml
+```
+
+Устанавливаем istio из созданного профиля:
+
+```shell
+$ istioctl install -f custom-profile.yaml -y
+```
+
+Вешаем label на namespace:
+
+```shell
+$ kubectl label namespace default istio-injection=enabled
+```
+
+Внесем изменения в дамп профиля `custom-profile.yaml` и выполним валидацию:
+
+```shell
+$ istioctl validate -f custom-profile.yaml
+```
+
+Применяем:
+
+```shell
+$ istioctl upgrade -f custom-profile.yaml -y
 ```
