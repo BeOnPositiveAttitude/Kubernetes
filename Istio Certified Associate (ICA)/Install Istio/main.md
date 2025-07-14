@@ -9,10 +9,17 @@ $ curl -L https://istio.io/downloadIstio | ISTIO_VERSION=1.18.2 sh -
 Далее добавляем новую директорию в PATH:
 
 ```shell
+$ cd istio-1.18.2
 $ export PATH=$PWD/bin:$PATH
 ```
 
-Либо копируем исполняемый файл из каталога `./bin/istioctl` в каталог `/usr/local/bin/`.
+Либо копируем исполняемый файл из каталога `~/istio-1.18.2/bin/istioctl` в каталог `/usr/local/bin/`.
+
+Либо копируем исполняемый файл командой:
+
+```shell
+$ sudo install -m 755 ~/istio-1.18.2/bin/istioctl /usr/local/bin/istioctl
+```
 
 Смотреть доступные для установки профили:
 
