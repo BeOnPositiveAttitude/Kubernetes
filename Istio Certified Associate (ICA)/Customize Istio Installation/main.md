@@ -97,3 +97,5 @@ $ istioctl validate -f custom-profile.yaml
 ```shell
 $ istioctl upgrade -f custom-profile.yaml -y
 ```
+
+It might seem unnecessary to pass `false` for one of the gateways instead of simply renaming the default one; however, if you rename it directly, Istio will create two gateways: one with the default name `istio-ingressgateway-*` and another with the name `istio-ingress-gateway-*`.
