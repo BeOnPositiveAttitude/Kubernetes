@@ -73,7 +73,7 @@ The workload accepts inbound HTTP traffic on port 9080. The traffic is then forw
 
 ### Demo
 
-Ставим и включаем istio, разворачиваем приложение bookinfo.
+Ставим и включаем istio для namespace `default`, разворачиваем в нем приложение bookinfo.
 
 Создаем тестовый namespace и нагрузку внутри него:
 
