@@ -89,7 +89,7 @@ Ingress Gateway должен иметь публичный IP-адрес.
 apiVersion: networking.istio.io/v1
 kind: VirtualService
 metadata:
-  name: app-vs
+  name: ingress-app-vs
   namespace: frontend
 spec:
   hosts:
@@ -147,3 +147,34 @@ spec:
     hosts:
     - *
 ```
+
+И пример соответствующего Virtual Service:
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: egress-app-vs
+  namespace: frontend
+spec:
+  hosts:
+  - api.example.com   # внешний хост, с которым мы хотим взаимодействовать
+  gateways:
+  - egress-app-gateway   # через какой gateway будет выходить трафик
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: api.example.com
+        port: 443
+```
+
+Зачем использовать Egress Gateway? Если нам нужно контролировать (ограничивать) исходящий трафик.
+
+<img src="image-1.png" width="1000" height="500"><br>
+
+Egress Gateway используется не так часто как Ingress Gateway, т.к. большинство компаний используют FW для ограничения исходящего трафика.
+
+Документация: https://istio.io/latest/docs/reference/config/networking/gateway/
