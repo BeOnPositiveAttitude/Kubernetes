@@ -186,7 +186,7 @@ root@test:/# curl httpbin.default.svc.cluster.local:8000/ip
 }
 ```
 
-Все равно работает! Почему? Дело в том, что для namespace `test` не включен istio sidecar, поэтому трафик беспрепятственно ходит к namespace `default` (видимо минуя service mesh).
+Все равно работает! Почему? Дело в том, что для namespace `test` не включен istio sidecar, поэтому трафик беспрепятственно ходит к namespace `default` (видимо минуя service mesh). This indicates that the `test` namespace does not have Istio injection enabled, resulting in the Virtual Service being ignored.
 
 Включим istio injection для namespace `test`:
 
