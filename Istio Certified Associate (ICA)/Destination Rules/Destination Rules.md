@@ -122,3 +122,200 @@ spec:
 <img src="image.png" width="1000" height="550"><br>
 
 Документация: https://istio.io/latest/docs/reference/config/networking/destination-rule/
+
+### Demo
+
+Ставим и включаем istio для namespace `default`, разворачиваем в нем приложение helloworld.
+
+```shell
+$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/master/samples/helloworld/helloworld.yaml
+```
+
+Создаем тестовый namespace:
+
+```shell
+$ kubectl create ns test
+```
+
+Включим istio injection для namespace `test`:
+
+```shell
+$ kubectl label ns test istio-injection=enabled
+```
+
+Создаем нагрузку внутри namespace `test`:
+
+```shell
+$ kubectl -n test run test --image=nginx
+```
+
+Подключимся к тестовому pod-у и проверим доступность сервиса `helloworld`:
+
+```
+$ kubectl -n test exec -it test -- /bin/bash
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v2, instance: helloworld-v2-6746879bdd-dqqm4
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+```
+
+Как видно, мы рандомно попадаем то на версию приложения v1, то на версию v2. У обоих pod-ов есть общая метка `app=helloworld`, по которой их находит service `helloworld`. А также уникальный метки с версиями - `version=v1` и `version=v2`.
+
+```shell
+$ kubectl get pods  --show-labels
+NAME                             READY   STATUS    RESTARTS   AGE     LABELS
+helloworld-v1-5787f49bd8-pncnp   2/2     Running   0          9m18s   app=helloworld,pod-template-hash=5787f49bd8,security.istio.io/tlsMode=istio,service.istio.io/canonical-name=helloworld,service.istio.io/canonical-revision=v1,version=v1
+helloworld-v2-6746879bdd-dqqm4   2/2     Running   0          9m18s   app=helloworld,pod-template-hash=6746879bdd,security.istio.io/tlsMode=istio,service.istio.io/canonical-name=helloworld,service.istio.io/canonical-revision=v2,version=v2
+```
+
+Для разделения трафика создадим Destination Rule:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: hello-world-ds
+  namespace: default
+spec:
+  host: helloworld
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+```
+
+Т.к. без Virtual Service одинокий Destination Rule не имеет никакого смысла, создадим VS:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: hello-world-vs
+  namespace: default
+spec:
+  hosts:
+  - helloworld
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: helloworld.default.svc.cluster.local
+        port:
+          number: 5000
+        subset: v1
+      weight: 50
+    - destination:
+        host: helloworld.default.svc.cluster.local
+        port:
+          number: 5000
+        subset: v2
+      weight: 50
+```
+
+Вновь подключимся к тестовому pod-у и проверим как распределяется трафик между версиями:
+
+```
+$ kubectl -n test exec -it test -- /bin/bash
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v2, instance: helloworld-v2-6746879bdd-dqqm4
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v2, instance: helloworld-v2-6746879bdd-dqqm4
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+```
+
+Теперь изменим распределение трафика между версиями:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: hello-world-vs
+  namespace: default
+spec:
+  hosts:
+  - helloworld
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: helloworld.default.svc.cluster.local
+        port:
+          number: 5000
+        subset: v1
+      weight: 95
+    - destination:
+        host: helloworld.default.svc.cluster.local
+        port:
+          number: 5000
+        subset: v2
+      weight: 5
+```
+
+Вновь подключимся к тестовому pod-у и проверим как распределяется трафик между версиями:
+
+```
+$ kubectl -n test exec -it test -- /bin/bash
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v2, instance: helloworld-v2-6746879bdd-dqqm4
+
+root@test:/# curl helloworld.default.svc.cluster.local:5000/hello
+Hello version: v1, instance: helloworld-v1-5787f49bd8-pncnp
+```
+
+Как видно, почти все запросы уходят на версию v1.
