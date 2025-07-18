@@ -15,7 +15,7 @@ gRPC-вызовы обычно используются для взаимоде�
 Освежим в памяти манифест нашего Virtual Service:
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1v1beta1
 kind: VirtualService
 metadata:
   name: app-vs
@@ -45,7 +45,7 @@ spec:
 И манфест для Destination Rule:
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1v1beta1
 kind: DestinationRule
 metadata:
   name: app-ds
@@ -64,7 +64,7 @@ spec:
 Предположим, что нам нужно выставить нашего приложение наружу, в public. Для этого нам понадобится Gateway:
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1v1beta1
 kind: Gateway
 metadata:
   name: ingress-app-gateway
@@ -86,7 +86,7 @@ Ingress Gateway должен иметь публичный IP-адрес.
 Добавим `gateway` в манифест Virtual Service:
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1v1beta1
 kind: VirtualService
 metadata:
   name: ingress-app-vs
@@ -125,7 +125,7 @@ Ingress Gateway представляет собой всего лишь standalo
 Ниже представлена конфигурация Egress Gateway:
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1v1beta1
 kind: Gateway
 metadata:
   name: egress-app-gateway
@@ -151,7 +151,7 @@ spec:
 И пример соответствующего Virtual Service:
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1v1beta1
 kind: VirtualService
 metadata:
   name: egress-app-vs
@@ -178,3 +178,101 @@ spec:
 Egress Gateway используется не так часто как Ingress Gateway, т.к. большинство компаний используют FW для ограничения исходящего трафика.
 
 Документация: https://istio.io/latest/docs/reference/config/networking/gateway/
+
+### Demo
+
+Ставим и включаем istio для namespace `default`, разворачиваем в нем приложение bookinfo.
+
+```shell
+$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.11/samples/bookinfo/platform/kube/bookinfo.yaml
+```
+
+Создадим Virtual Service:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: book-info-vs
+  namespace: default
+spec:
+  hosts:
+  - productpage
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: productpage.default.svc.cluster.local
+        port:
+          number: 9080
+```
+
+Смотрим метки для pod-а с Istio Ingress Gateway:
+
+```shell
+$ kubectl -n istio-system describe pod istio-ingressgateway-69c68b6cd5-frd27 
+
+Name:             istio-ingressgateway-69c68b6cd5-frd27
+Namespace:        istio-system
+Priority:         0
+Service Account:  istio-ingressgateway-service-account
+Node:             node01/172.30.2.2
+Start Time:       Fri, 18 Jul 2025 14:01:11 +0000
+Labels:           app=istio-ingressgateway
+                  chart=gateways
+                  heritage=Tiller
+                  install.operator.istio.io/owning-resource=unknown
+                  istio=ingressgateway
+                  istio.io/rev=default
+                  operator.istio.io/component=IngressGateways
+                  pod-template-hash=69c68b6cd5
+                  release=istio
+                  service.istio.io/canonical-name=istio-ingressgateway
+                  service.istio.io/canonical-revision=latest
+                  sidecar.istio.io/inject=false
+<...>
+```
+
+Создадим Gateway:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: istio-gateway
+  namespace: default
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "book.info.com"
+```
+
+Смотрим IP-адрес объекта Service `istio-ingressgateway `:
+
+```shell
+k -n istio-system get svc
+NAME                   TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)                                                                      AGE
+istio-egressgateway    ClusterIP      10.96.125.168   <none>        80/TCP,443/TCP                                                               12m
+istio-ingressgateway   LoadBalancer   10.99.149.168   <pending>     15021:31905/TCP,80:30217/TCP,443:30616/TCP,31400:30836/TCP,15443:31110/TCP   12m
+istiod                 ClusterIP      10.104.103.94   <none>        15010/TCP,15012/TCP,443/TCP,15014/TCP                                        13m
+```
+
+Пробуем постучаться curl-ом на полученный IP-адрес:
+
+```shell
+$ curl -I -H "Host: book.info.com" http://10.99.149.168
+HTTP/1.1 404 Not Found
+date: Fri, 18 Jul 2025 14:17:18 GMT
+server: istio-envoy
+transfer-encoding: chunked
+```
+
+Почему 404? Потому что Virtual Service не связан с Gateway. Исправим это:
