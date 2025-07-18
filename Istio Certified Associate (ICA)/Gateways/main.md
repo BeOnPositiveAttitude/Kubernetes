@@ -269,10 +269,51 @@ istiod                 ClusterIP      10.104.103.94   <none>        15010/TCP,15
 
 ```shell
 $ curl -I -H "Host: book.info.com" http://10.99.149.168
+
 HTTP/1.1 404 Not Found
 date: Fri, 18 Jul 2025 14:17:18 GMT
 server: istio-envoy
 transfer-encoding: chunked
 ```
 
-Почему 404? Потому что Virtual Service не связан с Gateway. Исправим это:
+В данном случае мы стучимся на внутренний IP-адрес сервиса с master-ноды кластера. Хотя в production это должен быть внешний IP-адрес, полученный от LoadBalancer и соответствующая A-запись в DNS.
+
+Почему 404? Потому что Virtual Service не связан с Gateway. Сконфигурируем нащ Virtual Service:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: book-info-vs
+  namespace: default
+spec:
+  hosts:
+  - productpage
+  - "book.info.com"
+  gateways:
+  - istio-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: productpage.default.svc.cluster.local
+        port:
+          number: 9080
+```
+
+Пробуем постучаться curl-ом повторно:
+
+```shell
+$ curl -I -H "Host: book.info.com" http://10.99.149.168
+
+HTTP/1.1 200 OK
+content-type: text/html; charset=utf-8
+content-length: 1683
+server: istio-envoy
+date: Fri, 18 Jul 2025 14:30:51 GMT
+x-envoy-upstream-service-time: 45
+```
+
+Теперь успешно.
