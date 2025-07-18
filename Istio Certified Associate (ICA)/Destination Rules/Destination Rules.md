@@ -74,7 +74,7 @@ spec:
 apiVersion: networking.istio.io/v1
 kind: DestinationRule
 metadata:
-  name: app-ds
+  name: app-dr
   namespace: frontend
 spec:
   host: app-svc
@@ -176,7 +176,7 @@ helloworld-v2-6746879bdd-dqqm4   2/2     Running   0          9m18s   app=hellow
 apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
-  name: hello-world-ds
+  name: hello-world-dr
   namespace: default
 spec:
   host: helloworld
