@@ -313,6 +313,10 @@ The reserved word `mesh` is used to imply (подразумевать) all the s
 
 При совпадении (`match`) с хостом `www.wikipedia.org` трафик пойдет через `istio-egressgateway`.
 
-Если трафик исходит от Service Mesh (тестовый pod, который обращается к сайту Wikipedia), то будет совпадение с `mesh` и трафик будет направлен на сервис `istio-egressgateway.istio-system.svc.cluster.local` и далее петлей снова придет на этот же Virtual Service, затем вновь сработает второй `match` и далее запрос пойдет на сайт Wikipedia.
+Если трафик исходит от Service Mesh (тестовый pod, который обращается к сайту Wikipedia), то будет совпадение с `mesh` и трафик будет направлен на сервис `istio-egressgateway.istio-system.svc.cluster.local` и далее **петлей** снова придет на этот же Virtual Service, затем вновь сработает второй `match` и далее запрос пойдет на сайт Wikipedia.
 
 В данном случае в логах Egress Gateway мы увидим записи об обращении к сайту Wikipedia.
+
+Документация: https://istio.io/latest/docs/tasks/traffic-management/egress/egress-gateway/
+
+Трафик из Mesh перехватывается VS, далее по совпадению с `mesh` попадает на сервис `istio-egressgateway.istio-system.svc.cluster.local`, снова перехватывается VS и дальше отправляется на внешний ресурс.

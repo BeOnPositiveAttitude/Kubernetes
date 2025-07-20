@@ -130,3 +130,170 @@ spec:
 <img src="image-1.png" width="800" height="500"><br>
 
 Документация: https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPMirrorPolicy
+
+### Demo
+
+Ставим и включаем istio для namespace `default`, разворачиваем в нем две версии приложения echo-server.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-server-v1
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo-server
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: echo-server
+        version: v1
+    spec:
+      containers:
+      - name: echo-server
+        image: ealen/echo-server
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-server-v2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo-server
+      version: v2
+  template:
+    metadata:
+      labels:
+        app: echo-server
+        version: v2
+    spec:
+      containers:
+      - name: echo-server
+        image: ealen/echo-server
+        ports:
+        - containerPort: 80
+```
+
+Также создадим Service:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-server
+  labels:
+    app: echo-server
+spec:
+  ports:
+  - port: 80
+    name: http
+  selector:
+    app: echo-server
+```
+
+Выведем логи обеих версий приложения:
+
+```shell
+$ kubectl logs -f echo-server-v1-699dcf589b-q9bkb 
+$ kubectl logs -f echo-server-v2-6bc546d54c-mf2dl 
+```
+
+Создаем тестовый pod:
+
+```shell
+$ kubectl run test --image=nginx
+```
+
+Подключимся к тестовому pod-у и проверим доступность сервиса `echo-server`:
+
+```
+$ kubectl exec -it test -- /bin/bash
+
+root@test:/# curl -s http://echo-server | grep -o '"HOSTNAME":"[^"]*"' | sed 's/"HOSTNAME":"\(.*\)"/HOSTNAME: \1/'
+HOSTNAME: echo-server-v1-699dcf589b-q9bkb
+
+root@test:/# curl -s http://echo-server | grep -o '"HOSTNAME":"[^"]*"' | sed 's/"HOSTNAME":"\(.*\)"/HOSTNAME: \1/'
+HOSTNAME: echo-server-v2-6bc546d54c-mf2dl
+
+root@test:/# curl -s http://echo-server | grep -o '"HOSTNAME":"[^"]*"' | sed 's/"HOSTNAME":"\(.*\)"/HOSTNAME: \1/'
+HOSTNAME: echo-server-v1-699dcf589b-q9bkb
+
+root@test:/# curl -s http://echo-server | grep -o '"HOSTNAME":"[^"]*"' | sed 's/"HOSTNAME":"\(.*\)"/HOSTNAME: \1/'
+HOSTNAME: echo-server-v2-6bc546d54c-mf2dl
+```
+
+Попадаем то на v1, то на v2.
+
+Создаем Destination Rule:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: echo-server
+  namespace: default
+spec:
+  host: echo-server
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+```
+
+Также созадим Virtual Service:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: echo-server
+  namespace: default
+spec:
+  hosts:
+  - echo-server
+  http:
+  - route:
+    - destination:
+        host: echo-server
+        subset: v1
+      weight: 100
+    mirror:
+      host: echo-server
+      subset: v2
+    mirrorPercentage:
+      value: 100.0
+```
+
+Вновь подключимся к тестовому pod-у и проверим доступность сервиса `echo-server`:
+
+```
+$ kubectl exec -it test -- /bin/bash
+
+root@test:/# curl -s http://echo-server | grep -o '"HOSTNAME":"[^"]*"' | sed 's/"HOSTNAME":"\(.*\)"/HOSTNAME: \1/'
+HOSTNAME: echo-server-v1-699dcf589b-q9bkb
+
+root@test:/# curl -s http://echo-server | grep -o '"HOSTNAME":"[^"]*"' | sed 's/"HOSTNAME":"\(.*\)"/HOSTNAME: \1/'
+HOSTNAME: echo-server-v1-699dcf589b-q9bkb
+
+root@test:/# curl -s http://echo-server | grep -o '"HOSTNAME":"[^"]*"' | sed 's/"HOSTNAME":"\(.*\)"/HOSTNAME: \1/'
+HOSTNAME: echo-server-v1-699dcf589b-q9bkb
+
+root@test:/# curl -s http://echo-server | grep -o '"HOSTNAME":"[^"]*"' | sed 's/"HOSTNAME":"\(.*\)"/HOSTNAME: \1/'
+HOSTNAME: echo-server-v1-699dcf589b-q9bkb
+
+root@test:/# curl -s http://echo-server | grep -o '"HOSTNAME":"[^"]*"' | sed 's/"HOSTNAME":"\(.*\)"/HOSTNAME: \1/'
+HOSTNAME: echo-server-v1-699dcf589b-q9bkb
+```
+
+Теперь мы попадаем только на v1, однако в логах pod-ов видно, что трафик приходит сразу на обе версии приложения (зеркалируется).
