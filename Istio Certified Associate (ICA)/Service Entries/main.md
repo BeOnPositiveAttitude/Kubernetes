@@ -225,7 +225,11 @@ set-cookie: WMF-Uniq=4uvoqhkBygxIWroQtNxkGgI1AAAAAFvdDFQHe8t1uWEMFTlTabU0q-dmy1H
 content-length: 91470
 ```
 
-Доступ появился, т.к. мы добавили Service Entry.
+Доступ появился, т.к. мы добавили Service Entry. Однако, если посмотреть на логи Egress Gateway, то там будет пусто. Это значит, что трафик не проходит через Egress Gateway.
+
+```shell
+$ kubectl -n istio-system logs -f istio-egressgateway-644589b977-n7nr7 
+```
 
 Как объединить Egress Gateway с Service Entry, чтобы убедиться, что весь исходящий трафик проходит через Egress Gateway?
 
@@ -302,3 +306,13 @@ spec:
           number: 80
       weight: 100
 ```
+
+The reserved word `mesh` is used to imply (подразумевать) all the sidecars in the mesh. When this field is omitted, the default gateway (`mesh`) will be used, which would apply the rule to all sidecars in the mesh. If a list of gateway names is provided, the rules will apply only to the gateways. To apply the rules to both gateways and sidecars, specify `mesh` as one of the gateway names.
+
+В случае входящего трафика мы указывали имя только одного Ingress Gateway при конфигурировании соответствующего Virtual Service. В случае же исходящего трафика мы указываем два Egress Gateway - один для трафика, входящего через Egress Gateway и один для трафика, исходящего изнутри Service Mesh, например наш тестовый pod, который обращается к сайту Wikipedia.
+
+При совпадении (`match`) с хостом `www.wikipedia.org` трафик пойдет через `istio-egressgateway`.
+
+Если трафик исходит от Service Mesh (тестовый pod, который обращается к сайту Wikipedia), то будет совпадение с `mesh` и трафик будет направлен на сервис `istio-egressgateway.istio-system.svc.cluster.local` и далее петлей снова придет на этот же Virtual Service, затем вновь сработает второй `match` и далее запрос пойдет на сайт Wikipedia.
+
+В данном случае в логах Egress Gateway мы увидим записи об обращении к сайту Wikipedia.
