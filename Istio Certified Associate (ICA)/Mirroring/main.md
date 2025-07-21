@@ -251,7 +251,7 @@ spec:
       version: v2
 ```
 
-Также созадим Virtual Service:
+Также создадим Virtual Service:
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
