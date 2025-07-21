@@ -89,7 +89,7 @@ spec:
 
 Subsets по сути являются набором pod-ов, сгруппированных по меткам.
 
-Также созадим Virtual Service:
+Также создадим Virtual Service:
 
 ```yaml
 apiVersion: networking.istio.io/v1
