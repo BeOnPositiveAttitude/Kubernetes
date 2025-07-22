@@ -53,3 +53,101 @@ spec:
 ```
 
 Документация: https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/
+
+### Demo
+
+Ставим и включаем istio для namespace `default`, разворачиваем в нем приложение echo-server.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: echo-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: echo-server
+  template:
+    metadata:
+      labels:
+        app: echo-server
+    spec:
+      containers:
+      - name: echo
+        image: ealen/echo-server
+        ports:
+        - containerPort: 80
+```
+
+Также создадим Service:
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: echo-server
+  labels:
+    app: echo-server
+spec:
+  ports:
+  - port: 80
+    name: http
+  selector:
+    app: echo-server
+```
+
+Также развернем приложение для нагрузочного тестирования:
+
+```shell
+$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.25/samples/httpbin/sample-client/fortio-deploy.yaml
+```
+
+Из fortio проверим доступность сервиса `echo-server`:
+
+```
+$ kubectl exec fortio-deploy-1234 -c fortio -- /usr/bin/fortio curl -quiet http://echo-server | grep -o '"HOSTNAME":"[^"]*"'
+```
+
+Создадим Virtual Service:
+
+```yaml
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: echo-vs
+  namespace: default
+spec:
+  hosts:
+  - echo-server
+  http:
+    route:
+    - destination:
+        host: echo-server
+        port:
+          number: 80
+```
+
+Плюс создадим Destination Rule:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: echo-dr
+  namespace: default
+spec:
+  host: echo-server
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 1              # максимум 1 соединение для HTTP/1
+      http:
+        http1MaxPendingRequests: 1     # максимум 1 запрос для HTTP/1
+        maxRequestsPerConnection: 1    # максимум 1 запрос на одно соединение
+    outlierDetection:
+      consecutive5xxErrors: 1          # сколько подряд 500-ых ошибок должно произойти
+      interval: 5s                     # скан каждые 5 секунд
+      baseEjectionTime: 30s            # на какое время "выбросить" хост из-за обнаруженных проблем
+      maxEjectionPercent: 100
+```
