@@ -13,3 +13,43 @@ Istio Circuit Breakers контролируют сетевой трафик ме
 То же самое верно, если мы хотим ограничить количество запросов, приходящих к самой "Product Page".
 
 <img src="image.png" width="800" height="400"><br>
+
+Рассмотрим другое приложение, состоящее из трех сервисов - "Homepage" (frontend), "Products" (backend) и "Database" (БД). Сервис "Homepage" взаимодействует с сервисом "Products", а сервис "Products" в свою очередь взаимодействует с сервисом "Database". Теперь представим, что БД стала работать очень медленно. Сервис "Products" ждет, ждет и ждет в надежде получить ответ от БД. В это время сервис "Homepage" тоже начинает работать медленнее, т.к. он ждет ответа от сервиса "Products". Это называется *cascading failure*. Все больше и больше запросов начинает приходить, приложение становится все более медленным и по итогу может вовсе упасть. Подытоживая, сбой сервиса Database повлиял на работу всей системы. Таким образом мы увидели, что может произойти без Circuit Breaking.
+
+<img src="image-1.png" width="800" height="300"><br>
+
+Теперь возьмем этот же пример, но применим Circuit Breaking. В этом случае Istio увидит, что БД стала работать медленно или упала, и сработает автоматический выключатель (Circuit Breaker). Сервис "Products" остановит отправку запросов к БД на какое-то время и сможет возвращать быстрые ответы об ошибках обратно сервису "Homepage", например что-то вроде "Out of stock" (распродано). Соответственно сервис "Homepage" останется отзывчивым на запросы пользователей.
+
+<img src="image-2.png" width="800" height="250"><br>
+
+Без Istio Service Mesh разработчикам понадобится потратить немало времени на разработку подобного функционала, который будет обрабатывать подобные типы проблем.
+
+<img src="image-3.png" width="800" height="350"><br>
+
+Для Circuit Breaking не существует выделенного CRD. Circuit Breaking конфигурируется внутри Destination Rule.
+
+Пример манифеста:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: app-ds
+  namespace: frontend
+spec:
+  host: app-svc
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 2              # максимум 2 соединения для HTTP/1
+        connectTimeout: 30s            # таймаут
+      http:
+        http2MaxRequests: 2            # максимум 2 запроса для HTTP/2
+        maxRequestsPerConnection: 10   # максимум 10 запросов на одно соединение
+    outlierDetection:
+      consecutive5xxErrors: 3          # сколько подряд 500-ых ошибок должно произойти
+      interval: 5m                     # скан каждые 5 минут
+      baseEjectionTime: 10m            # на какое время "выбросить" хост из-за обнаруженных проблем
+```
+
+Документация: https://istio.io/latest/docs/tasks/traffic-management/circuit-breaking/
