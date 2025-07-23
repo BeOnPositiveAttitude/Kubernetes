@@ -97,7 +97,7 @@ spec:
     app: echo-server
 ```
 
-Также развернем приложение для нагрузочного тестирования:
+Также развернем приложение для нагрузочного тестирования fortio:
 
 ```shell
 $ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.25/samples/httpbin/sample-client/fortio-deploy.yaml
@@ -105,14 +105,26 @@ $ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.25/sa
 
 Из fortio проверим доступность сервиса `echo-server`:
 
+```shell
+$ kubectl exec fortio-deploy-74ffb9b4d6-lnrkg -c fortio -- /usr/bin/fortio curl -quiet http://echo-server | grep -o '"HOSTNAME":"[^"]*"'
+
+HTTP/1.1 200 OK
+content-type: application/json; charset=utf-8
+content-length: 1244
+etag: W/"4dc-yLdnt7WVMlvA7xVztJgiLCV228U"
+date: Wed, 23 Jul 2025 05:38:05 GMT
+x-envoy-upstream-service-time: 6
+server: envoy
+
+"HOSTNAME":"echo-server-5d7455c8b5-z9fr6"
 ```
-$ kubectl exec fortio-deploy-1234 -c fortio -- /usr/bin/fortio curl -quiet http://echo-server | grep -o '"HOSTNAME":"[^"]*"'
-```
+
+Все работает.
 
 Создадим Virtual Service:
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: echo-vs
@@ -121,7 +133,7 @@ spec:
   hosts:
   - echo-server
   http:
-    route:
+  - route:
     - destination:
         host: echo-server
         port:
@@ -147,7 +159,104 @@ spec:
         maxRequestsPerConnection: 1    # максимум 1 запрос на одно соединение
     outlierDetection:
       consecutive5xxErrors: 1          # сколько подряд 500-ых ошибок должно произойти
-      interval: 5s                     # скан каждые 5 секунд
+      interval: 5s                     # сканировать pod-ы каждые 5 секунд на предмет "здоровья", если они были "ejected"
       baseEjectionTime: 30s            # на какое время "выбросить" хост из-за обнаруженных проблем
       maxEjectionPercent: 100
+```
+
+В данном случае, если одновременно есть более одного ожидающего запроса (concurrent pending request), то гипотетически начнут появляться 500-е ошибки и сработает обнаружение аномалий (outlier detection). Таким образом, если сервис `echo-server` вернет хотя бы одну 500-ую ошибку, то он будет "выброшен" на 30 секунд.
+
+Из fortio вновь проверим доступность сервиса `echo-server`:
+
+```shell
+$ kubectl exec fortio-deploy-74ffb9b4d6-lnrkg -c fortio -- /usr/bin/fortio curl -quiet http://echo-server | grep -o '"HOSTNAME":"[^"]*"'
+
+HTTP/1.1 200 OK
+content-type: application/json; charset=utf-8
+content-length: 1244
+etag: W/"4dc-2WRpRHrH8r5/0lYgLgWU6/IgPTQ"
+date: Wed, 23 Jul 2025 05:44:26 GMT
+x-envoy-upstream-service-time: 10
+server: envoy
+
+"HOSTNAME":"echo-server-5d7455c8b5-z9fr6"
+```
+
+Все работает, т.к. нет серьезной нагрузки, которая может вызвать Circuit Breaking.
+
+Создадим нагрузку:
+
+```shell
+$ kubectl exec fortio-deploy-74ffb9b4d6-lnrkg -c fortio -- /usr/bin/fortio load -c 2 -qps 0 -n 20 -loglevel Warning http://echo-server
+
+...
+Code 200 : 19 (95.0 %)
+Code 503 : 1 (5.0 %)
+...
+```
+
+Опции fortio:
+
+- `-c` - number of connections/goroutine/threads (default 4) (количество одновременных подключений)
+- `-n` - run for exactly this number of calls instead of duration (количество запросов)
+- `-qps` - queries per seconds or 0 for no wait/max qps (default 8)
+
+Пока только один запрос завершился ошибкой. Увеличим нагрузку:
+
+```shell
+$ kubectl exec fortio-deploy-74ffb9b4d6-lnrkg -c fortio -- /usr/bin/fortio load -c 20 -qps 0 -n 80 -loglevel Warning http://echo-server
+
+...
+Code 200 : 8 (10.0 %)
+Code 503 : 72 (90.0 %)
+...
+```
+
+Как видно ситуация сильно ухудшилась, только 8 запросов были успешными. "Подкрутим" наш Destination Rule:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: echo-dr
+  namespace: default
+spec:
+  host: echo-server
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 10             # максимум 10 соединений для HTTP/1
+      http:
+        http1MaxPendingRequests: 1     # максимум 1 запрос для HTTP/1
+        maxRequestsPerConnection: 10   # максимум 10 запросов на одно соединение
+    outlierDetection:
+      consecutive5xxErrors: 1          # сколько подряд 500-ых ошибок должно произойти
+      interval: 5s                     # сканировать pod-ы каждые 5 секунд на предмет "здоровья", если они были "ejected"
+      baseEjectionTime: 30s            # на какое время "выбросить" хост из-за обнаруженных проблем
+      maxEjectionPercent: 100
+```
+
+Проверим:
+
+```shell
+$ kubectl exec fortio-deploy-74ffb9b4d6-lnrkg -c fortio -- /usr/bin/fortio load -c 20 -qps 0 -n 80 -loglevel Warning http://echo-server
+
+...
+Code 200 : 23 (28.8 %)
+Code 503 : 57 (71.2 %)
+...
+```
+
+Посмотрим на логи istio-proxy:
+
+```shell
+$ kubectl exec fortio-deploy-74ffb9b4d6-lnrkg -c istio-proxy -- pilot-agent request GET stats | grep echo-server | grep pending
+
+cluster.outbound|80||echo-server.default.svc.cluster.local.circuit_breakers.default.remaining_pending: 1
+cluster.outbound|80||echo-server.default.svc.cluster.local.circuit_breakers.default.rq_pending_open: 0
+cluster.outbound|80||echo-server.default.svc.cluster.local.circuit_breakers.high.rq_pending_open: 0
+cluster.outbound|80||echo-server.default.svc.cluster.local.upstream_rq_pending_active: 0
+cluster.outbound|80||echo-server.default.svc.cluster.local.upstream_rq_pending_failure_eject: 0
+cluster.outbound|80||echo-server.default.svc.cluster.local.upstream_rq_pending_overflow: 125
+cluster.outbound|80||echo-server.default.svc.cluster.local.upstream_rq_pending_total: 39
 ```
