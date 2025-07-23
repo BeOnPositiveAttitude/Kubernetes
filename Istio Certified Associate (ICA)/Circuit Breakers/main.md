@@ -41,14 +41,14 @@ spec:
   trafficPolicy:
     connectionPool:
       tcp:
-        maxConnections: 2              # максимум 2 соединения для HTTP/1
-        connectTimeout: 30s            # таймаут
+        maxConnections: 2              # максимум 2 TCP-соединения
+        connectTimeout: 30s            # величина таймаута
       http:
         http2MaxRequests: 2            # максимум 2 запроса для HTTP/2
         maxRequestsPerConnection: 10   # максимум 10 запросов на одно соединение
     outlierDetection:
       consecutive5xxErrors: 3          # сколько подряд 500-ых ошибок должно произойти
-      interval: 5m                     # скан каждые 5 минут
+      interval: 5m                     # сканировать pod-ы каждые 5 минут на предмет "здоровья", если они были "ejected"
       baseEjectionTime: 10m            # на какое время "выбросить" хост из-за обнаруженных проблем
 ```
 
@@ -153,9 +153,9 @@ spec:
   trafficPolicy:
     connectionPool:
       tcp:
-        maxConnections: 1              # максимум 1 соединение для HTTP/1
+        maxConnections: 1              # максимум 1 TCP-соединение
       http:
-        http1MaxPendingRequests: 1     # максимум 1 запрос для HTTP/1
+        http1MaxPendingRequests: 1     # максимум 1 pending-запрос для HTTP/1
         maxRequestsPerConnection: 1    # максимум 1 запрос на одно соединение
     outlierDetection:
       consecutive5xxErrors: 1          # сколько подряд 500-ых ошибок должно произойти
@@ -165,6 +165,10 @@ spec:
 ```
 
 В данном случае, если одновременно есть более одного ожидающего запроса (concurrent pending request), то гипотетически начнут появляться 500-е ошибки и сработает обнаружение аномалий (outlier detection). Таким образом, если сервис `echo-server` вернет хотя бы одну 500-ую ошибку, то он будет "выброшен" на 30 секунд.
+
+This configuration indicates that if there are more than one concurrent and pending requests, HTTP 5xx errors will start to occur. Additionally, the outlier detection section specifies that if the `echo-server` service returns even a single HTTP 5xx error, the service will be ejected for a duration of 30 seconds.
+
+Furthermore (более того), the `interval` parameter indicates that Envoy Proxy will check the health of all pods in the echo app every 5 seconds to ascertain (удостовериться) if any of them have been ejected.
 
 Из fortio вновь проверим доступность сервиса `echo-server`:
 
@@ -225,9 +229,9 @@ spec:
   trafficPolicy:
     connectionPool:
       tcp:
-        maxConnections: 10             # максимум 10 соединений для HTTP/1
+        maxConnections: 10             # максимум 10 TCP-соединений
       http:
-        http1MaxPendingRequests: 1     # максимум 1 запрос для HTTP/1
+        http1MaxPendingRequests: 1     # максимум 1 pending-запрос для HTTP/1
         maxRequestsPerConnection: 10   # максимум 10 запросов на одно соединение
     outlierDetection:
       consecutive5xxErrors: 1          # сколько подряд 500-ых ошибок должно произойти
