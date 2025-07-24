@@ -98,7 +98,7 @@ spec:
           number: 8000
     retries:
       attempts: 3         # сколько раз повторить попытку
-      perTryTimeout: 1s
+      perTryTimeout: 1s   # может вернуть "Gateway Timeout" в случае, если упрется в таймаут, например при обращении к /delay/2
       retryOn: 5xx        # повторять попытки при возникновении 500-й ошибки  
 ```
 
@@ -142,3 +142,5 @@ $ kubectl logs httpbin-686d6fc899-t5q4b -c istio-proxy
 ```
 
 Видим три повторные попытки выполнения запроса к location `/status/500`.
+
+Документация: https://istio.io/latest/docs/concepts/traffic-management/#network-resilience-and-testing
