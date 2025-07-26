@@ -65,7 +65,7 @@ $ kubectl -n test exec -it test -- curl helloworld.default.svc.cluster.local:500
 Hello version: v1, instance: helloworld-v1-5787f49bd8-r6f88
 ```
 
-Все работает.
+Все работает. This works because by default mTLS is not enforced unless you explicitly enable it via PeerAuthentication. This means services can communicate over plain text HTTP.
 
 Включим mTLS глобально на уровне всего Service Mesh (*mesh-wide policy*):
 
@@ -89,9 +89,11 @@ curl: (56) Recv failure: Connection reset by peer
 command terminated with exit code 56
 ```
 
-Не работает, т.к. для namespace `test` не включено istio injection и трафик уходит по plain text HTTP, а приложение в namespace `default` требует обязательного наличия mTLS.
+Не работает, т.к. для namespace `test` не включено Istio Injection и трафик уходит по plain text HTTP, а заданная нами *mesh-wide policy* требует обязательного наличия mTLS.
 
-Включим istio injection для namespace `test` и пересоздадим тестовый pod:
+This is happening because Istio Injection is not enabled on the `test` namespace, so traffic from the `test` pod to the `helloworld` endpoint is going over plaintext. But the PeerAuthentication policy is enforcing that all traffic must be mTLS encrypted.
+
+Включим Istio Injection для namespace `test` и пересоздадим тестовый pod:
 
 ```shell
 $ kubectl label ns test istio-injection=enabled
@@ -107,7 +109,7 @@ $ kubectl -n test exec -it test -- curl helloworld.default.svc.cluster.local:500
 Hello version: v1, instance: helloworld-v1-5787f49bd8-r6f88
 ```
 
-Теперь заработало, т.к. мы включили istio и для namespace `test`.
+Теперь заработало, т.к. мы включили Istio Injection для namespace `test`.
 
 Переопределим глобальную политику Peer Authentication для namespace `default` (*namespace-wide policy*):
 
@@ -131,7 +133,7 @@ default        default   PERMISSIVE   5s
 istio-system   default   STRICT       6m56s
 ```
 
-Создаем еще один тестовый namespace и нагрузку внутри него:
+Создаем еще один тестовый namespace `app` и нагрузку внутри него:
 
 ```shell
 $ kubectl create ns app
@@ -146,7 +148,9 @@ $ kubectl -n app exec -it test -- curl helloworld.default.svc.cluster.local:5000
 Hello version: v1, instance: helloworld-v1-5787f49bd8-r6f88
 ```
 
-Работает. Хотя для namespace `app` не включено istio injection, но permissive-режим, включенный для namespace `default` разрешает plain text HTTP.
+Работает. Хотя для namespace `app` не включено Istio Injection, но permissive-режим, включенный для namespace `default` разрешает plain text HTTP.
+
+The Hello World endpoint should now become accessible again due to the `PERMISSIVE` policy applied on the `default` namespace overriding the global `STRICT` policy.
 
 Теперь разворачиваем в namespace `default` приложение bookinfo.
 
@@ -183,7 +187,7 @@ Hello version: v2, instance: helloworld-v2-6746879bdd-jwgzw
 Из тестового pod-а в namespace `test` проверим доступность сервиса `helloworld`:
 
 ```shell
-$ kubectl -n app exec -it test -- curl helloworld.default.svc.cluster.local:5000/hello
+$ kubectl -n test exec -it test -- curl helloworld.default.svc.cluster.local:5000/hello
 
 Hello version: v1, instance: helloworld-v1-5787f49bd8-r6f88
 ```
