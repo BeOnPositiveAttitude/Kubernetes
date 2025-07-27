@@ -116,6 +116,8 @@ $ kubectl exec -it test -- curl http://helloworld:5000/hello
 Hello version: v1, instance: helloworld-v1-5787f49bd8-x5n4v
 ```
 
+Теперь ответы приходят с 5-секундной задержкой.
+
 Теперь вместо задержки добавим 500-е ошибки.
 
 ```yaml
@@ -159,3 +161,5 @@ server: envoy
 ```bash
 $ kubectl exec -it test -- /bin/sh -c 'for i in $(seq 1 10); do curl -I http://helloworld:5000/hello; echo "---"; done'
 ```
+
+Часть запросов завершилась успешно, а другая часть с ошибкой.

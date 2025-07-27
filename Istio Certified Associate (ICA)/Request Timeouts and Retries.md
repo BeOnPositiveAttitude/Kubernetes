@@ -27,7 +27,11 @@ server: envoy
 transfer-encoding: chunked
 ```
 
+Istio has a `timeout` option we can implement in case an application doesn't respond.
+
 Создадим Virtual Service, в котором добавим таймаут. Т.е. если сервис (объект k8s) `httpbin` не отвечает в течение двух секунд, то пометить его как "timed out".
+
+The Virtual Service states (утверждает) that all traffic going to `httpbin` will time out after 2 seconds if the app doesn't respond.
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
@@ -101,6 +105,8 @@ spec:
       perTryTimeout: 1s   # может вернуть "Gateway Timeout" в случае, если упрется в таймаут, например при обращении к /delay/2
       retryOn: 5xx        # повторять попытки при возникновении 500-й ошибки  
 ```
+
+The `retries` section states that it will retry 3 times on any 5xx errors.
 
 Сэмулируем  500-ю ошибку (само приложение умеет имитировать ошибки при обращении к location `/status`):
 
