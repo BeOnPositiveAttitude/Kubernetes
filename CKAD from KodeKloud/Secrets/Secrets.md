@@ -133,3 +133,9 @@ spec:
 - секрет посылается ноде, только если pod на этой ноде требует его
 - kubelet хранит секрет в tmpfs, таким образом секрет не записывается на диск
 - если pod зависящий от секрета удален, kubelet также удалит локальную копию секрета
+
+Добавить в секрет два новых значения `foo` и `bar`:
+
+```shell
+$  kubectl patch secret my-super-secret -p '{"data":{"foo":"base64EncodedValue1", "bar":"base64EncodedValue2"}}'
+```

@@ -141,25 +141,23 @@ https://istio.io/latest/docs/tasks/security/authorization/
 
 ### Demo
 
-### Demo Timeouts
-
 Ставим и включаем istio для namespace `default`, разворачиваем в нем приложение httpbin.
 
 ```shell
 $ kubectl apply -f https://raw.githubusercontent.com/istio/istio/refs/heads/master/samples/httpbin/httpbin.yaml
 ```
 
-Создаем новый namespace и тестовый pod внутри него:
+Создаем новый namespace и включаем Istio Injection:
 
 ```shell
 $ kubectl create ns test
-$ kubectl -n test run test --image=nginx
+$ kubectl label ns test istio-injection=enabled
 ```
 
-Включаем Istio Injection на созданном namespace:
+Создаем тестовый pod внутри него:
 
 ```shell
-$ kubectl label ns test istio-injection=enabled
+$ kubectl -n test run test --image=nginx
 ```
 
 Проверим доступность сервиса `httpbin` из тестового pod-а:
@@ -167,6 +165,15 @@ $ kubectl label ns test istio-injection=enabled
 ```bash
 $ kubectl -n test exec -it test -- curl -I http://httpbin.default.svc.cluster.local:8000
 
+HTTP/1.1 200 OK
+access-control-allow-credentials: true
+access-control-allow-origin: *
+content-security-policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' camo.githubusercontent.com
+content-type: text/html; charset=utf-8
+date: Tue, 29 Jul 2025 05:49:10 GMT
+x-envoy-upstream-service-time: 13
+server: envoy
+transfer-encoding: chunked
 ```
 
 Включим mTLS глобально на уровне всего Service Mesh (*mesh-wide policy*):
@@ -200,3 +207,311 @@ spec:
     - operation:
         methods: ["GET"]
 ```
+
+Вновь проверим доступность сервиса `httpbin` из тестового pod-а:
+
+```bash
+$ kubectl -n test exec -it test -- curl -I http://httpbin.default.svc.cluster.local:8000
+
+HTTP/1.1 403 Forbidden
+content-length: 19
+content-type: text/plain
+date: Tue, 29 Jul 2025 05:51:05 GMT
+server: envoy
+x-envoy-upstream-service-time: 2
+```
+
+Почему мы получили 403? Потому что разрешили только метод GET, но не разрешили метод HEAD. Проверим без опции `--head`:
+
+```bash
+$ kubectl -n test exec -it test -- curl http://httpbin.default.svc.cluster.local:8000
+
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv='content-type' value='text/html;charset=utf8'>
+  <meta name='generator' value='Ronn/v0.7.3 (http://github.com/rtomayko/ronn/tree/0.7.3)'>
+  <title>go-httpbin(1): HTTP Client Testing Service</title>
+<...>
+```
+
+Так работает. Добавим метод GET в разрешенные:
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: httpbin-auth-policy
+  namespace: default
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["test"]
+    to:
+    - operation:
+        methods: ["GET", "HEAD"]
+```
+
+Проверим еще раз:
+
+```bash
+$ kubectl -n test exec -it test -- curl -I http://httpbin.default.svc.cluster.local:8000
+
+HTTP/1.1 200 OK
+access-control-allow-credentials: true
+access-control-allow-origin: *
+content-security-policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' camo.githubusercontent.com
+content-type: text/html; charset=utf-8
+date: Tue, 29 Jul 2025 07:47:44 GMT
+x-envoy-upstream-service-time: 1
+server: envoy
+transfer-encoding: chunked
+```
+
+Заработало, т.к. мы добавили метод HEAD в разрешенные.
+
+Теперь создаем еще один новый namespace `app` и включаем Istio Injection:
+
+```shell
+$ kubectl create ns app
+$ kubectl label ns app istio-injection=enabled
+```
+
+Создаем тестовый pod внутри него:
+
+```shell
+$ kubectl -n app run test --image=nginx
+```
+
+Проверим доступность сервиса httpbin из namespace `app`:
+
+```bash
+$ kubectl -n app exec -it test -- curl -I http://httpbin.default.svc.cluster.local:8000
+
+HTTP/1.1 403 Forbidden
+content-length: 19
+content-type: text/plain
+date: Tue, 29 Jul 2025 07:52:51 GMT
+server: envoy
+x-envoy-upstream-service-time: 5
+```
+
+Не работает, т.к. политика разрешает доступ в namespace `default` только из namespace `test`.
+
+Добавим namespace `app` в разрешенные:
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: httpbin-auth-policy
+  namespace: default
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["test", "app"]
+    to:
+    - operation:
+        methods: ["GET", "HEAD"]
+```
+
+Проверяем:
+
+```bash
+$ kubectl -n app exec -it test -- curl -I http://httpbin.default.svc.cluster.local:8000
+
+HTTP/1.1 200 OK
+access-control-allow-credentials: true
+access-control-allow-origin: *
+content-security-policy: default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' camo.githubusercontent.com
+content-type: text/html; charset=utf-8
+date: Tue, 29 Jul 2025 07:55:01 GMT
+x-envoy-upstream-service-time: 1
+server: envoy
+transfer-encoding: chunked
+```
+
+Заработало!
+
+Пересоздадим разрешающую политику авторизации:
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: httpbin-auth-policy
+  namespace: default
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["app"]
+    to:
+    - operation:
+        methods: ["GET", "HEAD"]
+        paths: ["/get"]
+```
+
+И создадим еще одну запрещающую политику авторизации:
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: httpbin-auth-deny-policy
+  namespace: default
+spec:
+  action: DENY
+  rules:
+  - to:
+    - operation:
+        paths: ["/delay"]
+```
+
+Проверяем работу DENY-политики из двух namespace:
+
+```bash
+$ kubectl -n app exec -it test -- curl http://httpbin.default.svc.cluster.local:8000/delay/1
+RBAC: access denied
+
+$ kubectl -n test exec -it test -- curl http://httpbin.default.svc.cluster.local:8000/delay/1
+RBAC: access denied
+```
+
+Проверяем работу ALLOW-политики из двух namespace:
+
+```bash
+$ kubectl -n test exec -it test -- curl http://httpbin.default.svc.cluster.local:8000/get    
+RBAC: access denied
+
+$ kubectl -n app exec -it test -- curl http://httpbin.default.svc.cluster.local:8000/get
+{
+  "args": {},
+  "headers": {
+    "Accept": [
+      "*/*"
+    ],
+    "Host": [
+      "httpbin.default.svc.cluster.local:8000"
+    ],
+    "User-Agent": [
+      "curl/7.88.1"
+    ],
+<...>
+```
+
+Разрешающая политика разрешает доступ в namespace `default` только из namespace `app`, отсюда такой результат.
+
+Теперь добавим селектор в разрешающую политику:
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: httpbin-auth-policy
+  namespace: default
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app: httpbin
+  rules:
+  - from:
+    - source:
+        namespaces: ["app"]
+    to:
+    - operation:
+        methods: ["GET", "HEAD"]
+        paths: ["/get"]
+```
+
+Разворачиваем в namespace `default` приложение bookinfo.
+
+```shell
+$ kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.11/samples/bookinfo/platform/kube/bookinfo.yaml
+```
+
+Пересоздадим DENY-политику, чтобы она запрещала вообще все:
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: default
+spec:
+  action: DENY
+  rules:
+  - {}
+```
+
+```shell
+$ kubectl get authorizationpolicies.security.istio.io 
+NAME                  AGE
+deny-all              4s
+httpbin-auth-policy   16m
+```
+
+Проверяем доступность сервиса `httpbin` из двух namespace:
+
+```bash
+$ kubectl -n app exec -it test -- curl http://httpbin.default.svc.cluster.local:8000/get
+RBAC: access denied
+
+$ kubectl -n test exec -it test -- curl http://httpbin.default.svc.cluster.local:8000/get
+RBAC: access denied
+```
+
+Не работает из обоих namespaces, не смотря на созданную разрешающую политику! Это происходит потому, что запрещающая политика всегда побеждает и "перезаписывает" разрешающую!
+
+Удалим DENY-политику.
+
+Проверяем доступность сервиса `productpage` из namespace `app`:
+
+```bash
+$ kubectl -n app exec -it test -- curl -I http://productpage.default.svc.cluster.local:9080/productpage
+
+HTTP/1.1 200 OK
+content-type: text/html; charset=utf-8
+content-length: 5179
+server: envoy
+date: Tue, 29 Jul 2025 08:31:14 GMT
+x-envoy-upstream-service-time: 1607
+```
+
+Создадим новую DENY-политику:
+
+```yaml
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all-product
+  namespace: default
+spec:
+  action: DENY
+  selector:
+    matchLabels:
+      app: productpage
+  rules:
+  - {}
+```
+
+Вновь проверяем доступность сервиса `productpage` из namespace `app`:
+
+```bash
+$ kubectl -n app exec -it test -- curl -I http://productpage.default.svc.cluster.local:9080/productpage
+
+HTTP/1.1 403 Forbidden
+content-length: 19
+content-type: text/plain
+date: Tue, 29 Jul 2025 08:34:01 GMT
+server: envoy
+x-envoy-upstream-service-time: 6
+```
+
+Важно!!! Селектор смотрит на метки объекта Service, а не на Pod!
