@@ -235,7 +235,9 @@ $ kubectl -n test exec -it test -- curl http://httpbin.default.svc.cluster.local
 <...>
 ```
 
-Так работает. Добавим метод GET в разрешенные:
+Так работает.
+
+Добавим метод GET в разрешенные:
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -285,7 +287,7 @@ $ kubectl label ns app istio-injection=enabled
 $ kubectl -n app run test --image=nginx
 ```
 
-Проверим доступность сервиса httpbin из namespace `app`:
+Проверим доступность сервиса `httpbin` из namespace `app`:
 
 ```bash
 $ kubectl -n app exec -it test -- curl -I http://httpbin.default.svc.cluster.local:8000
@@ -337,7 +339,7 @@ transfer-encoding: chunked
 
 Заработало!
 
-Пересоздадим разрешающую политику авторизации:
+Переконфигурируем разрешающую политику авторизации:
 
 ```yaml
 apiVersion: security.istio.io/v1beta1
@@ -430,6 +432,8 @@ spec:
         paths: ["/get"]
 ```
 
+The configuration presented above is designed to exclusively target workloads labeled with `app: httpbin`. However, if there is another workload within the same namespace, this configuration will not impact it, as it specifically pertains (относится) to the labels assigned within this namespace.
+
 Разворачиваем в namespace `default` приложение bookinfo.
 
 ```shell
@@ -467,7 +471,7 @@ $ kubectl -n test exec -it test -- curl http://httpbin.default.svc.cluster.local
 RBAC: access denied
 ```
 
-Не работает из обоих namespaces, не смотря на созданную разрешающую политику! Это происходит потому, что запрещающая политика всегда побеждает и "перезаписывает" разрешающую!
+Не работает из обоих namespaces, не смотря на созданную разрешающую политику! Это происходит потому, что запрещающая политика всегда побеждает и "перезаписывает" разрешающую! In Istio, DENY policies are evaluated with higher precedence.
 
 Удалим DENY-политику.
 
@@ -515,3 +519,5 @@ x-envoy-upstream-service-time: 6
 ```
 
 Важно!!! Селектор смотрит на метки объекта Service, а не на Pod!
+
+При использовании селектора ограничения, заданные например в разрешающей политике, накладываются только на выбранную нагрузку, на все остальные нагрузки эти ограничения не действуют.
