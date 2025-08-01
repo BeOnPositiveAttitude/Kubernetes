@@ -90,7 +90,7 @@ $ istioctl install -f custom-profile.yaml -y
 Чтобы сэмлуировать внешнее приложение, поставим непосредственно на ноду K8s-кластера Nginx:
 
 ```shell
-$ sudo apt update -y && sudo apt install nginx -y
+$ sudo apt update && sudo apt install nginx -y
 ```
 
 Проверяем работу Nginx:
@@ -108,8 +108,10 @@ $ ip -c addr show weave
 Проверяем работу Nginx через этот интерфейс:
 
 ```shell
-$ curl http://10.50.0.1
+$ curl http://172.30.1.2
 ```
+
+Все ок, работает.
 
 Включим Istio Injection для namespace `default`:
 
@@ -123,15 +125,109 @@ $ kubectl label ns default istio-injection=enabled
 $ kubectl run test --image=nginx
 ```
 
-Из тестового pod-а проверим доступность Nginx:
+Из тестового pod-а проверим доступность Nginx по IP-адресу:
 
 ```shell
-$ kubectl exec -it test -- curl -I http://10.50.0.1
-
-root@test:/# curl -I -L http://www.wikipedia.org
+$ kubectl exec -ti test -- curl -I http://172.30.1.2
 
 HTTP/1.1 502 Bad Gateway
-date: Sat, 19 Jul 2025 09:12:58 GMT
+date: Fri, 01 Aug 2025 05:15:40 GMT
 server: envoy
 transfer-encoding: chunked
 ```
+
+Ожидаемо не работает.
+
+Создадим Workload Entry:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: WorkloadEntry
+metadata:
+  name: external-app-we
+  namespace: default
+spec:
+  address: 172.30.1.2
+  labels:
+    app: external
+```
+
+Добавим Service Entry:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: external-app-se
+  namespace: default
+spec:
+  hosts:
+  - app.internal.com   # создаем хост в istio internal registry
+  ports:
+  - number: 80
+    name: http
+    protocol: HTTP
+  resolution: STATIC  # не DNS, потому что связан с Workload Entry
+  workloadSelector:
+    labels:
+      app: external
+```
+
+Из тестового pod-а вновь проверим доступность Nginx по IP-адресу:
+
+```shell
+$ kubectl exec -ti test -- curl -I http://172.30.1.2
+
+HTTP/1.1 502 Bad Gateway
+date: Fri, 01 Aug 2025 05:15:40 GMT
+server: envoy
+transfer-encoding: chunked
+```
+
+Не работает, т.к. мы обращаемся по IP-адресу. Но в Istio's Internal Registry есть только доменное имя. Проверим по нему:
+
+```shell
+$ kubectl exec -ti test -- curl -I http://app.internal.com
+
+HTTP/1.1 200 OK
+server: envoy
+date: Fri, 01 Aug 2025 05:20:06 GMT
+content-type: text/html
+content-length: 615
+last-modified: Fri, 01 Aug 2025 05:10:13 GMT
+etag: "688c4c35-267"
+accept-ranges: bytes
+x-envoy-upstream-service-time: 1
+```
+
+По доменному имени работает!
+
+Запустим еще один тестовый pod, но сразу зададим ему метку `app=external`, чтобы его "подхватил" наш Workload Entry:
+
+```shell
+$ kubectl run nginx --image=nginx --labels="app=external"
+```
+
+Чтобы различать Nginx, запущенный на ноде кластера, и Nginx, запущенны в pod-е, изменим его стартовую страницу:
+
+```shell
+$ kubectl exec nginx -- /bin/bash -c 'echo "This is an Nginx Pod" > /usr/share/nginx/html/index.html'
+```
+
+Из тестового pod-а вновь проверим доступность Nginx:
+
+```shell
+$ kubectl exec -ti test -- curl -I http://app.internal.com
+
+This is an Nginx Pod
+
+$ kubectl exec -ti test -- curl -I http://app.internal.com
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<...>
+```
+
+Как видно мы попадаем то в pod, то на ноду кластера!
