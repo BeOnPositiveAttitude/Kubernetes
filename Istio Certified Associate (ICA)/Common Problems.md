@@ -45,5 +45,9 @@
 14. Как убедиться, что политика авторизации действительно работает:
 
     https://istio.io/latest/docs/ops/common-problems/security-issues/#ensure-istiod-accepts-the-policies
+
+15. Основное приложение в pod-е не становится Ready из-за istio-proxy:
+
+    https://istio.io/latest/docs/ops/common-problems/injection/#pod-or-containers-start-with-network-issues-if-istio-proxy-is-not-ready
  
 Документация: https://istio.io/latest/docs/ops/common-problems/

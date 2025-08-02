@@ -267,10 +267,14 @@ spec:
     - destination:
         host: echo-server
         subset: v1
+        port:
+          number: 80
       weight: 100
     mirror:
       host: echo-server
       subset: v2
+      port:
+        number: 80
     mirrorPercentage:
       value: 100.0
 ```
@@ -297,3 +301,34 @@ HOSTNAME: echo-server-v1-699dcf589b-q9bkb
 ```
 
 Теперь мы попадаем только на v1, однако в логах pod-ов видно, что трафик приходит сразу на обе версии приложения (зеркалируется).
+
+Конфигурация VS из квиза:
+
+```yaml
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: hello-world-vs
+  namespace: hello
+spec:
+  hosts:
+  - helloworld
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: helloworld.hello.svc.cluster.local
+        subset: v1
+        port:
+          number: 5000
+      weight: 100
+    mirror:
+      host: helloworld.hello.svc.cluster.local
+      subset: v2
+      port:
+        number: 5000
+    mirrorPercentage:
+      value: 100.0
+```
