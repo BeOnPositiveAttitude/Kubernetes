@@ -173,6 +173,8 @@ spec:
       app: external
 ```
 
+The Service Entry defines the DNS to be added to Istio's Registry, in this case, `app.internal.com`. It also defines the port, protocol and the resolution of `STATIC` as opposed to `DNS`. Finally, we use the `workloadSelector` to tie (связывать) the Workload Entry to this Service Entry. Notice that the `labels` match the Workload Entry `labels`.
+
 Из тестового pod-а вновь проверим доступность Nginx по IP-адресу:
 
 ```shell
