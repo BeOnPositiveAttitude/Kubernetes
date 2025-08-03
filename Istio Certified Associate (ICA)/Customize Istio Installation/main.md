@@ -99,3 +99,7 @@ $ istioctl upgrade -f custom-profile.yaml -y
 ```
 
 It might seem unnecessary to pass `false` for one of the gateways instead of simply renaming the default one; however, if you rename it directly, Istio will create two gateways: one with the default name `istio-ingressgateway-*` and another with the name `istio-ingress-gateway-*`.
+
+Чтобы отключить автоматическое инжектирование Istio Sidecar для определенного pod-а, нужно добавить для него метку `sidecar.istio.io/inject: "false"`.
+
+https://istio.io/latest/docs/setup/additional-setup/sidecar-injection/#controlling-the-injection-policy

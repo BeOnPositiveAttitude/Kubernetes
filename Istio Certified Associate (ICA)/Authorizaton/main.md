@@ -471,7 +471,7 @@ $ kubectl -n test exec -it test -- curl http://httpbin.default.svc.cluster.local
 RBAC: access denied
 ```
 
-Не работает из обоих namespaces, не смотря на созданную разрешающую политику! Это происходит потому, что запрещающая политика всегда побеждает и "перезаписывает" разрешающую (в квиз-лабе это не подтвердилось)! In Istio, DENY policies are evaluated with higher precedence.
+Не работает из обоих namespaces, не смотря на созданную разрешающую политику! Это происходит потому, что запрещающая политика всегда побеждает и "перезаписывает" разрешающую (видимо потому что применяется к одному и тому же namespace)! In Istio, DENY policies are evaluated with higher precedence.
 
 Удалим DENY-политику.
 
@@ -532,3 +532,7 @@ metadata:
   namespace: istio-system
 spec: {}
 ```
+
+What is a recommended practice when implementing Istio's security features?
+
+- Use a default `AuthorizationPolicy` that denies all traffic and then explicitly allows necessary access.

@@ -1,0 +1,20 @@
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      run: test
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    80:
+      mode: DISABLE
+
+###
+# Allow more permissive traffic in the "default" namespace to port 80 for workloads labeled with "run: test".
+# These specific workloads will accept plaintext communication on port 80 exclusively.
+# All other traffic should enforce strict mTLS.
+###

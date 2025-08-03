@@ -1,0 +1,28 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+spec:
+  components:
+    base:
+      enabled: true
+    cni:
+      enabled: false
+    egressGateways:
+    - enabled: true
+      name: istio-egressgateway
+    ingressGateways:
+    - enabled: false
+      name: istio-ingressgateway
+    - enabled: true
+      name: kode-kloud-gateway
+      namespace: default
+    istiodRemote:
+      enabled: false
+    pilot:
+      enabled: true
+      k8s:
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+  hub: docker.io/istio
+<...>
