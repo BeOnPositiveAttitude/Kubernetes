@@ -471,7 +471,7 @@ $ kubectl -n test exec -it test -- curl http://httpbin.default.svc.cluster.local
 RBAC: access denied
 ```
 
-Не работает из обоих namespaces, не смотря на созданную разрешающую политику! Это происходит потому, что запрещающая политика всегда побеждает и "перезаписывает" разрешающую! In Istio, DENY policies are evaluated with higher precedence.
+Не работает из обоих namespaces, не смотря на созданную разрешающую политику! Это происходит потому, что запрещающая политика всегда побеждает и "перезаписывает" разрешающую (в квиз-лабе это не подтвердилось)! In Istio, DENY policies are evaluated with higher precedence.
 
 Удалим DENY-политику.
 
@@ -521,3 +521,14 @@ x-envoy-upstream-service-time: 6
 Важно!!! Селектор смотрит на метки объекта Service, а не на Pod!
 
 При использовании селектора ограничения, заданные например в разрешающей политике, накладываются только на выбранную нагрузку, на все остальные нагрузки эти ограничения не действуют.
+
+Пустая DENY-политика, запрещающая все по умолчанию:
+
+```yaml
+apiVersion: security.istio.io/v1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: istio-system
+spec: {}
+```
