@@ -1,0 +1,58 @@
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: app-gateway
+  namespace: istio-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "app.domain.com"
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: httpbin-vs
+  namespace: api
+spec:
+  hosts:
+  - "app.domain.com"
+  gateways:
+  - istio-system/app-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: httpbin.api.svc.cluster.local
+        port:
+          number: 8000
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: helloworld-vs
+  namespace: hello
+spec:
+  hosts:
+  - "app.domain.com"
+  gateways:
+  - istio-system/app-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/hello"
+    route:
+    - destination:
+        host: helloworld
+        port:
+          number: 5000
