@@ -56,3 +56,141 @@ spec:
         host: helloworld
         port:
           number: 5000
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: hello-world-dr
+  namespace: hello
+spec:
+  host: helloworld.hello.svc.cluster.local
+  trafficPolicy:
+    loadBalancer:
+      simple: ROUND_ROBIN
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: helloworld-dr
+  namespace: welcome
+spec:
+  host: helloworld
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: helloworld-vs
+  namespace: welcome
+spec:
+  hosts:
+  - helloworld
+  http:
+  - match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: helloworld.welcome.svc.cluster.local
+        port:
+          number: 5000
+        subset: v1
+      weight: 70
+    - destination:
+        host: helloworld.welcome.svc.cluster.local
+        port:
+          number: 5000
+        subset: v2
+      weight: 30
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: end-user-gateway
+  namespace: end-user
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "end-user.domain.com"
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: helloworld-vs
+  namespace: end-user
+spec:
+  hosts:
+  - "end-user.domain.com"
+  gateways:
+  - end-user-gateway
+  http:
+  - match:
+    - headers:
+        end-user:
+          exact: kodekloud
+    route:
+    - destination:
+        host: helloworld.end-user.svc.cluster.local
+        port:
+          number: 5000
+        subset: v1
+  - route:
+    - destination:
+        host: helloworld.end-user.svc.cluster.local
+        port:
+          number: 5000
+        subset: v2
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: helloworld-dr
+  namespace: end-user
+spec:
+  host: helloworld   # именно внутреннее имя, а не внешнее "end-user.domain.com"
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: cnn-se
+  namespace: cnn
+spec:
+  hosts:
+  - edition.cnn.com
+  ports:
+  - number: 80
+    name: http
+    protocol: HTTP
+  - number: 443
+    name: https
+    protocol: HTTPS  
+  resolution: DNS
+
+# In the preconfigured cnn namespace, please configure an Istio Egress Gateway, named cnn-istio-egress, to route all outbound HTTP and HTTPS traffic to the external domain edition.cnn.com. Please utilize name cnn-istio-egress for your gateway.
+#Please confirm that all traffic exits the mesh via the egress gateway, rather than directly from the application pods.

@@ -71,7 +71,7 @@ spec:
 Для разделения трафика создадим Destination Rule:
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1beta1
 kind: DestinationRule
 metadata:
   name: app-dr
@@ -92,7 +92,7 @@ Subsets по сути являются набором pod-ов, сгруппир
 Также создадим Virtual Service:
 
 ```yaml
-apiVersion: networking.istio.io/v1
+apiVersion: networking.istio.io/v1beta1
 kind: VirtualService
 metadata:
   name: app-vs
