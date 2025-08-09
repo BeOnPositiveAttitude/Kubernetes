@@ -192,5 +192,7 @@ spec:
     protocol: HTTPS  
   resolution: DNS
 
-# In the preconfigured cnn namespace, please configure an Istio Egress Gateway, named cnn-istio-egress, to route all outbound HTTP and HTTPS traffic to the external domain edition.cnn.com. Please utilize name cnn-istio-egress for your gateway.
-#Please confirm that all traffic exits the mesh via the egress gateway, rather than directly from the application pods.
+# In the preconfigured cnn namespace, please configure an Istio Egress Gateway, named cnn-istio-egress, to route all outbound HTTP
+# and HTTPS traffic to the external domain edition.cnn.com. Please utilize name cnn-istio-egress for your gateway.
+
+# Please confirm that all traffic exits the mesh via the egress gateway, rather than directly from the application pods.

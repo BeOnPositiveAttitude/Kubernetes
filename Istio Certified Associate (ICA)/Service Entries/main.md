@@ -269,7 +269,7 @@ spec:
   - name: wikipedia
 ```
 
-Также созадим Virtual Service:
+Также создадим Virtual Service:
 
 ```yaml
 apiVersion: networking.istio.io/v1beta1
