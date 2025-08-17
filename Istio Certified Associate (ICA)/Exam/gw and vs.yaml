@@ -196,3 +196,190 @@ spec:
 # and HTTPS traffic to the external domain edition.cnn.com. Please utilize name cnn-istio-egress for your gateway.
 
 # Please confirm that all traffic exits the mesh via the egress gateway, rather than directly from the application pods.
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: cnn-istio-egress
+  namespace: cnn
+spec:
+  selector:
+    istio: egressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - edition.cnn.com
+  - port:
+      number: 443
+      name: tls
+      protocol: TLS
+    hosts:
+    - edition.cnn.com
+    tls:
+      mode: PASSTHROUGH
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: cnn-dr
+  namespace: cnn
+spec:
+  host: istio-egressgateway.istio-system.svc.cluster.local
+  subsets:
+  - name: cnn
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: cnn-vs
+  namespace: cnn
+spec:
+  hosts:
+  - edition.cnn.com
+  gateways:
+  - cnn-istio-egress
+  - mesh
+  http:
+  - match:
+    - gateways:
+      - mesh
+      port: 80
+    route:
+    - destination:
+        host: istio-egressgateway.istio-system.svc.cluster.local
+        subset: cnn
+        port:
+          number: 80
+      weight: 100
+  - match:
+    - gateways:
+      - cnn-istio-egress
+      port: 80
+    route:
+    - destination:
+        host: edition.cnn.com
+        port:
+          number: 80
+      weight: 100
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nginx-dr
+  namespace: nginx
+spec:
+  host: nginx
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: nginx-vs
+  namespace: nginx
+spec:
+  hosts:
+  - nginx
+  http:
+  - route:
+    - destination:
+        host: nginx.nginx.svc.cluster.local
+        port:
+          number: 80
+        subset: v1
+      weight: 100
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nginx-dr
+  namespace: mirroring
+spec:
+  host: nginx
+  subsets:
+  - name: v1
+    labels:
+      version: v1
+  - name: v2
+    labels:
+      version: v2
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: nginx-vs
+  namespace: mirroring
+spec:
+  hosts:
+  - nginx
+  http:
+  - route:
+    - destination:
+        host: nginx.mirroring.svc.cluster.local
+        port:
+          number: 80
+        subset: v1
+      weight: 100
+    mirror:
+      host: nginx.mirroring.svc.cluster.local
+      port:
+        number: 80
+      subset: v2
+    mirrorPercentage:
+      value: 100
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: echo-vs
+  namespace: echo-limited
+spec:
+  hosts:
+  - echo
+  http:
+  - route:
+    - destination:
+        host: echo.echo-limited.svc.cluster.local
+        port:
+          number: 80
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: echo-dr
+  namespace: echo-limited
+spec:
+  host: echo
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 1
+      http:
+        http2MaxRequests: 1
+        http1MaxPendingRequests: 1
+        maxRequestsPerConnection: 1
+    outlierDetection:
+      consecutive5xxErrors: 3
+      interval: 5s
+      baseEjectionTime: 5m
+
+# A new instance of the Hello World App has been deployed in namespace hello-delay.
+
+# Your objective is to implement a 5-second delay on all HTTP requests directed to this instance.
