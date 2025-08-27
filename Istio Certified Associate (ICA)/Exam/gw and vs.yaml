@@ -380,6 +380,194 @@ spec:
       interval: 5s
       baseEjectionTime: 5m
 
-# A new instance of the Hello World App has been deployed in namespace hello-delay.
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: hello-vs
+  namespace: hello-delay
+spec:
+  hosts:
+  - helloworld
+  http:
+  - fault:
+      delay:
+        percentage:
+          value: 100.0
+        fixedDelay: 5s
+    route:
+    - destination:
+        host: helloworld.hello-delay.svc.cluster.local
+        port:
+          number: 5000
 
-# Your objective is to implement a 5-second delay on all HTTP requests directed to this instance.
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: hello-vs
+  namespace: hello-abort
+spec:
+  hosts:
+  - helloworld
+  http:
+  - fault:
+      abort:
+        percentage:
+          value: 100.0
+        httpStatus: 500
+    route:
+    - destination:
+        host: helloworld.hello-abort.svc.cluster.local
+        port:
+          number: 5000
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: httpbin-vs
+  namespace: httpbin-timeout
+spec:
+  hosts:
+  - httpbin
+  http:
+  - timeout: 3s
+    route:
+    - destination:
+        host: httpbin.httpbin-timeout.svc.cluster.local
+        port:
+          number: 8000
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: httpbin-vs
+  namespace: httpbin-retry
+spec:
+  hosts:
+  - httpbin
+  http:
+  - route:
+    - destination:
+        host: httpbin.httpbin-retry.svc.cluster.local
+        port:
+          number: 8000
+    retries:
+      attempts: 2
+      perTryTimeout: 1s
+      retryOn: 5xx
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: http-api
+spec:
+  action: DENY
+  rules:
+  - {}
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-httpbin-policy
+  namespace: http-api
+spec:
+  action: ALLOW
+  selector:
+    matchLabels:
+      app: httpbin
+  rules:
+  - to:
+    - operation:
+        paths: ["/ip", "/headers"]
+
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: books-mtls
+spec:
+  mtls:
+    mode: STRICT
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: WorkloadEntry
+metadata:
+  name: external-app-we
+  namespace: external-nginx
+spec:
+  address: 10.50.0.2
+  labels:
+    app: external
+
+---
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: external-app-se
+  namespace: external-nginx
+spec:
+  hosts:
+  - nginx.external.com
+  ports:
+  - number: 80
+    name: http
+    protocol: HTTP
+  resolution: STATIC
+  workloadSelector:
+    labels:
+      app: external
+
+---
+# 25
+
+#kubectl -n external-nginx label pod nginx app=external
+
+kubectl label pod nginx -n external-nginx app=nginx
+
+To validate your solution, execute the following steps to differentiate between the internal and external workloads. Start by updating the internal workload's default page with the command:
+
+kubectl exec -n external-nginx -ti nginx -- /bin/bash -c 'cd /usr/share/nginx/html && echo "This is an Nginx Pod" > index.html'
+
+Next, run a pod in the 'welcome' namespace using the command:
+
+kubectl run curl-test --rm -i -t --image=radial/busyboxplus:curl -n welcome
+
+root@controlplane ~ ➜   kubectl run curl-test --rm -i -t --image=radial/busyboxplus:curl -n welcome
+If you don't see a command prompt, try pressing enter.
+[ root@curl-test:/ ]$ curl http://nginx.external.com
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+    body {
+        width: 35em;
+        margin: 0 auto;
+        font-family: Tahoma, Verdana, Arial, sans-serif;
+    }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+
+[ root@curl-test:/ ]$ curl http://nginx.external.com
+This is an Nginx Pod
