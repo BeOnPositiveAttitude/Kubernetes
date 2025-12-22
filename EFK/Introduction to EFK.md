@@ -2,7 +2,7 @@
 
 The EFK stack combines Elasticsearch, Fluentd, and Kibana to aggregate, store, and visualize logs from multiple sources within a Kubernetes environment.
 
-### Components of the EFK Stack
+#### Components of the EFK Stack
 
 - **Elasticsearch**: A distributed, RESTful search and analytics engine capable of addressing a growing number of use cases (способная удовлетворить растущее число вариантов использования).
 
@@ -10,7 +10,7 @@ The EFK stack combines Elasticsearch, Fluentd, and Kibana to aggregate, store, a
 
 - **Kibana**: A visualization layer that works on top of Elasticsearch, providing a user-friendly interface to visualize data.
 
-### Why Use the EFK Stack?
+#### Why Use the EFK Stack?
 
 - **Centralized Logging**: Aggregate logs from all nodes and pods in a cluster, making it easier to monitor and troubleshoot.
 
@@ -18,7 +18,15 @@ The EFK stack combines Elasticsearch, Fluentd, and Kibana to aggregate, store, a
 
 - **Powerful Visualization**: Kibana provides powerful and beautiful visualizations of your log data, helping you to debug and understand application performance.
 
-### Step 1: Deploy Elasticsearch
+### Deploying the EFK Stack on Kubernetes
+
+Deploying the EFK stack on Kubernetes involves setting up each component to work together seamlessly. There are multiple ways of deploying the stack like manual deployment, helm charts, operators and pre-built cloud marketplace solutions. In this course, we will follow the **manual deployment approach** using individual manifest files.
+
+Below is a simplified overview of deploying the EFK stack (далее идет такая себе диаграмма).
+
+**Note**: Some code snippets will be provided as a reference for each step. These ought not be used (не должны использоваться) for the tasks - the task statements specifically mention the URLs to be used.
+
+#### Step 1: Deploy Elasticsearch
 
 Elasticsearch - the backend of the EFK stack - is basically a Document-based NoSQL database that runs on port `9200` by default.
 
@@ -48,7 +56,7 @@ spec:
         - containerPort: 9200
 ```
 
-### Step 2: Deploy Fluentd
+#### Step 2: Deploy Fluentd
 
 Fluentd - the log shipper - utilizes a variety of plugins for filtering and transforming log data. These plugins are defined in the fluentd configuration file, which uses the `.conf` extension.
 
@@ -72,6 +80,8 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: fluentd
+  labels:
+    app: fluentd
 spec:
   selector:
     matchLabels:
@@ -83,20 +93,20 @@ spec:
     spec:
       containers:
       - name: fluentd
-        image: fluent/fluentd:v1.11.1
+        image: fluent/fluentd-kubernetes-daemonset:v1.14.6-debian-elasticsearch7-1.0
         volumeMounts:
         - name: fluentd-config
           mountPath: /fluentd/etc/fluent.conf
           subPath: fluent.conf
         - name: varlog
           mountPath: /var/log
-  volumes:
-  - name: fluentd-config
-    configMap:
-      name: fluentd-config
-  - name: varlog
-    hostPath:
-      path: /var/log
+      volumes:
+      - name: fluentd-config
+        configMap:
+          name: fluentd-config
+      - name: varlog
+        hostPath:
+          path: /var/log
 ```
 
 ### Step 3: Deploy Kibana
