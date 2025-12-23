@@ -2,7 +2,11 @@
 
 Fluentd is an open-source data collector designed for processing logs and events. It's highly flexible, allowing you to collect data from multiple sources, transform it as needed, and send it to various destinations.
 
-### Create a Fluentd Configuration File
+### Deploying Fluentd as a DaemonSet
+
+A DaemonSet ensures that a copy of the pod runs on each node in the cluster. This is perfect for log collection, as we want Fluentd to collect logs from every node.
+
+#### Create a Fluentd Configuration File
 
 First, create a Fluentd configuration file (say `fluentd-config.conf`) that specifies how logs should be collected and forwarded.
 
@@ -104,7 +108,47 @@ Apart from directives, fluentd also uses various input and output plugins.
 </match>
 ```
 
-### Define the DaemonSet
+#### Define the DaemonSet
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd
+  namespace: kube-system
+spec:
+  selector:
+    matchLabels:
+      name: fluentd
+  template:
+    metadata:
+      labels:
+        name: fluentd
+    spec:
+      containers:
+      - name: fluentd
+        image: fluent/fluentd-kubernetes-daemonset:v1.11-debian-elasticsearch
+        env:
+        - name: FLUENT_ELASTICSEARCH_HOST
+          value: "elasticsearch.default.svc.cluster.local"
+        - name: FLUENT_ELASTICSEARCH_PORT
+          value: "9200"
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: dockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: dockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+```
+
+Манифесты для лабы:
 
 ```yaml
 apiVersion: apps/v1
@@ -123,7 +167,8 @@ spec:
       labels:
         app: fluentd
     spec:
-      serviceAccount: fluentd
+      # deprecated option
+      # serviceAccount: fluentd
       serviceAccountName: fluentd
       tolerations:
       - key: node-role.kubernetes.io/master
@@ -132,22 +177,22 @@ spec:
       - name: fluentd
         image: fluent/fluentd-kubernetes-daemonset:v1.14.1-debian-elasticsearch7-1.0
         env:
-          - name:  FLUENT_ELASTICSEARCH_HOST
-            value: "elasticsearch.elastic-stack.svc.cluster.local"
-          - name:  FLUENT_ELASTICSEARCH_PORT
-            value: "9200"
-          - name: FLUENT_ELASTICSEARCH_SCHEME
-            value: "http"
-          - name: FLUENTD_SYSTEMD_CONF
-            value: disable
-          - name: FLUENT_CONTAINER_TAIL_EXCLUDE_PATH
-            value: /var/log/containers/fluent*
-          - name: FLUENT_ELASTICSEARCH_SSL_VERIFY
-            value: "false"
-          - name: FLUENT_CONTAINER_TAIL_PARSER_TYPE
-            value: /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/ 
-          - name:  FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX
-            value: "fluentd"
+        - name:  FLUENT_ELASTICSEARCH_HOST
+          value: "elasticsearch.elastic-stack.svc.cluster.local"
+        - name:  FLUENT_ELASTICSEARCH_PORT
+          value: "9200"
+        - name: FLUENT_ELASTICSEARCH_SCHEME
+          value: "http"
+        - name: FLUENTD_SYSTEMD_CONF
+          value: disable
+        - name: FLUENT_CONTAINER_TAIL_EXCLUDE_PATH
+          value: /var/log/containers/fluent*
+        - name: FLUENT_ELASTICSEARCH_SSL_VERIFY
+          value: "false"
+        - name: FLUENT_CONTAINER_TAIL_PARSER_TYPE
+          value: /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/ 
+        - name:  FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX
+          value: "fluentd"
         resources:
           limits:
             memory: 512Mi
@@ -227,19 +272,27 @@ subjects:
 EOF
 ```
 
+#### Deploy the DaemonSet
+
+Apply the DaemonSet definition to your cluster.
+
+```shell
+$ kubectl apply -f fluentd-daemonset.yaml
+```
+
 ### Configuring Fluentd for Kubernetes Logs
 
 Fluentd needs to be configured to collect logs from both Kubernetes nodes and pods. The configuration we defined earlier in `fluentd-config.conf` sets Fluentd to listen for logs and forward them to Elasticsearch.
 
-### Collecting Node Logs
+#### Collecting Node Logs
 
 The DaemonSet configuration mounts the `/var/log` directory from the host into the Fluentd container, allowing Fluentd to access and collect system and application logs from the nodes.
 
-### Collecting Pod Logs
+#### Collecting Pod Logs
 
 Similarly, mounting `/var/lib/docker/containers` enables Fluentd to collect logs from Docker containers, including those managed by Kubernetes pods.
 
-### Forwarding Logs to Elasticsearch
+#### Forwarding Logs to Elasticsearch
 
 The Fluentd configuration specifies Elasticsearch as the destination for logs. Ensure that Elasticsearch is running and accessible from within your Kubernetes cluster.
 
@@ -254,4 +307,4 @@ The Fluentd configuration specifies Elasticsearch as the destination for logs. E
 
 The above configuration forwards all collected logs to Elasticsearch, where they can be indexed and made searchable.
 
-This has been made possible because of the use of output plugin `fluent-plugin-elasticsearch` which is used to forward data to Elasticsearch. The match section displays the parameters it uses.
+This has been made possible because of the use of output plugin `fluent-plugin-elasticsearch` which is used to forward data to Elasticsearch. The `match` section displays the parameters it uses.
