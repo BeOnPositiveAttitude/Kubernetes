@@ -177,9 +177,9 @@ spec:
       - name: fluentd
         image: fluent/fluentd-kubernetes-daemonset:v1.14.1-debian-elasticsearch7-1.0
         env:
-        - name:  FLUENT_ELASTICSEARCH_HOST
+        - name: FLUENT_ELASTICSEARCH_HOST
           value: "elasticsearch.elastic-stack.svc.cluster.local"
-        - name:  FLUENT_ELASTICSEARCH_PORT
+        - name: FLUENT_ELASTICSEARCH_PORT
           value: "9200"
         - name: FLUENT_ELASTICSEARCH_SCHEME
           value: "http"
@@ -191,7 +191,7 @@ spec:
           value: "false"
         - name: FLUENT_CONTAINER_TAIL_PARSER_TYPE
           value: /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/ 
-        - name:  FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX
+        - name: FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX
           value: "fluentd"
         resources:
           limits:
