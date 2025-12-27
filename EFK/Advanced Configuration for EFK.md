@@ -70,6 +70,12 @@ Index rollover helps in managing indices (индексы) based on certain crite
 
 2. **Set up an ILM (Index Lifecycle Management) policy**:
 
+   ILM policies define the conditions under which indices should be transitioned between different phases (such as hot, warm, cold, and delete) based on factors like age, size, and other criteria.
+
+   ILM policies allow the automation of the index management process, which can help optimize resource usage and improve performance. For example, you can use ILM policies to automatically move indices from hot storage (fast, expensive storage) to warm storage (slower, cheaper storage) as they age, or to delete indices that are no longer needed based on a specified timeframe.
+
+   Overall, ILM policies help you manage your Elasticsearch indices more efficiently by automating common lifecycle management tasks.
+
    ```json
    PUT _ilm/policy/my_logs_policy
    {
@@ -118,8 +124,8 @@ PUT /my_logs-000001
 {
   "settings": {
     "index": {
-      "number_of_shards": 3, 
-      "number_of_replicas": 2 
+      "number_of_shards": 3,
+      "number_of_replicas": 2
     }
   }
 }
@@ -133,7 +139,7 @@ The Elasticsearch index setting critical for improving write performance in a lo
 
 The refresh interval controls how often the changes made to the index are made visible to search operations. In a log-heavy environment, setting a higher refresh interval can significantly improve write performance by reducing the frequency of index refreshes, which can be resource-intensive.
 
-Custom FluentD Fliter:
+Custom FluentD fliter, file name must be `filter_my_custom_filter.rb`:
 
 ```ruby
 require 'fluent/plugin/filter'
@@ -148,4 +154,192 @@ class Fluent::Plugin::MyCustomFilter < Fluent::Plugin::Filter
     record
   end
 end
+```
+
+`fluent.conf` file content:
+
+```
+<label @FLUENT_LOG>
+  <match fluent.**>
+    @type null
+    @id ignore_fluent_logs
+  </match>
+</label>
+<source>
+  @type tail
+  @id in_tail_container_logs
+  path "/var/log/containers/*.log"
+  pos_file "/var/log/fluentd-containers.log.pos"
+  tag "kubernetes.*"
+  exclude_path /var/log/containers/fluent*
+  read_from_head true
+  <parse>
+    @type "/^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/"
+    time_format "%Y-%m-%dT%H:%M:%S.%NZ"
+    unmatched_lines
+    expression ^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$
+    ignorecase false
+    multiline false
+  </parse>
+</source>
+<filter **>
+  @type my_custom_filter
+  additional_data static_info
+</filter>
+<match **>
+  @type elasticsearch
+  @id out_es
+  @log_level "info"
+  include_tag_key true
+  host "elasticsearch.elastic-stack.svc.cluster.local"
+  port 9200
+  path ""
+  scheme http
+  ssl_verify false
+  ssl_version TLSv1_2
+  user
+  password xxxxxx
+  reload_connections false
+  reconnect_on_error true
+  reload_on_failure true
+  log_es_400_reason false
+  logstash_prefix "fluentd"
+  logstash_dateformat "%Y.%m.%d"
+  logstash_format true
+  index_name "logstash"
+  target_index_key
+  type_name "fluentd"
+  include_timestamp false
+  template_name
+  template_file
+  template_overwrite false
+  sniffer_class_name "Fluent::Plugin::ElasticsearchSimpleSniffer"
+  request_timeout 5s
+  application_name default
+  suppress_type_name true
+  enable_ilm false
+  ilm_policy_id logstash-policy
+  ilm_policy {}
+  ilm_policy_overwrite false
+  <buffer>
+    flush_thread_count 8
+    flush_interval 5s
+    chunk_limit_size 2M
+    queue_limit_length 32
+    retry_max_interval 30
+    retry_forever true
+  </buffer>
+</match>
+```
+
+FluentD DaemonSet:
+
+```yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fluentd
+  namespace: elastic-stack
+  labels:
+    app: fluentd
+spec:
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      serviceAccount: fluentd
+      serviceAccountName: fluentd
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      containers:
+      - name: fluentd
+        image: fluent/fluentd-kubernetes-daemonset:v1.14.1-debian-elasticsearch7-1.0
+        env:
+        - name:  FLUENT_ELASTICSEARCH_HOST
+          value: "elasticsearch.elastic-stack.svc.cluster.local"
+        - name:  FLUENT_ELASTICSEARCH_PORT
+          value: "9200"
+        - name: FLUENT_ELASTICSEARCH_SCHEME
+          value: "http"
+        - name: FLUENTD_SYSTEMD_CONF
+          value: disable
+        - name: FLUENT_CONTAINER_TAIL_EXCLUDE_PATH
+          value: /var/log/containers/fluent*
+        - name: FLUENT_ELASTICSEARCH_SSL_VERIFY
+          value: "false"
+        - name: FLUENT_CONTAINER_TAIL_PARSER_TYPE
+          value: /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/ 
+        - name:  FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX
+          value: "fluentd"
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: configpath
+          mountPath: /fluentd/etc
+        - name: pluginpath
+          mountPath: /fluentd/plugins
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: configpath
+        hostPath:
+          path: /root/fluentd/etc
+      - name: pluginpath
+        hostPath:
+          path: /root/fluentd/plugins
+```
+
+Применить ILM-политику из json-файла:
+
+```shell
+$ curl -X PUT "http://localhost:30200/_ilm/policy/my_logs_policy" -H 'Content-Type: application/json' -d @my_logs_policy.json
+```
+
+Проверить, что политика создана:
+
+```shell
+$ curl -X GET "http://localhost:30200/_ilm/policy"
+```
+
+Index Template JSON:
+
+```json
+{
+  "index_patterns": ["fluentd-*"],
+  "settings": {
+    "index.lifecycle.name": "my_logs_policy",
+    "index.lifecycle.rollover_alias": "my-logs"
+  }
+}
+```
+
+Применить шаблон из json-файла:
+
+```shell
+$ curl -X PUT "http://localhost:30200/_template/my_logs_template" -H 'Content-Type: application/json' -d @my_logs_template.json
+```
+
+Проверить, что шаблон создан:
+
+```shell
+$ curl -X GET "http://localhost:30200/_template"
 ```
