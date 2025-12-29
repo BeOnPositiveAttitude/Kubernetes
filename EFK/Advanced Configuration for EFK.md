@@ -139,7 +139,7 @@ The Elasticsearch index setting critical for improving write performance in a lo
 
 The refresh interval controls how often the changes made to the index are made visible to search operations. In a log-heavy environment, setting a higher refresh interval can significantly improve write performance by reducing the frequency of index refreshes, which can be resource-intensive.
 
-Custom FluentD fliter, file name must be `filter_my_custom_filter.rb`:
+Custom FluentD filter, file name must be `filter_my_custom_filter.rb`:
 
 ```ruby
 require 'fluent/plugin/filter'
