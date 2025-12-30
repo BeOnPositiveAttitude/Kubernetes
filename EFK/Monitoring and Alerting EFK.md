@@ -206,4 +206,56 @@ Prometheus Alertmanager can manage alerts sent by Prometheus. Define alert rules
 $ wget https://github.com/prometheus-community/elasticsearch_exporter/releases/download/v1.7.0/elasticsearch_exporter-1.7.0.linux-amd64.tar.gz
 $ tar xzvf elasticsearch_exporter-1.7.0.linux-amd64.tar.gz
 $ nohup elasticsearch_exporter-1.7.0.linux-amd64/elasticsearch_exporter --es.uri="http://localhost:30200" &
+$ curl http://localhost:9114/metrics
 ```
+
+Установка Prometheus:
+
+```shell
+$ wget https://github.com/prometheus/prometheus/releases/download/v2.51.1/prometheus-2.51.1.linux-amd64.tar.gz
+$ tar xzvf prometheus-2.51.1.linux-amd64.tar.gz
+```
+
+Добавим в конфиг `prometheus.yml` новый target:
+
+```yaml
+- job_name: "elasticsearch"
+  static_configs:
+  - targets: ["localhost:9114"]
+```
+
+Запустим Prometheus:
+
+```shell
+$ nohup ./prometheus --config.file=prometheus.yml &
+```
+
+Установка Grafana:
+
+```shell
+$ wget https://dl.grafana.com/enterprise/release/grafana-enterprise-10.4.1.linux-amd64.tar.gz
+$ tar xzvf grafana-enterprise-10.4.1.linux-amd64.tar.gz
+$ nohup ./bin/grafana-server &
+```
+
+Open the menu on the left of the Grafana Welcome page under **Home**. Under the **Connections** submenu, click on **Data sources** => **Add data source** and select **Prometheus**.
+
+Under **Connection**, enter `http://localhost:9090/` for Prometheus server URL. Scroll to the bottom of this page and click on **Save and Test**.
+
+Having set up our basic observability stack for the elasticsearch metrics, let's learn how to query our metrics in the Grafana dashboard.
+
+Select **Explore** from the Grafana menu. You will be presented with a workspace to create and run your queries. Prometheus as a data source has already been selected for you as a result of your previous task.
+
+There are two ways through which you can create a query here - either by using the **builder** or by using the **code**.
+
+Let's select **builder** for now and view the value of a simple metric. From the Metric dropdown, select `elasticsearch_cluster_health_active_primary_shards` and `cluster` and `docker-cluster` as the key-value pair under **Label filters**. After clicking on **Run query**, you can view the value of the current number of primary shards in the cluster that are active and assigned to nodes.
+
+You can also select other metrics, and create a dashboard for visualizing the vitals of your Elasticsearch components.
+
+This dashboard can be used as a reference:
+
+https://grafana.com/grafana/dashboards/14191-elasticsearch-overview/
+
+Reference for elasticsearch metrics:
+
+https://github.com/prometheus-community/elasticsearch_exporter?tab=readme-ov-file#configuration
