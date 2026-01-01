@@ -259,3 +259,59 @@ https://grafana.com/grafana/dashboards/14191-elasticsearch-overview/
 Reference for elasticsearch metrics:
 
 https://github.com/prometheus-community/elasticsearch_exporter?tab=readme-ov-file#configuration
+
+Define an alert rule in Prometheus for high Elasticsearch heap usage.
+
+1. Navigate to the `prometheus-2.51.1.linux-amd64` folder and create a file named `rules.yml` with the following content:
+
+   ```yaml
+   groups:
+   - name: elasticsearch
+     rules:
+     - alert: HighElasticsearchHeapUsage
+       expr: elasticsearch_jvm_memory_used_bytes{job="elasticsearch"} / elasticsearch_jvm_memory_max_bytes{job="elasticsearch"} > 0.05
+       for: 2m
+       labels:
+         severity: critical
+       annotations:
+         summary: "High Elasticsearch heap usage (instance {{ $labels.instance }})"
+         description: "Elasticsearch instance {{ $labels.instance }} has high heap usage ({{ $value }} bytes used) for more than 2 minutes."
+   ```
+
+2. Edit the `prometheus.yml` file and add the newly created rules file to it under the `rule_files` section:
+
+   ```yaml
+   rule_files:
+     - "rules.yml"
+   ```
+
+3. Restart Prometheus.
+
+4. In the Prometheus UI, navigate to the **Alerts** section. You will find your defined alert `HighElasticsearchHeapUsage`. This will remain in **pending** state for up to two minutes, and then go into the **firing** state.
+
+Установка AlertManager:
+
+```shell
+$ wget https://github.com/prometheus/alertmanager/releases/download/v0.27.0/alertmanager-0.27.0.linux-amd64.tar.gz
+$ tar xzvf alertmanager-0.27.0.linux-amd64.tar.gz
+$ nohup ./alertmanager --config.file=alertmanager.yml &
+```
+
+Добавим в конфиг Prometheus адрес AlertManager:
+
+```yaml
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["localhost:9093"]
+```
+
+Перезапустим Prometheus. В веб-морде AlertManager спустя две минуты должен появится алерт.
+
+Переходим в каталог `/root/scripts` и запускаем python-скрипт:
+
+```bash
+$ python3 alert_receiver.py
+```
+
+В терминале увидим алерты.
