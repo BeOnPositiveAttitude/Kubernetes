@@ -124,3 +124,40 @@ spec:
 ```
 
 Although beneficial (несмотря на свою полезность), auto-scaling thresholds should be carefully picked (тщательно выбирать) so that frequent (частые) and unnecessary scaling operations are avoided.
+
+Создать индекс:
+
+```bash
+$ curl -X PUT "http://localhost:30200/myindex" -H 'Content-Type: application/json' -d'
+{
+  "settings": {
+    "number_of_shards": 5
+  }
+}'
+```
+
+Let's migrate our data from the old index to this new index. Reindex data from the old index of the form `fluentd-*` to the newly created `myindex`.
+
+```bash
+$ curl -X POST "http://localhost:30200/_reindex" -H 'Content-Type: application/json' -d'
+{
+  "source": {
+    "index": "fluentd-<date>"
+  },
+  "dest": {
+    "index": "myindex"
+  }
+}'
+```
+
+```bash
+$ kubectl -n elastic-stack get svc elasticsearch -ojsonpath='{.spec.clusterIP}' | xargs -I {} curl -X POST "http://{}:9200/_reindex" -H 'Content-Type: application/json' -d '
+{
+  "source": {
+    "index": "fluentd-2026.01.02"
+  },
+  "dest": {
+    "index": "myindex"
+  }
+}'
+```
