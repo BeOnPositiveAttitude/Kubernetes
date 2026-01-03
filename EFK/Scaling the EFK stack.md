@@ -125,10 +125,12 @@ spec:
 
 Although beneficial (несмотря на свою полезность), auto-scaling thresholds should be carefully picked (тщательно выбирать) so that frequent (частые) and unnecessary scaling operations are avoided.
 
+### Lab
+
 Создать индекс:
 
 ```bash
-$ curl -X PUT "http://localhost:30200/myindex" -H 'Content-Type: application/json' -d'
+$ curl -X PUT "http://localhost:30200/myindex" -H 'Content-Type: application/json' -d '
 {
   "settings": {
     "number_of_shards": 5
@@ -139,10 +141,10 @@ $ curl -X PUT "http://localhost:30200/myindex" -H 'Content-Type: application/jso
 Let's migrate our data from the old index to this new index. Reindex data from the old index of the form `fluentd-*` to the newly created `myindex`.
 
 ```bash
-$ curl -X POST "http://localhost:30200/_reindex" -H 'Content-Type: application/json' -d'
+$ curl -X POST "http://localhost:30200/_reindex" -H 'Content-Type: application/json' -d '
 {
   "source": {
-    "index": "fluentd-<date>"
+    "index": "fluentd-2026.01.03"
   },
   "dest": {
     "index": "myindex"
@@ -161,3 +163,109 @@ $ kubectl -n elastic-stack get svc elasticsearch -ojsonpath='{.spec.clusterIP}' 
   }
 }'
 ```
+
+ReplicaSet FluentD:
+
+```yaml
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+  name: fluentd-replicaset
+  namespace: elastic-stack
+  labels:
+    app: fluentd
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: fluentd
+  template:
+    metadata:
+      labels:
+        app: fluentd
+    spec:
+      serviceAccount: fluentd
+      serviceAccountName: fluentd
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        effect: NoSchedule
+      containers:
+      - name: fluentd
+        image: fluent/fluentd-kubernetes-daemonset:v1.14.1-debian-elasticsearch7-1.0
+        env:
+        - name:  FLUENT_ELASTICSEARCH_HOST
+          value: "elasticsearch.elastic-stack.svc.cluster.local"
+        - name:  FLUENT_ELASTICSEARCH_PORT
+          value: "9200"
+        - name: FLUENT_ELASTICSEARCH_SCHEME
+          value: "http"
+        - name: FLUENTD_SYSTEMD_CONF
+          value: disable
+        - name: FLUENT_CONTAINER_TAIL_EXCLUDE_PATH
+          value: /var/log/containers/fluent*
+        - name: FLUENT_ELASTICSEARCH_SSL_VERIFY
+          value: "false"
+        - name: FLUENT_CONTAINER_TAIL_PARSER_TYPE
+          value: /^(?<time>.+) (?<stream>stdout|stderr)( (?<logtag>.))? (?<log>.*)$/
+        - name:  FLUENT_ELASTICSEARCH_LOGSTASH_PREFIX
+          value: "fluentd"
+        resources:
+          limits:
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 200Mi
+        volumeMounts:
+        - name: varlog
+          mountPath: /var/log
+        - name: varlibdockercontainers
+          mountPath: /var/lib/docker/containers
+          readOnly: true
+        - name: configpath
+          mountPath: /fluentd/etc
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: varlog
+        hostPath:
+          path: /var/log
+      - name: varlibdockercontainers
+        hostPath:
+          path: /var/lib/docker/containers
+      - name: configpath
+        hostPath:
+          path: /root/fluentd/etc
+```
+
+Опция metrics-server: `--kubelet-insecure-tls`.
+
+HPA:
+
+```yaml
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: elasticsearch-autoscaler
+  namespace: elastic-stack
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: elasticsearch
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+```
+
+Initially, the CPU utilization value for the `elasticsearch-0` pod will be higher, hence, the HPA spins up extra pods.
+
+You can view this in the description of the Horizontal Pods Autoscaler:
+
+```bash
+$ kubectl describe hpa elasticsearch-autoscaler
+```
+
+However, as the CPU utilization percentage for the elasticsearch pod comes down below the target of 80%, the HPA removes the extra elasticsearch pod.
+
+The Horizontal Pod Autoscaler (HPA) may not immediately scale down the number of replicas, even if the current resource utilization is below the target value. This behavior is intended to prevent rapid and unnecessary scaling that could lead to instability in the cluster. The HPA uses a stabilization window to observe the resource utilization and ensure that scaling decisions are based on sustained metrics, rather than temporary spikes.
+
+Do not worry if the extra elasticsearch pods are not in the running state.
