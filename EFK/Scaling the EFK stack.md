@@ -266,6 +266,6 @@ $ kubectl describe hpa elasticsearch-autoscaler
 
 However, as the CPU utilization percentage for the elasticsearch pod comes down below the target of 80%, the HPA removes the extra elasticsearch pod.
 
-The Horizontal Pod Autoscaler (HPA) may not immediately scale down the number of replicas, even if the current resource utilization is below the target value. This behavior is intended to prevent rapid and unnecessary scaling that could lead to instability in the cluster. The HPA uses a stabilization window to observe the resource utilization and ensure that scaling decisions are based on sustained metrics, rather than temporary spikes.
+The Horizontal Pod Autoscaler (HPA) may not immediately scale down the number of replicas, even if the current resource utilization is below the target value. This behavior is intended (предназначено) to prevent rapid (быстрое) and unnecessary scaling that could lead to instability (нестабильности) in the cluster. The HPA uses a stabilization window (окно стабилизации) to observe (для наблюдения) the resource utilization and ensure that scaling decisions are based on sustained (устойчивых) metrics, rather than temporary spikes (временные всплески).
 
 Do not worry if the extra elasticsearch pods are not in the running state.

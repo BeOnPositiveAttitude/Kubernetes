@@ -200,7 +200,7 @@ Prometheus Alertmanager can manage alerts sent by Prometheus. Define alert rules
 
 Команда `nohup` предотвращает распространение системного сигнала SIGHUP (Signal Hang UP), задача которого - сообщать запущенным процессам о потере соединения с управляющим терминалом пользователя.
 
-Установка `elasticsearch-exporter`:
+#### Установка экспортера для Elasticsearch
 
 ```shell
 $ wget https://github.com/prometheus-community/elasticsearch_exporter/releases/download/v1.7.0/elasticsearch_exporter-1.7.0.linux-amd64.tar.gz
@@ -209,7 +209,7 @@ $ nohup elasticsearch_exporter-1.7.0.linux-amd64/elasticsearch_exporter --es.uri
 $ curl http://localhost:9114/metrics
 ```
 
-Установка Prometheus:
+#### Установка Prometheus
 
 ```shell
 $ wget https://github.com/prometheus/prometheus/releases/download/v2.51.1/prometheus-2.51.1.linux-amd64.tar.gz
@@ -230,13 +230,15 @@ $ tar xzvf prometheus-2.51.1.linux-amd64.tar.gz
 $ nohup ./prometheus --config.file=prometheus.yml &
 ```
 
-Установка Grafana:
+#### Установка Grafana
 
 ```shell
 $ wget https://dl.grafana.com/enterprise/release/grafana-enterprise-10.4.1.linux-amd64.tar.gz
 $ tar xzvf grafana-enterprise-10.4.1.linux-amd64.tar.gz
 $ nohup ./bin/grafana-server &
 ```
+
+#### Добавление нового Data Source в Grafana
 
 Open the menu on the left of the Grafana Welcome page under **Home**. Under the **Connections** submenu, click on **Data sources** => **Add data source** and select **Prometheus**.
 
@@ -259,6 +261,8 @@ https://grafana.com/grafana/dashboards/14191-elasticsearch-overview/
 Reference for elasticsearch metrics:
 
 https://github.com/prometheus-community/elasticsearch_exporter?tab=readme-ov-file#configuration
+
+#### Создание нового alert rule в Prometheus
 
 Define an alert rule in Prometheus for high Elasticsearch heap usage.
 
@@ -289,7 +293,7 @@ Define an alert rule in Prometheus for high Elasticsearch heap usage.
 
 4. In the Prometheus UI, navigate to the **Alerts** section. You will find your defined alert `HighElasticsearchHeapUsage`. This will remain in **pending** state for up to two minutes, and then go into the **firing** state.
 
-Установка AlertManager:
+#### Установка AlertManager
 
 ```shell
 $ wget https://github.com/prometheus/alertmanager/releases/download/v0.27.0/alertmanager-0.27.0.linux-amd64.tar.gz
@@ -302,11 +306,11 @@ $ nohup ./alertmanager --config.file=alertmanager.yml &
 ```yaml
 alerting:
   alertmanagers:
-    - static_configs:
-        - targets: ["localhost:9093"]
+  - static_configs:
+    - targets: ["localhost:9093"]
 ```
 
-Перезапустим Prometheus. В веб-морде AlertManager спустя две минуты должен появится алерт.
+Перезапустим Prometheus. В веб-морде AlertManager спустя две минуты должен появится alert.
 
 Переходим в каталог `/root/scripts` и запускаем python-скрипт:
 
