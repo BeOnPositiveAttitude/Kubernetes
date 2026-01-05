@@ -167,3 +167,84 @@ Similarly, ensure Fluentd and Kibana are configured to use TLS for secure commun
 ### Mutual TLS Authentication
 
 Beyond encrypting traffic, consider implementing mutual TLS (mTLS) for an added layer of security. mTLS requires both the client and server to authenticate each other, ensuring that only trusted components can communicate with each other.
+
+### Lab
+
+Включить безопасные настройки в ES:
+
+```yaml
+env:
+- name: discovery.type
+  value: single-node
+- name: ES_JAVA_OPTS
+  value: "-Xms1g -Xmx1g"
+- name: xpack.security.enabled
+  value: "true"
+- name: xpack.security.transport.ssl.enabled
+  value: "true"
+```
+
+Создать пользователя в ES:
+
+```bash
+$ kubectl exec -it elasticsearch-0 -- bin/elasticsearch-users useradd elastic_user -r superuser -p elasticPass123
+```
+
+Здесь параметр `-r` означает роль создаваемого пользователя.
+
+Добавить пользователя в Kibana для аутентификации в ES:
+
+```yaml
+env:
+- name: ELASTICSEARCH_USERNAME
+  value: "elastic_user"
+- name: ELASTICSEARCH_PASSWORD
+  value: "elasticPass123"
+```
+
+Network Policy:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: efk-stack-policy
+  namespace: elastic-stack
+spec:
+  podSelector:
+    matchLabels: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector: {}
+      namespaceSelector:
+        matchLabels:
+          name: elastic-stack
+  egress:
+  - to:
+    - podSelector: {}
+      namespaceSelector:
+        matchLabels:
+          name: elastic-stack
+```
+
+FluentD:
+
+1. Now, navigate to the `/root/fluentd/etc` folder. Scroll down to the `<match **>` section at the end of this configuration. This part pertains to the recipient elasticsearch.
+
+2. Modify the value of `ssl_verify` parameter to `true` from `false`:
+
+   ```
+   ssl_verify true
+   ```
+
+3. Add the elasticsearch username and password for the `user` and `password` parameters:
+
+   ```
+   user elastic_user
+   password elasticPass123
+   ```
+
+4. Save this configuration and delete the existing fluentd pod.
