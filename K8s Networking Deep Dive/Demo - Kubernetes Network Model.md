@@ -11,12 +11,12 @@ metadata:
 spec:
   containers:
   - name: sleep1
-    image: busybox
+    image: ubuntu
     command:
     - sleep
     - "7200"
   - name: sleep2
-    image: busybox
+    image: ubuntu
     command:
     - sleep
     - "7200"
