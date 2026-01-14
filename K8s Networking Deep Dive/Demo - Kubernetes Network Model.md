@@ -33,9 +33,11 @@ spec:
     image: nginx
 ```
 
+В контейнер `sleep1` с Ubuntu придется доставить пакеты curl и iproute2 (чтобы работали команды `ip addr show`).
+
 ### Exploring Network Namespaces on the Node
 
-Посмотрим на namespace-ы, созданные на ноде:
+List all PID-based namespaces::
 
 ```bash
 $ lsns -t pid
@@ -50,7 +52,7 @@ $ lsns -t pid
 - Колонка `NS` - namespace identifier (inode number)
 - Параметр `-t, --type` - namespace type (mnt, net, ipc, user, pid, uts, cgroup, time)
 
-Определим к каким сетевым namespace-ам относятся эти контейнерные процессы:
+Определим к каким сетевым namespace-ам относятся эти контейнерные процессы (identify the network namespace for a specific PID):
 
 ```bash
 $ ip netns identify 23261
@@ -79,7 +81,9 @@ $ ip addr | grep -A1 veth
 
 Each `veth` pair connects a Pod's network namespace to the host or overlay network.
 
-Определим к каким сетевым namespace-ам относятся контейнерные процессы:
+### Inspecting a Pod's Network Namespace
+
+Определим к каким сетевым namespace-ам относятся контейнерные процессы (map container PIDs to namespaces:):
 
 ```bash
 $ for i in 23038 23169 23211 23261; do ip netns identify $i; done
@@ -90,6 +94,8 @@ cni-8f553eed-9d76-101e-f3bf-a5a02f4e20a9
 ```
 
 Обратите внимание, что всего два уникальных namespace-а (т.к. два pod-а).
+
+### Verifying Shared Network Namespace in pod1
 
 Посмотрим на сетевые интерфейсы в одном из namespace-ов (в котором три контейнера):
 
@@ -146,3 +152,75 @@ $ kubectl exec pod1 -c sleep1 -- ip addr show
 ```
 
 Видим, что конфигурация одинаковая.
+
+### Intra-Pod Communication
+
+From `sleep1`, fetch the Nginx welcome page (контейнер `nginx`) over `localhost`:
+
+```bash
+$ kubectl exec pod1 -c sleep1 -- curl -s localhost:80
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+```
+
+### Pod-to-Pod Communication
+
+Retrieve all Pod IPs in the default namespace:
+
+```bash
+$ kubectl get pods -ojsonpath='{range .items[*]}{"podName: "}{.metadata.name}{" podIP: "}{.status.podIP}{"\n"}{end}'
+podName: pod1 podIP: 192.168.1.4
+podName: pod2 podIP: 192.168.0.4
+```
+
+Здесь IP-адрес `pod1` отличается от ip-адреса в предыдущем пункте (`192.168.0.7`), т.к. это разные запуски playground.
+
+From `pod1`, connect to the Nginx server on `pod2`:
+
+```bash
+$ kubectl exec pod1 -c sleep1 -- curl -s 192.168.0.4:80
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+<style>
+html { color-scheme: light dark; }
+body { width: 35em; margin: 0 auto;
+font-family: Tahoma, Verdana, Arial, sans-serif; }
+</style>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and
+working. Further configuration is required.</p>
+
+<p>For online documentation and support please refer to
+<a href="http://nginx.org/">nginx.org</a>.<br/>
+Commercial support is available at
+<a href="http://nginx.com/">nginx.com</a>.</p>
+
+<p><em>Thank you for using nginx.</em></p>
+</body>
+</html>
+```
