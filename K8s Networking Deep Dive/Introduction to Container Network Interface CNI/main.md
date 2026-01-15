@@ -102,3 +102,66 @@ When running `ADD`:
 - Execute plugin binaries **in listed order** (в указанном порядке) with `CNI_COMMAND=ADD`.
 - Halt (остановиться) on any failure and return an error.
 - Persist (сохранить) success data for later `CHECK` or `DEL`.
+
+<img src="image-2.png" width="700" height="400"><br>
+
+The `DEL` operation runs plugins in **reverse order**. `CHECK` follows the same sequence as `ADD` but performs validations only.
+
+<img src="image-3.png" width="700" height="400"><br>
+
+### Chaining and Delegation
+
+CNI supports chaining multiple plugins. A parent plugin can delegate tasks to child plugins. On failure, the parent invokes a `DEL` on all delegates (делегатов) before returning an error, ensuring cleanup.
+
+### Result Types
+
+CNI operations return standardized JSON for:
+
+- **Success**: Contains `cniVersion`, configured interfaces, IPs, routes, DNS.
+- **Error**: Includes `code`, `msg`, `details`, `cniVersion`.
+- **Version**: Lists supported spec versions.
+
+Example **error** response:
+
+```json
+{
+  "cniVersion": "1.1.0",
+  "code": 7,
+  "msg": "Invalid Configuration",
+  "details": "Network 192.168.0.0/31 too small to allocate from."
+}
+```
+
+## Key Features of CNI
+
+1. **Standardized Interface**: Unified API for all container runtimes.
+2. **Flexibility**: Supports a vast (обширную) ecosystem of plugins.
+3. **Dynamic Configuration**: Runtime-driven setup and teardown (завершение работы).
+4. **Ease of Integration**: Embeds directly into container runtimes.
+5. **Compatibility**: Versioned specs for interoperability (совместимость).
+
+## Popular CNI Plugins
+
+<img src="image-4.png" width="700" height="400"><br>
+
+- **Flannel** - A CoreOS project providing simple IPv4 layer-3 networking.
+- **Weave Net** - Weaveworks' layer-2 overlay with built-in encryption and network policies.
+
+<img src="image-5.png" width="700" height="400"><br>
+
+- **Calico** - Tigera's solution featuring (включающее) scalable BGP routing and robust (крепкий, надежный) network policies.
+
+<img src="image-6.png" width="700" height="400"><br>
+
+- **Cilium** - Leverages eBPF for deep network and security visibility, plus inter-cluster service mesh capabilities.
+
+Many cloud providers (AWS, Azure, GCP) also offer CNI implementations optimized for their platforms.
+
+#### Comparison of Popular CNIs
+
+| Plugin | Type | Key Features |
+| ----------- | ----------- | ----------- |
+| Flannel | L3 Overlay | Simple IPv4 overlay, minimal policy |
+| Weave Net | L2 Overlay | Encryption, built-in network policies |
+| Calico | BGP Routing | Scalable, advanced security policies |
+| Cilium | eBPF-Powered | Fine-grained policies, service mesh |
