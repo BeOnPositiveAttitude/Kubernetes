@@ -130,7 +130,7 @@ $ hubble status
 Sample output:
 
 ```
-Healthcheck (via localhost:4245):
+Healthcheck (via localhost:4245): Ok
 Current/Max Flows: 5,818/8,190 (71.04%)
 Flows/s: 22.83
 Connected Nodes: 2/2
