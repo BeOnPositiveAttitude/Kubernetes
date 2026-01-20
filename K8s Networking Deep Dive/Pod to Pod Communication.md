@@ -34,6 +34,27 @@ If `Envoy DaemonSet` is disabled, Cilium is using its embedded proxy mode. For f
 
 Apply a manifest (`pods.yaml`) to spin up three simple pods in the default namespace:
 
+```yaml
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod1
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod2
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+```
+
 ```bash
 $ kubectl apply -f pods.yaml
 ```
@@ -47,14 +68,15 @@ $ journalctl -u cilium -f
 Or:
 
 ```bash
+# Ищем pod cilium на ноде
+$ kubectl describe node controlplane
 $ kubectl -n kube-system logs -f <cilium-pod-name>
 ```
 
 You should observe entries like:
 
 ```
-level=info msg="Create endpoint request" addressing="&{10.0.1.207 ee7b43f3-... default}" containerID=b1c311eadc2... interface=eth0 subsys=daemon
-level=info msg="New endpoint" ciliumEndpointName=default/pod1 ipv4=10.0.1.207 endpointID=170
+time="2026-01-20T05:30:46Z" level=info msg="Create endpoint request" addressing="&{10.0.0.75 dd14237f-485f-4d19-aa14-f1a5e021ad44 default   }" containerID=97df177dfd226683085b378b8ab566298aa357c6dcdd0d705d2e925f066174dd containerInterface=eth0 datapathConfiguration="&{false false false false false <nil>}" interface=lxc67659437b8b7 k8sPodName=default/pod1 labels="[]" subsys=daemon sync-build=true
 ```
 
 ### 3. Inspect the Pod Interface and Network Namespace
@@ -62,27 +84,31 @@ level=info msg="New endpoint" ciliumEndpointName=default/pod1 ipv4=10.0.1.207 en
 On the node hosting `pod1`, list the CNI veth pair created by Cilium:
 
 ```bash
-$ ip addr | grep -A1 lxc
+$ ip addr | grep -A1 lxc67659437b8b7
 ```
 
 Example output:
 
 ```
-21: lxc7356c0cd4e00@if20: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 900
-    link/ether 82:61:ee:60:27:3a brd ff:ff:ff:ff:ff:ff link-netns cni-ba760e87-7617-b4a3-197f-9baf33fa823d
+26: lxc67659437b8b7@if25: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 900 qdisc noqueue state UP group default qlen 1000
+    link/ether a2:b6:db:d8:ef:bc brd ff:ff:ff:ff:ff:ff link-netns cni-33207a6f-bc61-ee1e-f3e6-66a89ddfbffc
 ```
 
 Enter the network namespace and inspect `eth0`:
 
 ```bash
-$ ip netns exec cni-ba760e87-7617-b4a3-197f-9baf33fa823d ip addr show eth0
+$ ip netns exec cni-33207a6f-bc61-ee1e-f3e6-66a89ddfbffc ip addr show eth0
+# или
+$ ip -n cni-33207a6f-bc61-ee1e-f3e6-66a89ddfbffc addr show eth0
 ```
 
 Result:
 
 ```
-20: eth0@if21: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 900
-    inet 10.0.1.207/32 scope global eth0
+25: eth0@if26: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 900 qdisc noqueue state UP group default qlen 1000
+    link/ether 86:90:64:db:11:bf brd ff:ff:ff:ff:ff:ff link-netnsid 0
+    inet 10.0.0.75/32 scope global eth0
+       valid_lft forever preferred_lft forever
 ```
 
 This IP matches the address reported in the Cilium logs.
@@ -98,15 +124,19 @@ $ kubectl delete pod pod1
 Cilium logs will include:
 
 ```
-level=info msg="Delete endpoint by containerID request" containerID=b1c311eacd... endpointID=1704 subsys=daemon
-level=info msg="Removed endpoint" ciliumEndpointName=default/pod1 endpointID=1704 subsys=endpoint
+time="2026-01-20T05:39:22Z" level=info msg="Delete endpoint by containerID request" containerID=97df177dfd226683085b378b8ab566298aa357c6dcdd0d705d2e925f066174dd endpointID=1905 k8sNamespace=default k8sPodName=pod1 subsys=daemon
+time="2026-01-20T05:39:22Z" level=info msg="Releasing key" key="[k8s:io.cilium.k8s.namespace.labels.kubernetes.io/metadata.name=default k8s:io.cilium.k8s.policy.cluster=kubernetes k8s:io.cilium.k8s.policy.serviceaccount=default k8s:io.kubernetes.pod.namespace=default]" subsys=allocator
+time="2026-01-20T05:39:22Z" level=info msg="Removed endpoint" ciliumEndpointName=default/pod1 containerID=97df177dfd containerInterface= datapathPolicyRevision=1 desiredPolicyRevision=1 endpointID=1905 identity=43165 ipv4=10.0.0.75 ipv6= k8sPodName=default/pod1 subsys=endpoint
 ```
 
 Verify the veth interface is removed:
 
 ```bash
-$ ip addr | grep lxc7356c0cd4e00
+$ ip addr | grep lxc67659437b8b7
+$ ip -br addr show
 ```
+
+Здесь параметр `br` = brief.
 
 Recreate `pod1`:
 
@@ -126,7 +156,7 @@ level=info msg="Rewrote endpoint BPF program" ciliumEndpointName=default/pod1 en
 Retrieve the pod IPs:
 
 ```bash
-kubectl get pods -o=jsonpath='{range .items[*]}{.metadata.name}: {.status.podIP}{"\n"}{end}'
+$ kubectl get pods -o=jsonpath='{range .items[*]}{.metadata.name}: {.status.podIP}{"\n"}{end}'
 ```
 
 | Pod | IP |
