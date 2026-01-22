@@ -207,3 +207,120 @@ $ kubectl apply -f deny-ingress.yaml
 - Kubernetes defaults to **allow all** ingress/egress traffic.
 - **Default-deny** policies lock down Pods by default.
 - Fine-tune communication by defining **egress** and **ingress** rules matching labels, ports, and namespaces.
+
+### Lab
+
+Default deny policy:
+
+```yaml
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-database-network-policy
+  namespace: database
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-website-network-policy
+  namespace: website
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress: []
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-backup-network-policy
+  namespace: backup-system
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress: []
+```
+
+Allow `database` pod to get ingress communication from `website` pod on port `3306`:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-website-ingress-to-database
+  namespace: database
+spec:
+  podSelector:
+    matchLabels:
+      role: database
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          role: website
+    - podSelector:
+        matchLabels:
+          role: website
+    ports:
+    - protocol: TCP
+      port: 3306
+```
+
+Allow `database` pod to get ingress communication from `backup` pod on port `3306`:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backup-ingress-to-database
+  namespace: database
+spec:
+  podSelector:
+    matchLabels:
+      role: database
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          role: backup-system
+    - podSelector:
+        matchLabels:
+          role: backup-system
+    ports:
+    - protocol: TCP
+      port: 3306
+```
+
+Allow the backup server egress to the NFS server with IP 10.1.2.3 on port 2049:
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-backup-network-policy
+  namespace: backup-system
+spec:
+  podSelector:
+    matchLabels:
+      role: backup-system 
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: 10.1.2.3/32
+    ports:
+    - port: 2049
+      protocol: TCP
+```
