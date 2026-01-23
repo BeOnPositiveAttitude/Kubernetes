@@ -109,6 +109,8 @@ $ kubectl exec -it pod1 -- ping -c 2 www.google.com
 $ kubectl exec -it pod1 -- ping -c 2 192.168.121.187
 ```
 
+"Закрытый" egress в namespace `default` тем не менее не влияет на прохождение пингов. Т.е. из другого namespace `website` пинги будут проходить до pod-ов в namespace `default`. А вот "закрытый" ingress в namespace `default` уже блокирует прохождение пингов.
+
 No responses will be received.
 
 ## 3. Apply Default-Deny Ingress
@@ -239,8 +241,6 @@ $ kubectl apply -f deny-ingress.yaml
 - Kubernetes defaults to **allow all** ingress/egress traffic.
 - **Default-deny** policies lock down Pods by default.
 - Fine-tune communication by defining **egress** and **ingress** rules matching labels, ports, and namespaces.
-
-"Закрытый" egress в namespace `default` не влияет на прохождение пингов. Т.е. из другого namespace `website` пинги будут проходить до pod-ов в namespace `default`. А вот "закрытый" ingress уже влияет.
 
 ### Lab
 
