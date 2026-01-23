@@ -11,10 +11,42 @@ By default, Kubernetes allows all egress and ingress traffic between Pods (even 
 
 ### 1.1 Test External Connectivity
 
+Создадим два pod-а:
+
+```yaml
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod1
+  labels:
+    app: ubuntu
+spec:
+  containers:
+  - name: ubuntu
+    image: ubuntu
+    command:
+    - sleep
+    - "7200"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: pod2
+  labels:
+    app: nginx
+spec:
+  containers:
+  - name: nginx
+    image: nginx
+```
+
+В контейнер `ubuntu` придется доставить пакет iputils-ping (чтобы работала команда `ping`).
+
 Exec into `pod1` (in the `default` namespace) and ping an external endpoint:
 
 ```bash
-$ kubectl exec -it pod1 --container container1 -- ping -c 4 www.google.com
+$ kubectl exec -it pod1 -- ping -c 4 www.google.com
 ```
 
 You should see successful responses:
@@ -30,13 +62,13 @@ You should see successful responses:
 List Pod IPs in `kube-system` and pick one (e.g. `192.168.121.187`):
 
 ```bash
-$ kubectl get pods -n kube-system -o jsonpath='{range .items[*]}{.status.podIP}{"\n"}{end}'
+$ kubectl -n kube-system get pods -o jsonpath='{range .items[*]}{.status.podIP}{"\n"}{end}'
 ```
 
 From `pod1`, ping that IP:
 
 ```bash
-$ kubectl exec -it pod1 --container container1 -- ping -c 3 192.168.121.187
+$ kubectl exec -it pod1 -- ping -c 3 192.168.121.187
 ```
 
 You should receive replies, confirming open egress/ingress.
@@ -66,7 +98,7 @@ $ kubectl apply -f deny-egress.yaml
 $ kubectl describe networkpolicy default-deny-egress
 ```
 
-You should see `policyTypes: [Egress]` and no `egress` rules.
+You should see `Policy Types: Egress` and no `egress` rules.
 
 ### 2.1 Validate Egress Blocking
 
@@ -105,7 +137,7 @@ From a Pod in `kube-system`, try to curl `pod2` (Nginx):
 
 ```bash
 $ POD_IP=$(kubectl get pod pod2 -o jsonpath='{.status.podIP}')
-$ kubectl run --rm -i test-client --image=centos --namespace=kube-system --restart=Never -- \
+$ kubectl -n kube-system run --rm -i test-client --image=nginx --restart=Never -- \
   curl --connect-timeout 1 http://$POD_IP
 ```
 
@@ -207,6 +239,8 @@ $ kubectl apply -f deny-ingress.yaml
 - Kubernetes defaults to **allow all** ingress/egress traffic.
 - **Default-deny** policies lock down Pods by default.
 - Fine-tune communication by defining **egress** and **ingress** rules matching labels, ports, and namespaces.
+
+"Закрытый" egress в namespace `default` не влияет на прохождение пингов. Т.е. из другого namespace `website` пинги будут проходить до pod-ов в namespace `default`. А вот "закрытый" ingress уже влияет.
 
 ### Lab
 
