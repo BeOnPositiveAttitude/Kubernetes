@@ -41,7 +41,7 @@ spec:
     image: nginx
 ```
 
-В контейнер `ubuntu` придется доставить пакет iputils-ping (чтобы работала команда `ping`).
+В контейнер `ubuntu` придется доставить пакеты iputils-ping и curl (чтобы работали команды `ping` и `curl`).
 
 Exec into `pod1` (in the `default` namespace) and ping an external endpoint:
 
@@ -109,9 +109,23 @@ $ kubectl exec -it pod1 -- ping -c 2 www.google.com
 $ kubectl exec -it pod1 -- ping -c 2 192.168.121.187
 ```
 
+No responses will be received.
+
 "Закрытый" egress в namespace `default` тем не менее не влияет на прохождение пингов. Т.е. из другого namespace `website` пинги будут проходить до pod-ов в namespace `default`. А вот "закрытый" ingress в namespace `default` уже блокирует прохождение пингов.
 
-No responses will be received.
+```bash
+$ POD1_IP=$(kubectl -n default get pod pod1 -ojsonpath='{.status.podIP}')
+$ kubectl -n website exec -it website -- ping -c 4 $POD1_IP
+PING 10.0.0.44 (10.0.0.44) 56(84) bytes of data.
+64 bytes from 10.0.0.44: icmp_seq=1 ttl=62 time=0.796 ms
+64 bytes from 10.0.0.44: icmp_seq=2 ttl=62 time=0.510 ms
+64 bytes from 10.0.0.44: icmp_seq=3 ttl=62 time=0.722 ms
+64 bytes from 10.0.0.44: icmp_seq=4 ttl=62 time=0.485 ms
+
+--- 10.0.0.44 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3030ms
+rtt min/avg/max/mdev = 0.485/0.628/0.796/0.133 ms
+```
 
 ## 3. Apply Default-Deny Ingress
 
@@ -201,12 +215,12 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-    - Ingress
+  - Ingress
   ingress:
   - from:
     - podSelector:
         matchLabels:
-          app: centos
+          app: ubuntu
     ports:
     - protocol: TCP
       port: 80
@@ -225,7 +239,7 @@ $ kubectl apply -f deny-ingress.yaml
    ```bash
    $ kubectl exec -it pod1 -- curl --connect-timeout 1 http://$POD_IP
    ```
-   
+
    You should see the Nginx welcome page.
 
 2. **Blocked**: From `pod1` => Nginx on port 8080
@@ -233,7 +247,7 @@ $ kubectl apply -f deny-ingress.yaml
    ```bash
    $ kubectl exec -it pod1 -- curl --connect-timeout 1 http://$POD_IP:8080
    ```
-   
+
    Connections on other ports will time out.
 
 ## Recap
