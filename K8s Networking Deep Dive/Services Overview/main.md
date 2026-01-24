@@ -53,7 +53,28 @@ Kubernetes exposes Service endpoints to pods in two ways:
 Kubernetes supports four Service types, each controlling how traffic reaches your application.
 
 | Service Type | Exposure Scope | Port Mapping |
-| ClusterIP | Internal cluster only	Virtual cluster IP
-| NodePort	Host nodes	NodeIP:NodePort
-| LoadBalancer	External via LB	Provisioned cloud load balancer IP
-| ExternalName	DNS redirection	CNAME record to external hostname
+| ----------- | ----------- | ----------- |
+| ClusterIP | Internal cluster only | Virtual cluster IP |
+| NodePort | Host nodes | NodeIP:`NodePort` |
+| LoadBalancer | External via LB | Provisioned cloud load balancer IP |
+| ExternalName | DNS redirection | CNAME record to external hostname |
+
+1. **ClusterIP**
+
+   Exposes the Service on a cluster-internal IP address. Use it for internal microservice communications or when fronted by an Ingress.
+
+2. **NodePort**
+
+   Allocates a port on each node's IP. External clients use `NodeIP:NodePort` to reach the Service.
+
+3. **LoadBalancer**
+
+   Integrates with cloud-provider load balancers. Kubernetes provisions an external load balancer and maps it to your Service.
+
+4. **ExternalName**
+
+   Creates a DNS CNAME record that maps the Service to an external DNS name. No proxies or IPs are provisioned in the cluster.
+
+**Warning**
+
+`ExternalName` Services do not support port mapping or protocols. They simply return a DNS CNAME.
