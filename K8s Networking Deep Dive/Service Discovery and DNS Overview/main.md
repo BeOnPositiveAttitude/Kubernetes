@@ -6,7 +6,7 @@ When pods are created, scaled, or terminated, Kubernetes updates EndpointSlices 
 
 <img src="image.png" width="700" height="400"><br>
 
-### Service Discovery Mechanisms
+## Service Discovery Mechanisms
 
 | Mechanism | Description | Pros | Cons |
 | ----------- | ----------- | ----------- | ----------- |
@@ -51,3 +51,37 @@ Service names are uppercased and dashes become underscores when generating envir
 
 Deploy a DNS add-on (e.g., CoreDNS) to enable DNS lookups for Services. CoreDNS watches the Kubernetes API and automatically creates DNS records whenever Services change.
 
+#### DNS Records
+
+By default, Kubernetes creates both A and SRV records for each Service:
+
+```
+A record:
+my-app.default.svc.cluster.local
+
+SRV record:
+_my-app._tcp.my-app.default.svc.cluster.local
+```
+
+Both records resolve to the service's ClusterIP.
+
+#### Shortened DNS Names
+
+Depending on the client's namespace and search path, you can drop portions of the full DNS name:
+
+- Outside the namespace: `my-app.default`
+- Inside the namespace: `my-app`
+
+The pod's `/etc/resolv.conf` (configured by the kubelet) controls this:
+
+```
+search backup-system.svc.cluster.local svc.cluster.local cluster.local
+nameserver 10.96.0.10
+options ndots:5
+```
+
+DNS resolution first tries the pod's namespace domain, then `svc.cluster.local`, and finally `cluster.local`.
+
+**Warning**
+
+If `ndots` is set too low, lookups may skip qualified names. Ensure `options ndots:5` (or higher) to allow short names in-cluster.
