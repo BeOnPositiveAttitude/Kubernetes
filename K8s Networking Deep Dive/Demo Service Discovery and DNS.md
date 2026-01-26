@@ -25,7 +25,7 @@ nginx-service   ClusterIP   10.103.206.194   <none>        80/TCP    10m
 When a pod starts, the kubelet injects environment variables for each Service in the same namespace. Let's verify this with a temporary pod:
 
 ```bash
-$ kubectl run -i --tty --rm test-conn --image=ubuntu --restart=Never -- bash
+$ kubectl run -i --tty --rm test-pod --image=ubuntu --restart=Never -- /bin/bash
 ```
 
 Inside the pod shell, list variables related to `nginx-service`:
@@ -59,7 +59,7 @@ Environment variables are only injected into pods in the same namespace as the S
 To see this in action, launch a pod in the `kube-system` namespace:
 
 ```bash
-$ kubectl -n kube-system run -i --tty --rm test-conn --image=ubuntu --restart=Never -- bash
+$ kubectl -n kube-system run -i --tty --rm test-pod --image=ubuntu --restart=Never -- /bin/bash
 $ env | grep -i nginx
 ```
 No output appears, since `nginx-service` resides in `default`.
@@ -129,3 +129,36 @@ Both will resolve to `10.103.206.194`.
 - **Cluster DNS**
 
   Provides cross-namespace, cluster-wide name resolution. Requires CoreDNS or kube-dns running.
+
+### Lab
+
+```yaml
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: database
+spec:
+  selector:
+    role: database
+  ports:
+  - name: mysql
+    protocol: TCP
+    port: 3306
+    targetPort: 3306
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: website-service
+  namespace: website
+spec:
+  selector:
+    role: website
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80
+```
