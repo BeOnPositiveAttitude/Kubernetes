@@ -81,9 +81,106 @@ $ kubectl run -i --tty --rm debug --image=curlimages/curl --restart=Never -- sh
 
 Inside the debug pod:
 
+```bash
+$ nslookup clusterip-svc.default.svc.cluster.local
+$ curl http://clusterip-svc.default.svc.cluster.local
+# Should return the NGINX welcome page
+```
 
+ClusterIP services are only reachable from within the Kubernetes cluster. Use them for internal microservice communication.
 
+### 2. NodePort
 
+NodePort exposes a Service on each Node's IP at a static port, allowing external traffic.
+
+#### 2.1 Service Definition
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nodeport-svc
+  namespace: default
+spec:
+  type: NodePort
+  selector:
+    role: nginx
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+    nodePort: 30000
+```
+
+```bash
+$ kubectl apply -f nodeport-svc.yaml
+$ kubectl get svc nodeport-svc
+# OUTPUT
+# NAME             TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)         AGE
+# nodeport-svc     NodePort    10.98.229.84     <none>        80:30000/TCP    5m
+```
+
+#### 2.2 Access via Node IP
+
+1. Find a node's IP address:
+
+   ```bash
+   $ kubectl get node node01 -o jsonpath='{.status.addresses[?(@.type=="InternalIP")].address}'
+   # e.g., 192.168.121.156
+   ```
+
+2. From outside the cluster:
+
+   ```bash
+   $ curl http://192.168.121.156:30000
+   ```
+
+   This should return the NGINX welcome page.
+
+   **Warning**
+   
+   Ensure that your cloud provider's firewall or on-premise network allows traffic to the nodePort range (default 30000–32767).
+   
+#### 2.3 Internal DNS Resolution
+
+Within the cluster, you can still resolve the service by DNS:
+
+```bash
+$ kubectl run -i --tty --rm debug --image=curlimages/curl --restart=Never -- sh
+# Inside the pod:
+$ nslookup nodeport-svc.default.svc.cluster.local
+$ curl http://nodeport-svc.default.svc.cluster.local
+```
+
+### 3. Headless Service
+
+A headless Service omits the cluster IP (`clusterIP: None`) and returns the IPs of individual pods directly.
+
+#### 3.1 Service Definition
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: headless-svc
+  namespace: default
+spec:
+  clusterIP: None
+  selector:
+    role: nginx
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+```
+
+```bash
+$ kubectl apply -f headless-svc.yaml
+$ kubectl get svc headless-svc
+# OUTPUT
+# NAME            TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+# headless-svc    ClusterIP   None         <none>        80/TCP    5m
+```
 
 ### Lab
 
