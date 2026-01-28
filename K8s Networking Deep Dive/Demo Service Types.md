@@ -138,9 +138,9 @@ $ kubectl get svc nodeport-svc
    This should return the NGINX welcome page.
 
    **Warning**
-   
+
    Ensure that your cloud provider's firewall or on-premise network allows traffic to the nodePort range (default 30000–32767).
-   
+
 #### 2.3 Internal DNS Resolution
 
 Within the cluster, you can still resolve the service by DNS:
@@ -181,6 +181,59 @@ $ kubectl get svc headless-svc
 # NAME            TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
 # headless-svc    ClusterIP   None         <none>        80/TCP    5m
 ```
+
+#### 3.2 DNS and Direct Pod Access
+
+```bash
+$ kubectl run -i --tty --rm debug --image=curlimages/curl --restart=Never -- sh
+```
+
+Inside the debug pod:
+
+```bash
+$ nslookup headless-svc.default.svc.cluster.local
+$ for ip in $(nslookup headless-svc.default.svc.cluster.local | grep Address | awk '{print $2}'); do
+  curl http://$ip
+done
+```
+
+Headless Services are ideal for stateful applications (e.g., databases) where you need direct pod access for persistent storage or custom load balancing.
+
+### 4. ExternalName
+
+ExternalName maps a Service to an external DNS name by returning a CNAME record.
+
+#### 4.1 Service Definition
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: externalname-svc
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: httpbin.org
+```
+
+```bash
+$ kubectl apply -f externalname-svc.yaml
+$ kubectl get svc externalname-svc
+# OUTPUT
+# NAME                 TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+# externalname-svc     ExternalName   <none>       <none>        <none>    5m
+```
+
+#### 4.2 Testing ExternalName
+
+```bash
+$ kubectl run -i --tty --rm debug --image=curlimages/curl --restart=Never -- sh
+# Inside the pod:
+$ curl http://externalname-svc.default.svc.cluster.local/get
+# This request is forwarded to httpbin.org/get
+```
+
+ExternalName does not proxy traffic through the cluster - it simply performs a DNS CNAME lookup. Use this to reference external APIs or services.
 
 ### Lab
 
