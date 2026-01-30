@@ -76,7 +76,7 @@ $ kubectl get svc clusterip-svc
 Launch a temporary pod to test DNS and HTTP:
 
 ```bash
-$ kubectl run -i --tty --rm debug --image=curlimages/curl --restart=Never -- sh
+$ kubectl run -i --tty --rm debug-pod --image=curlimages/curl --restart=Never -- /bin/sh
 ```
 
 Inside the debug pod:
@@ -146,7 +146,7 @@ $ kubectl get svc nodeport-svc
 Within the cluster, you can still resolve the service by DNS:
 
 ```bash
-$ kubectl run -i --tty --rm debug --image=curlimages/curl --restart=Never -- sh
+$ kubectl run -i --tty --rm debug-pod --image=curlimages/curl --restart=Never -- /bin/sh
 # Inside the pod:
 $ nslookup nodeport-svc.default.svc.cluster.local
 $ curl http://nodeport-svc.default.svc.cluster.local
@@ -185,16 +185,14 @@ $ kubectl get svc headless-svc
 #### 3.2 DNS and Direct Pod Access
 
 ```bash
-$ kubectl run -i --tty --rm debug --image=curlimages/curl --restart=Never -- sh
+$ kubectl run -i --tty --rm debug-pod --image=curlimages/curl --restart=Never -- /bin/sh
 ```
 
 Inside the debug pod:
 
 ```bash
 $ nslookup headless-svc.default.svc.cluster.local
-$ for ip in $(nslookup headless-svc.default.svc.cluster.local | grep Address | awk '{print $2}'); do
-  curl http://$ip
-done
+$ for ip in $(nslookup headless-svc.default.svc.cluster.local | grep Address | awk '{print $2}'); do curl http://$ip; done
 ```
 
 Headless Services are ideal for stateful applications (e.g., databases) where you need direct pod access for persistent storage or custom load balancing.
@@ -221,13 +219,13 @@ $ kubectl apply -f externalname-svc.yaml
 $ kubectl get svc externalname-svc
 # OUTPUT
 # NAME                 TYPE           CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
-# externalname-svc     ExternalName   <none>       <none>        <none>    5m
+# externalname-svc     ExternalName   <none>       httpbin.org   <none>    35s
 ```
 
 #### 4.2 Testing ExternalName
 
 ```bash
-$ kubectl run -i --tty --rm debug --image=curlimages/curl --restart=Never -- sh
+$ kubectl run -i --tty --rm debug-pod --image=curlimages/curl --restart=Never -- /bin/sh
 # Inside the pod:
 $ curl http://externalname-svc.default.svc.cluster.local/get
 # This request is forwarded to httpbin.org/get
