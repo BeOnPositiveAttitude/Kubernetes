@@ -27,6 +27,22 @@ spec:
         image: nginx
 ```
 
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-service
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    role: nginx
+  type: ClusterIP
+```
+
 ```bash
 $ kubectl get deployment
 # NAME                READY   UP-TO-DATE   AVAILABLE   AGE
@@ -35,9 +51,9 @@ $ kubectl get deployment
 
 ```bash
 $ kubectl get services
-# NAME            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
-# kubernetes      ClusterIP   10.96.0.1        <none>        443/TCP    40m
-# nginx-service   ClusterIP   10.98.220.254    <none>        80/TCP     5m
+# NAME            TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)   AGE
+# kubernetes      ClusterIP   10.96.0.1        <none>        443/TCP   132m
+# nginx-service   ClusterIP   10.100.159.140   <none>        80/TCP    44s
 ```
 
 #### 1.2 List Endpoints
@@ -46,12 +62,12 @@ Kubernetes automatically creates an Endpoints object that tracks the Pod IPs beh
 
 ```bash
 $ kubectl get endpoints
-# NAME            ENDPOINTS            AGE
-# kubernetes      192.168.121.182:6443 40m
-# nginx-service   10.0.0.55:80         5m
+# NAME            ENDPOINTS             AGE
+# kubernetes      192.168.121.28:6443   132m
+# nginx-service   10.0.1.103:80         21s
 ```
 
-The `nginx-service` Endpoints resource shows the Pod's IP (`10.0.0.55`) and port (`80`).
+The `nginx-service` Endpoints resource shows the Pod's IP (`10.0.1.103`) and port (`80`).
 
 #### 1.3 Inspect the Endpoints Resource
 
@@ -69,14 +85,14 @@ metadata:
   namespace: default
 subsets:
 - addresses:
-  - ip: 10.0.0.55
-    nodeName: node01
+  - ip: 10.0.1.103
+    nodeName: controlplane
     targetRef:
       kind: Pod
-      name: nginx-deployment-7c79c4bf97-z79j4
+      name: nginx-deployment-7d8785d889-jbz7t
       namespace: default
   ports:
-  - name: nginx
+  - name: http
     port: 80
     protocol: TCP
 ```
@@ -90,11 +106,13 @@ $ kubectl describe endpoints nginx-service
 ```
 Name:         nginx-service
 Namespace:    default
-Subset:
-  Addresses:  10.0.0.55
+Subsets:
+  Addresses:          10.0.1.103
+  NotReadyAddresses:  <none>
   Ports:
-    Name   Port  Protocol
-    nginx  80    TCP
+    Name  Port  Protocol
+    ----  ----  --------
+    http  80    TCP
 ```
 
 ### 2. Scaling and Endpoint Updates
@@ -120,11 +138,15 @@ Kubernetes updates the Endpoints list automatically when Pods are added or remov
    ```
 
    ```
-   Subset:
-     Addresses: 10.0.0.55,10.0.1.248
+   Name:         nginx-service
+   Namespace:    default
+   Subsets:
+     Addresses:          10.0.0.206,10.0.1.103
+     NotReadyAddresses:  <none>
      Ports:
-       Name   Port  Protocol
-       nginx  80    TCP
+       Name  Port  Protocol
+       ----  ----  --------
+       http  80    TCP
    ```
 
 4. Delete one Pod and observe the update:
@@ -149,59 +171,72 @@ Endpoint Slices improve scalability by splitting Service backends into multiple 
 
 ```bash
 $ kubectl get endpointslices
-# NAME                         ADDRESSTYPE   PORTS  ENDPOINTS       AGE
-# kubernetes                   IPv4          6443   192.168.121.182 42m
-# nginx-service-87c5j          IPv4          80     10.0.0.55       7m
+# NAME                  ADDRESSTYPE   PORTS   ENDPOINTS        AGE
+# kubernetes            IPv4          6443    192.168.121.28   139m
+# nginx-service-vx7cs   IPv4          80      10.0.1.103       7m21s
 ```
 
 #### 3.2 Inspect a Single EndpointSlice
 
 ```bash
-$ kubectl get endpointslice nginx-service-87c5j -o yaml
+$ kubectl get endpointslice nginx-service-vx7cs -o yaml
 ```
 
 ```yaml
 apiVersion: discovery.k8s.io/v1
 kind: EndpointSlice
 metadata:
-  name: nginx-service-87c5j
+  name: nginx-service-vx7cs
   namespace: default
   labels:
     kubernetes.io/service-name: nginx-service
     endpointslice.kubernetes.io/managed-by: endpointslice-controller.k8s.io
-ports:
-- name: nginx
-  port: 80
-  protocol: TCP
+addressType: IPv4
 endpoints:
 - addresses:
-  - 10.0.0.55
+  - 10.0.1.103
   conditions:
     ready: true
+    serving: true
+    terminating: false
+  nodeName: controlplane
   targetRef:
     kind: Pod
-    name: nginx-deployment-7c79c4bf97-z79j4
-  nodeName: node01
+    name: nginx-deployment-7d8785d889-jbz7t
+    namespace: default
+  ownerReferences:
+  - apiVersion: v1
+    blockOwnerDeletion: true
+    controller: true
+    kind: Service
+    name: nginx-service
+ports:
+- name: http
+  port: 80
+  protocol: TCP
 ```
 
 Or use:
 
 ```bash
-$ kubectl describe endpointslice nginx-service-87c5j
+$ kubectl describe endpointslice nginx-service-vx7cs
 ```
 
 ```
-Name:         nginx-service-87c5j
+Name:         nginx-service-vx7cs
 AddressType:  IPv4
 Ports:
-  Name   Port  Protocol
-  nginx  80    TCP
+  Name  Port  Protocol
+  ----  ----  --------
+  http  80    TCP
 Endpoints:
-  - Addresses:   10.0.0.55
+  - Addresses:  10.0.1.103
     Conditions:
-      Ready:     true
-    TargetRef:   Pod/nginx-deployment-7c79c4bf97-z79j4
-    NodeName:    node01
+      Ready:    true
+    Hostname:   <unset>
+    TargetRef:  Pod/nginx-deployment-7d8785d889-jbz7t
+    NodeName:   controlplane
+    Zone:       <unset>
 ```
 
 **Warning**
@@ -214,34 +249,55 @@ Scale to two replicas:
 
 ```bash
 $ kubectl scale deployment nginx-deployment --replicas=2
-$ kubectl describe endpointslice nginx-service-87c5j
+$ kubectl describe endpointslice nginx-service-vx7cs
 ```
 
 ```
+Name:         nginx-service-vx7cs
+AddressType:  IPv4
+Ports:
+  Name  Port  Protocol
+  ----  ----  --------
+  http  80    TCP
 Endpoints:
-  - Addresses: 10.0.0.55
+  - Addresses:  10.0.1.103
     Conditions:
-      Ready: true
-    TargetRef: Pod/nginx-deployment-7c79c4bf97-z79j4
-  - Addresses: 10.1.0.202
+      Ready:    true
+    Hostname:   <unset>
+    TargetRef:  Pod/nginx-deployment-7d8785d889-jbz7t
+    NodeName:   controlplane
+    Zone:       <unset>
+  - Addresses:  10.0.0.27
     Conditions:
-      Ready: true
-    TargetRef: Pod/nginx-deployment-7c79c4bf97-gsc44
+      Ready:    true
+    Hostname:   <unset>
+    TargetRef:  Pod/nginx-deployment-7d8785d889-xk9f7
+    NodeName:   node01
+    Zone:       <unset>
 ```
 
 Scale back to one replica and verify:
 
 ```bash
 $ kubectl scale deployment nginx-deployment --replicas=1
-$ kubectl describe endpointslice nginx-service-87c5j
+$ kubectl describe endpointslice nginx-service-vx7cs
 ```
 
 ```
+Name:         nginx-service-vx7cs
+AddressType:  IPv4
+Ports:
+  Name  Port  Protocol
+  ----  ----  --------
+  http  80    TCP
 Endpoints:
-  - Addresses: 10.0.0.55
+  - Addresses:  10.0.1.103
     Conditions:
-      Ready: true
-    TargetRef: Pod/nginx-deployment-7c79c4bf97-z79j4
+      Ready:    true
+    Hostname:   <unset>
+    TargetRef:  Pod/nginx-deployment-7d8785d889-jbz7t
+    NodeName:   controlplane
+    Zone:       <unset>
 ```
 
 ### 4. Comparison and Conclusion
