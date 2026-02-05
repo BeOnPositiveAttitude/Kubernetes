@@ -5,7 +5,7 @@ In this step-by-step guide, you'll learn how to diagnose and resolve internal ne
 Start by confirming that all Cilium components are running in the `kube-system` namespace:
 
 ```bash
-$ kubectl get pods -n kube-system
+$ kubectl -n kube-system get pods
 # NAME                                   READY   STATUS    RESTARTS   AGE
 # cilium-6xfl8                           1/1     Running   0          3m11s
 # cilium-9qzr8                           1/1     Running   0          3m11s
@@ -21,13 +21,13 @@ Cilium consists of:
 Inspect operator logs to catch any errors or warnings:
 
 ```bash
-$ kubectl logs -n kube-system cilium-operator-58684c48c9-4rntb
+$ kubectl -n kube-system logs cilium-operator-58684c48c9-4rntb
 ```
 
 For agent diagnostics, view a Cilium DaemonSet pod log:
 
 ```bash
-$ kubectl logs -n kube-system cilium-6xfl8
+$ kubectl -n kube-system logs cilium-6xfl8
 ```
 
 #### 1.1 Using the Cilium CLI
@@ -41,25 +41,35 @@ $ cilium status
 Example:
 
 ```
-Cilium:                OK
-Operator:              OK
-DaemonSet cilium:      Desired: 2, Ready: 2/2, Available: 2/2
+    /¯¯\
+ /¯¯\__/¯¯\    Cilium:             OK
+ \__/¯¯\__/    Operator:           OK
+ /¯¯\__/¯¯\    Envoy DaemonSet:    disabled (using embedded mode)
+ \__/¯¯\__/    Hubble Relay:       disabled
+    \__/       ClusterMesh:        disabled
+
+DaemonSet              cilium                   Desired: 2, Ready: 2/2, Available: 2/2
+Deployment             cilium-operator          Desired: 1, Ready: 1/1, Available: 1/1
+Containers:            cilium                   Running: 2
+                       cilium-operator          Running: 1
+                       clustermesh-apiserver    
+                       hubble-relay             
 ```
 
-#### 1.2 Running `cilium-debug`
+#### 1.2 Running `cilium-dbg`
 
 Run the built-in debug tool to gather component status:
 
 ```bash
-$ kubectl exec -n kube-system cilium-6xfl8 -- cilium-debug status
+$ kubectl -n kube-system exec cilium-6xfl8 -- cilium-dbg status
 ```
 
 Key checks include KVStore, API server connectivity, IPAM, and overall cluster health:
 
 ```
-Kubernetes:              Ok      1.29 (v1.29.0) [linux/amd64]
-Cilium:                  Ok      1.15.3
-Cluster health:         2/2 reachable (2024-07-21T20:18:25Z)
+Kubernetes:              Ok   1.34 (v1.34.0) [linux/amd64]
+Cilium:                  Ok   1.15.3 (v1.15.3-22dfbc58) 
+Cluster health:          2/2 reachable   (2026-02-05T05:34:58Z)
 ```
 
 #### 1.3 Checking Node Connectivity
@@ -71,9 +81,22 @@ $ kubectl exec -n kube-system cilium-6xfl8 -- cilium-health status
 ```
 
 ```
-Kubernetes:         Ok      1.29 (v1.29.0)
-Cilium:             Ok      1.15.3
-Cilium health:      2/2 reachable (2024-07-21T20:18:25Z)
+Probe time:   2026-02-05T05:37:58Z
+Nodes:
+  kubernetes/controlplane (localhost):
+    Host connectivity to 192.168.121.196:
+      ICMP to stack:   OK, RTT=425.366µs
+      HTTP to agent:   OK, RTT=229.229µs
+    Endpoint connectivity to 10.0.0.24:
+      ICMP to stack:   OK, RTT=424.06µs
+      HTTP to agent:   OK, RTT=210.118µs
+  kubernetes/node01:
+    Host connectivity to 192.168.121.62:
+      ICMP to stack:   OK, RTT=506.011µs
+      HTTP to agent:   OK, RTT=466.985µs
+    Endpoint connectivity to 10.0.1.129:
+      ICMP to stack:   OK, RTT=426.385µs
+      HTTP to agent:   OK, RTT=1.024029ms
 ```
 
 ### 2. Inspect Network Policies
@@ -82,20 +105,22 @@ NetworkPolicies can block unintended (непредусмотренные) traffi
 
 ```bash
 $ kubectl get networkpolicies.networking.k8s.io -A
-# NAMESPACE	NAME	POD-SELECTOR	AGE
-# default	default-deny-egress	<none>	7m12s
+# NAMESPACE   NAME                  POD-SELECTOR    AGE
+# default     default-deny-egress   <none>          21m
 ```
 
 Describe a restrictive policy:
 
 ```bash
-kubectl describe networkpolicies.networking.k8s.io default-deny-egress -n default
+kubectl -n default describe networkpolicies.networking.k8s.io default-deny-egress
 ```
 
 ```
-PodSelector: <none>    # Applies to all pods in this namespace
+PodSelector:     <none> (Allowing the specific traffic to all pods in this namespace)
+Not affecting ingress traffic
+Allowing egress traffic:
+   <none> (Selected pods are isolated for egress connectivity)
 Policy Types: Egress
-Egress: <none>         # Denies all egress traffic
 ```
 
 **Warning**
@@ -117,7 +142,7 @@ $ kubectl run --rm -i --tty debug-pod \
 - To restore connectivity, delete the policy:
 
   ```bash
-  $ kubectl delete networkpolicy default-deny-egress -n default
+  $ kubectl -n default delete networkpolicy default-deny-egress
   ```
 
 Re-run the curl test to confirm successful egress.
@@ -149,7 +174,7 @@ $ kubectl logs -f nginx-deployment-56fcf95486-7d2dw
 Test direct connectivity by forwarding local port 8080 to the pod's port 80:
 
 ```bash
-$ kubectl port-forward nginx-deployment-56fcf95486-7d2dw 8080:80
+$ kubectl port-forward deployment/nginx-deployment 8080:80
 ```
 
 Open your browser or use `curl http://localhost:8080` to verify the service response.
