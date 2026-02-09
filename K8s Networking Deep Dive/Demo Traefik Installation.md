@@ -311,3 +311,31 @@ $ kubectl -n traefik logs -f deployment/traefik
 ```
 
 With `logs.access.enabled: true`, each HTTP request is recorded in the logs.
+
+### Lab
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: website-ingress
+  namespace: website
+spec:
+  defaultBackend:
+    service:
+      name: website-service
+      port:
+        name: http
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: website-service
+            port:
+              name: http
+```
+
+Трафик приходит сначала на ноду кластера на порт 32080 (здесь публикуется сам ingress-контроллер через свой сервис `traefik` типа NodePort), далее в ingress-правиле идет сопоставление запрошенного location и названия сервиса, трафик перенаправляется на сервис `website-service`. Как видно опция `host` может и не указываться вовсе.

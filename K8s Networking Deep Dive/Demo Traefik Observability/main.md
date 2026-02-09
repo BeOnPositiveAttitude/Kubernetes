@@ -10,15 +10,16 @@ apiVersion: v1
 kind: Service
 metadata:
   name: traefik-dashboard-service
-  namespace: traefik
+  namespace: default
 spec:
   type: NodePort
   ports:
-  - port: 9000
+  - name: dashboard
+    port: 9000
     targetPort: traefik
     nodePort: 30000
   selector:
-    app.kubernetes.io/instance: traefik-traefik
+    app.kubernetes.io/instance: traefik-default
 ```
 
 Apply and verify the Service:
@@ -32,14 +33,14 @@ Expected output:
 
 ```text
 Name:                     traefik-dashboard-service
-Namespace:                traefik
-Selector:                 app.kubernetes.io/instance=traefik-traefik
+Namespace:                default
+Selector:                 app.kubernetes.io/instance=traefik-default
 Type:                     NodePort
-IP:                       10.104.3.15
-Port:                     9000/TCP
+IP:                       10.108.77.204
+Port:                     dashboard  9000/TCP
 TargetPort:               traefik/TCP
-NodePort:                 30000/TCP
-Endpoints:                10.1.0.10:9000
+NodePort:                 dashboard 30000/TCP
+Endpoints:                10.0.1.192:9000
 ```
 
 ### 2. Enable Insecure API Access
@@ -49,7 +50,7 @@ By default, Traefik's API/dashboard is secured. For this lab, we'll enable insec
 Edit the Traefik deployment:
 
 ```bash
-$ kubectl edit deployment traefik -n traefik
+$ kubectl -n default edit deployment traefik
 ```
 
 Under the container spec's `args:` section, include:
@@ -78,7 +79,7 @@ args:
 Save and exit. The deployment will rollout updated pods:
 
 ```bash
-$ kubectl -n traefik get pods
+$ kubectl -n default get pods
 ```
 
 You should see:
