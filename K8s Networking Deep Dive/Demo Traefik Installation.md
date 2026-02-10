@@ -19,29 +19,88 @@ kind: ClusterRole
 metadata:
   name: traefik-role
 rules:
-- apiGroups: ["*"]
+- apiGroups:
+  - ""
   resources:
-  - services
-  - secrets
-  - endpoints
-  - ingresses
   - configmaps
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["networking.k8s.io", "discovery.k8s.io"]
-  resources: ["ingresses", "ingressclasses"]
-  verbs: ["get", "list", "watch"]
-- apiGroups: ["networking.k8s.io"]
-  resources: ["ingresses/status"]
-  verbs: ["update"]
+  - nodes
+  - services
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - discovery.k8s.io
+  resources:
+  - endpointslices
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - pods
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - secrets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - extensions
+  - networking.k8s.io
+  resources:
+  - ingressclasses
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - extensions
+  - networking.k8s.io
+  resources:
+  - ingresses/status
+  verbs:
+  - update
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - list
+  - watch
+- apiGroups:
+  - traefik.io
+  resources:
+  - ingressroutes
+  - ingressroutetcps
+  - ingressrouteudps
+  - middlewares
+  - middlewaretcps
+  - serverstransports
+  - serverstransporttcps
+  - tlsoptions
+  - tlsstores
+  - traefikservices
+  verbs:
+  - get
+  - list
+  - watch
 ```
 
 Bind this role to a ServiceAccount in the `kube-system` namespace:
 
 ```yaml
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: traefik-account
+  name: traefik
   namespace: kube-system
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -50,7 +109,7 @@ metadata:
   name: traefik-binding
 subjects:
   - kind: ServiceAccount
-    name: traefik-account
+    name: traefik
     namespace: kube-system
 roleRef:
   kind: ClusterRole
@@ -79,27 +138,110 @@ spec:
   selector:
     matchLabels:
       app: traefik
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
   template:
     metadata:
       labels:
         app: traefik
     spec:
-      serviceAccountName: traefik-account
+      automountServiceAccountToken: true
       containers:
       - name: traefik
-        image: traefik:v3.1
+        image: docker.io/traefik:v3.6.7
+        imagePullPolicy: IfNotPresent
         args:
+        - --entryPoints.metrics.address=:9100/tcp
+        - --entryPoints.traefik.address=:8080/tcp
+        - --entryPoints.web.address=:8000/tcp
+        - --entryPoints.websecure.address=:8443/tcp
         - --api.insecure=true
-        - --providers.kubernetesingress=true
-        - --entryPoints.web.address=:80
-        - --entryPoints.websecure.address=:443
+        - --api.dashboard=true
+        - --ping=true
+        - --metrics.prometheus=true
+        - --metrics.prometheus.entrypoint=metrics
+        - --providers.kubernetescrd
+        - --providers.kubernetescrd.allowEmptyServices=true
+        - --providers.kubernetesingress
+        - --providers.kubernetesingress.allowEmptyServices=true
+        - --providers.kubernetesingress.ingressendpoint.publishedservice=default/traefik
+        - --entryPoints.websecure.http.tls=true
+        - --log.level=INFO
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        - name: USER
+          value: traefik
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /ping
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 2
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
+        readinessProbe:
+          failureThreshold: 1
+          httpGet:
+            path: /ping
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 2
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 2
         ports:
-        - name: web
-          containerPort: 80
-        - name: websecure
-          containerPort: 443
+        - name: metrics
+          protocol: TCP
+          containerPort: 9100
         - name: dashboard
+          protocol: TCP
           containerPort: 8080
+        - name: web
+          protocol: TCP
+          containerPort: 8000
+        - name: websecure
+          protocol: TCP
+          containerPort: 8443
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        - mountPath: /data
+          name: data
+        - mountPath: /tmp
+          name: tmp
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      securityContext:
+        runAsGroup: 65532
+        runAsNonRoot: true
+        runAsUser: 65532
+        seccompProfile:
+          type: RuntimeDefault
+      serviceAccount: traefik
+      serviceAccountName: traefik
+      volumes:
+      - emptyDir: {}
+        name: data
+      - emptyDir: {}
+        name: tmp
 ```
 
 The `--api.insecure` flag enables an unsecured dashboard. Do **not** use this in production environments. For secure dashboards, configure TLS and authentication.
@@ -112,31 +254,26 @@ Create a Service manifest (`traefik-svc.yaml`):
 apiVersion: v1
 kind: Service
 metadata:
-  name: traefik-web
+  name: traefik
   namespace: kube-system
 spec:
-  type: LoadBalancer
+  type: NodePort
   ports:
-  - name: http
+  - name: web
     port: 80
-    targetPort: 80
-  - name: https
+    targetPort: web
+    nodePort: 31950
+    protocol: TCP
+  - name: websecure
     port: 443
-    targetPort: 443
-  selector:
-    app: traefik
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: traefik-dashboard
-  namespace: kube-system
-spec:
-  type: LoadBalancer
-  ports:
+    targetPort: websecure
+    nodePort: 30279
+    protocol: TCP
   - name: dashboard
     port: 8080
-    targetPort: 8080
+    targetPort: dashboard
+    nodePort: 30280
+    protocol: TCP
   selector:
     app: traefik
 ```

@@ -145,3 +145,9 @@ spec:
 ```
 
 When this Service deploys, ExternalDNS will automatically create and maintain the DNS record `myservice.example.com`, updating it if the external IP changes.
+
+### Quiz
+
+What is the purpose of the `--txt-owner-id` flag in ExternalDNS?
+
+- To provide a unique identifier for the ExternalDNS instance.
