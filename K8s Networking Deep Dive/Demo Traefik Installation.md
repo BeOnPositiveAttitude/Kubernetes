@@ -386,13 +386,13 @@ kind: Service
 metadata:
   name: whoami
 spec:
-  type: ClusterIP
-  selector:
-    app: whoami
   ports:
   - name: http
     port: 80
     targetPort: 80
+  selector:
+    app: whoami
+  type: ClusterIP
 ```
 
 Apply:
@@ -447,7 +447,7 @@ Tail the Traefik pod's logs to inspect both general and access logs:
 $ kubectl -n traefik logs -f deployment/traefik
 ```
 
-With `logs.access.enabled: true`, each HTTP request is recorded in the logs.
+With `logs.access.enabled: true` (в файле `values.yaml`), each HTTP request is recorded in the logs. Либо указать аргумент `--accesslog=true` в Deployment.
 
 ### Lab
 
