@@ -167,7 +167,7 @@ spec:
         - --providers.kubernetescrd.allowEmptyServices=true
         - --providers.kubernetesingress
         - --providers.kubernetesingress.allowEmptyServices=true
-        - --providers.kubernetesingress.ingressendpoint.publishedservice=default/traefik
+        - --providers.kubernetesingress.ingressendpoint.publishedservice=kube-system/traefik
         - --entryPoints.websecure.http.tls=true
         - --log.level=INFO
         env:
@@ -293,6 +293,8 @@ Check the LoadBalancer IPs:
 ```bash
 $ kubectl -n kube-system get svc
 ```
+
+Недостаточно развернуть только указанные объекты. Также необходимо установить кучу CRDs, иначе в логах ingress-контроллера будут сыпаться ошибки.
 
 ### 2. Helm Installation
 
