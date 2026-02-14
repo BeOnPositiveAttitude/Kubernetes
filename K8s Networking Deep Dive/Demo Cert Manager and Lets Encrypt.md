@@ -23,7 +23,7 @@ $ kubectl create namespace cert-manager
 # Install Cert-Manager and register its CRDs
 $ helm install cert-manager jetstack/cert-manager \
     --namespace cert-manager \
-    --set installCRDs=true
+    --set crds.enabled=true
 ```
 
 Wait until all pods in the `cert-manager` namespace are in the `Running` state:
@@ -156,6 +156,12 @@ Events:
   Normal  CreateCertificate  10s   cert-manager-ingress-shim  Successfully created Certificate "web-ssl"
 ```
 
+Смотреть сертификат:
+
+```bash
+$ kubectl -n website describe certificate web-ssl
+```
+
 ### 6. Create a Let's Encrypt Production Issuer
 
 Once staging is validated, switch to the production environment. Create `prod-issuer.yaml`:
@@ -214,3 +220,72 @@ Your Traefik Ingress is now secured with a Let's Encrypt production certificate.
 | ----------- | ----------- | --------------- | ----------- |
 | letsencrypt-staging| Staging | https://acme-staging-v02.api.letsencrypt.org/directory | letsencrypt-staging |
 | letsencrypt-production | Production | https://acme-v02.api.letsencrypt.org/directory | letsencrypt-production |
+
+### Lab
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-staging
+  namespace: website
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email:  kodekloud-user@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-staging
+    solvers:
+    - http01:
+        ingress:
+          name: website-ingress
+```
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: website-ingress
+  namespace: website
+  annotations:
+    cert-manager.io/issuer: letsencrypt-staging
+spec:
+  tls:
+  - hosts:
+    - companyx-website.com
+    secretName: web-ssl
+  defaultBackend:
+    service:
+      name: website-service-nodeport
+      port:
+        name: http
+  rules:
+  - host: companyx-website.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: website-service-nodeport
+            port:
+              name: http
+```
+
+```yaml
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: letsencrypt-production
+  namespace: website
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email:  kodekloud-user@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-production
+    solvers:
+    - http01:
+        ingress:
+          name: website-ingress
+```
