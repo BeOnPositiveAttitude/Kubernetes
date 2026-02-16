@@ -117,7 +117,9 @@ spec:
 Layer 3 policies define network-layer connectivity without deep packet inspection:
 
 - **Endpoints-based:** Select pods by labels
+- **Services-based:** Промежуточный метод между Endpoints-based и CIDR-based, использует концепцию K8s Services.
 - **Entities-based:** Match built-in identities (идентификаторы) like `host` or `world`
+- **IP/CIDR-based:** 
 - **DNS-based:** Use runtime-resolved DNS names (honoring (с учётом значений) TTLs)
 
 <img src="image-3.png" width="700" height="400"><br>
