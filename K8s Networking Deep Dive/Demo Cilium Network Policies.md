@@ -75,7 +75,7 @@ $ kubectl delete networkpolicy demo-netpol
 
 Create `cilium-l3.yaml` to reimplement the same L3 selector using Cilium's CRD:
 
-```yaml  theme={null}
+```yaml
 apiVersion: cilium.io/v2
 kind: CiliumNetworkPolicy
 metadata:
@@ -222,8 +222,7 @@ spec:
         - method: GET
           path: /api
           headers:
-          - name: X-API-KEY
-            value: ABC123
+          - 'X-API-KEY: ABC123'
 ```
 
 ```bash
@@ -250,3 +249,89 @@ $ kubectl run --rm -i --tty admin-pod --image=curlimages/curl \
 | Cilium     | L4    | `cilium-l4.yaml`        | Restrict to TCP port 80                 |
 | Cilium     | L7    | `cilium-l7.yaml`        | Allow only GET `/healthz` & `/api`      |
 | Cilium     | L7+H  | `cilium-l7-header.yaml` | Adds `X-API-KEY` header check           |
+
+### Lab
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-website-ingress-to-database-cnp
+  namespace: database
+spec:
+  endpointSelector:
+    matchLabels:
+      app: database
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: website
+    toPorts:
+    - ports:
+      - port: "3306"
+        protocol: TCP
+```
+
+```yaml
+apiVersion: "cilium.io/v2"
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-backup-to-backup-server-cnp
+  namespace: backup-system
+spec:
+  endpointSelector:
+    matchLabels:
+      app: backup-system
+  egress:
+  - toCIDR:
+    - 10.1.2.3/32
+    toPorts:
+    - ports:
+      - port: "2049"
+        protocol: TCP
+```
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-backup-ingress-to-database-cnp
+  namespace: database
+spec:
+  endpointSelector:
+    matchLabels:
+      app: database
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: backup-system
+    toPorts:
+    - ports:
+      - port: "3306"
+        protocol: TCP
+```
+
+```yaml
+apiVersion: cilium.io/v2
+kind: CiliumClusterwideNetworkPolicy
+metadata:
+  name: allow-ingress-to-website-api
+spec:
+  endpointSelector:
+    matchLabels:
+      app: website
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        app: integration
+    toPorts:
+    - ports:
+      - port: "80"
+        protocol: TCP
+      rules:
+        http:
+        - method: POST
+          path: /api
+          headers:
+          - 'X-API-KEY: integrationKey123'
+```
