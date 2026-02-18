@@ -347,8 +347,8 @@ Confirm the NodePort assignment:
 
 ```bash
 $ kubectl -n traefik get svc
-# NAME      TYPE       CLUSTER-IP      PORT(S)
-# traefik   NodePort   10.xx.xx.xx     80:32080/TCP,443:32443/TCP
+# NAME         TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)                      AGE
+# traefik      NodePort    10.111.155.6   <none>        80:32080/TCP,443:32443/TCP   3m38s
 ```
 
 If you change ports in `values.yaml`, ensure your firewall or cloud provider permits traffic on the new NodePorts.
@@ -452,6 +452,23 @@ $ kubectl -n traefik logs -f deployment/traefik
 With `logs.access.enabled: true` (в файле `values.yaml`), each HTTP request is recorded in the logs. Либо указать аргумент `--accesslog=true` в Deployment.
 
 ### Lab
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: website-service
+  namespace: website
+spec:
+  ports:
+  - name: http
+    port: 5000
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: flaskapp
+  type: ClusterIP
+```
 
 ```yaml
 apiVersion: networking.k8s.io/v1

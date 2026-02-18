@@ -26,7 +26,7 @@ Apply and verify the Service:
 
 ```bash
 $ kubectl apply -f service-dashboard.yaml
-$ kubectl describe svc -n traefik traefik-dashboard-service
+$ kubectl describe svc traefik-dashboard-service
 ```
 
 Expected output:
@@ -89,6 +89,8 @@ NAME                         READY   STATUS    RESTARTS   AGE
 traefik-79554cb74d-txqdf     1/1     Running   0          30s
 ```
 
+В случае использования helm можно активировать "небезопасный" доступ к API в файле `values.yaml`. Для этого нужно задать значения параметра `api.insecure: true`.
+
 ### 3. Access the Dashboard
 
 Open port 30000 on your node and navigate to:
@@ -124,22 +126,22 @@ On the **Services** page, you can drill into each service's pods and endpoints. 
 Let's scale the CompanyX website to 5 replicas:
 
 ```bash
-$ kubectl scale deployment companyx-website --replicas=5
+$ kubectl -n website scale deployment website-deployment --replicas=5
 ```
 
 Verify new pods:
 
 ```bash
-$ kubectl -n companyx get pods
+$ kubectl -n website get pods
 ```
 
 ```text
 NAME                                  READY   STATUS    RESTARTS   AGE
-companyx-website-5d596d7d7d-abc12     1/1     Running   0          1m
-companyx-website-5d596d7d7d-def34     1/1     Running   0          1m
-companyx-website-5d596d7d7d-ghi56     1/1     Running   0          1m
-companyx-website-5d596d7d7d-jkl78     1/1     Running   0          1m
-companyx-website-5d596d7d7d-mno90     1/1     Running   0          1m
+website-deployment-5d5cdc47c4-45xs7   1/1     Running   0          40m
+website-deployment-5d5cdc47c4-9dnwg   1/1     Running   0          8s
+website-deployment-5d5cdc47c4-j6ggk   1/1     Running   0          8s
+website-deployment-5d5cdc47c4-qw25v   1/1     Running   0          40m
+website-deployment-5d5cdc47c4-vfhvr   1/1     Running   0          40m
 ```
 
 Refresh the Traefik dashboard - you'll now see five healthy pods listed under the CompanyX service.
