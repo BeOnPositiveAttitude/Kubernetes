@@ -92,7 +92,7 @@ traefik-7df9fd988f-j49ln         1/1     Running   0          18m
    $ kubectl -n default logs -f deployment/external-dns
    ```
 
-   Expected log excerpt:
+   Expected log excerpt (отрывок):
 
    ```plaintext
    time="2024-07-18T23:18:02Z" level=info msg="Using inCluster-config based on serviceaccount-token"

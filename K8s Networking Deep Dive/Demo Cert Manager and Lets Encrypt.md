@@ -29,7 +29,7 @@ $ helm install cert-manager jetstack/cert-manager \
 Wait until all pods in the `cert-manager` namespace are in the `Running` state:
 
 ```bash
-$ kubectl  -n cert-manager get pods
+$ kubectl -n cert-manager get pods
 ```
 
 **Make sure your cluster meets the [Cert-Manager prerequisites](https://cert-manager.io/docs/installation/).**
@@ -45,9 +45,18 @@ $ kubectl -n default get all
 Example output:
 
 ```text
-pod/whoami-8c9864b56-6pm4p   1/1 Running
-service/whoami               ClusterIP   10.98.232.119    80/TCP
-deployment.apps/whoami       1/1 Running
+NAME                          READY   STATUS    RESTARTS   AGE
+pod/whoami-66b7d97547-tmjgk   1/1     Running   0          83s
+
+NAME                 TYPE        CLUSTER-IP   EXTERNAL-IP   PORT(S)   AGE
+service/kubernetes   ClusterIP   10.96.0.1    <none>        443/TCP   3h43m
+service/whoami       ClusterIP   10.99.30.1   <none>        80/TCP    83s
+
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/whoami   1/1     1            1           83s
+
+NAME                                DESIRED   CURRENT   READY   AGE
+replicaset.apps/whoami-66b7d97547   1         1         1       83s
 ```
 
 Check the existing Ingress:
@@ -76,6 +85,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: letsencrypt-staging
+  namespace: default
 spec:
   acme:
     server: https://acme-staging-v02.api.letsencrypt.org/directory
@@ -88,12 +98,16 @@ spec:
           name: whoami-ingress
 ```
 
+Объект типа `Issuer` указывает к какому CA обращаться за выпуском сертификата.
+
+Автоматически создастся секрет с именем `letsencrypt-staging`, который будет содержать приватный ключ.
+
 Apply and inspect:
 
 ```bash
 $ kubectl apply -f staging-issuer.yaml
-$ kubectl -n default describe issuer letsencrypt-staging
-$ kubectl -n default get secrets
+$ kubectl describe issuer letsencrypt-staging
+$ kubectl get secrets
 ```
 
 You should see `letsencrypt-staging` in the secret list.
@@ -134,6 +148,8 @@ Apply the updated Ingress:
 $ kubectl apply -f whoami-ingress.yaml
 ```
 
+Автоматически создастся секрет с именем `web-ssl-cjk6t`, который тоже будет содержать приватный ключ.
+
 **Ensure DNS for `test-example.com` points to your Traefik load balancer before requesting a certificate.**
 
 ### 5. Verify the ACME Challenge and Certificate Issuance
@@ -141,7 +157,7 @@ $ kubectl apply -f whoami-ingress.yaml
 Describe the Ingress again to confirm ACME resources:
 
 ```bash
-kubectl -n default describe ingress whoami-ingress
+kubectl describe ingress whoami-ingress
 ```
 
 Look for:
@@ -171,6 +187,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: letsencrypt-production
+  namespace: default
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
@@ -187,7 +204,7 @@ Apply and verify:
 
 ```bash
 $ kubectl apply -f prod-issuer.yaml
-$ kubectl -n default describe issuer letsencrypt-production
+$ kubectl describe issuer letsencrypt-production
 ```
 
 ### 7. Switch Ingress to Production Issuer
@@ -195,7 +212,7 @@ $ kubectl -n default describe issuer letsencrypt-production
 Update the Ingress annotation to use the production Issuer:
 
 ```bash
-$ kubectl -n default annotate ingress whoami-ingress \
+$ kubectl annotate ingress whoami-ingress \
     cert-manager.io/issuer=letsencrypt-production \
     --overwrite
 ```
@@ -203,7 +220,7 @@ $ kubectl -n default annotate ingress whoami-ingress \
 Describe the Ingress to confirm renewal:
 
 ```bash
-$ kubectl -n default describe ingress whoami-ingress
+$ kubectl describe ingress whoami-ingress
 ```
 
 In the events, you should see:
