@@ -4,18 +4,83 @@ In this tutorial, we'll secure a sample application using Cilium Network Policie
 
 Our demo application runs as a single Pod with two containers listening on ports **5000** and **80**. It exposes two corresponding ClusterIP Services.
 
+```yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: demo-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: demo
+  template:
+    metadata:
+      labels:
+        app: demo
+    spec:
+      containers:
+      - name: app-1
+        image: wbassler/flask-app-demo:v0.1
+        command: [ "flask" ]
+        args: [ "run", "-p", "80", "-h", "0.0.0.0" ]
+        ports:
+        - containerPort: 80
+      - name: app-2
+        image: wbassler/flask-app-demo:v0.1
+        command: [ "flask" ]
+        args: [ "run", "-p", "5000", "-h", "0.0.0.0" ]
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-svc-80
+  namespace: default
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: demo
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-svc-5000
+  namespace: default
+spec:
+  ports:
+  - name: http
+    port: 80
+    protocol: TCP
+    targetPort: 5000
+  selector:
+    app: demo
+  type: ClusterIP
+```
+
 ```bash
 $ kubectl get all
 ```
 
 ```text
-NAME                                  READY   STATUS    RESTARTS   AGE
-pod/demo-deployment-7ccd685fcc-7z9wf  2/2     Running   0          5m
+NAME                                   READY   STATUS    RESTARTS   AGE
+pod/demo-deployment-7f74498dfd-w8tv2   2/2     Running   0          4m44s
 
-NAME                   TYPE        CLUSTER-IP       PORT(S)    AGE
-service/app-svc-5000   ClusterIP   10.111.51.97     5000/TCP   5m
-service/app-svc-80     ClusterIP   10.102.122.72     80/TCP    5m
-service/kubernetes     ClusterIP   10.96.0.1         443/TCP  10m
+NAME                   TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/kubernetes     ClusterIP   10.96.0.1        <none>        443/TCP    79m
+service/app-svc-80     ClusterIP   10.100.186.130   <none>        80/TCP     40s
+service/app-svc-5000   ClusterIP   10.97.118.255    <none>        80/TCP     40s
+
+NAME                              READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/demo-deployment   1/1     1            1           7m
 ```
 
 Both containers serve the same Flask app. We'll lock down access so only Pods labeled `app=admin` can communicate.
@@ -33,6 +98,8 @@ spec:
   podSelector:
     matchLabels:
       app: demo
+  policyTypes:
+  - Ingress
   ingress:
   - from:
     - podSelector:
@@ -62,7 +129,7 @@ spec:
    $ kubectl run --rm -i --tty client-pod --image=curlimages/curl \
        --restart=Never -- \
        curl --connect-timeout 2 app-svc-80
-   # curl: (28) Failed to connect...
+   # curl: (28) Connection timed out after 2002 milliseconds
    ```
 
 **Before applying Cilium policies, delete the existing Kubernetes NetworkPolicy so that Cilium's default behavior (allow all) is restored.**

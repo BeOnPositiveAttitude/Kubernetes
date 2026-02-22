@@ -88,7 +88,7 @@ metadata:
 spec:
   podSelector: {}   # selects all Pods in default
   policyTypes:
-    - Egress
+  - Egress
 ```
 
 Apply and verify:
@@ -140,7 +140,7 @@ metadata:
 spec:
   podSelector: {}
   policyTypes:
-    - Ingress
+  - Ingress
 ```
 
 Apply the policy:
