@@ -306,3 +306,5 @@ spec:
         ingress:
           name: website-ingress
 ```
+
+Важно - в лабе созданы ingress-ресурсы, но отсутствует ingress-контроллер Traefik.
