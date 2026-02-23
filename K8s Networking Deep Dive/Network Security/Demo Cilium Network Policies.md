@@ -209,7 +209,7 @@ $ kubectl run --rm -i --tty admin-pod --image=curlimages/curl \
 $ kubectl run --rm -i --tty admin-pod --image=curlimages/curl \
     --labels app=admin --restart=Never -- \
     curl --connect-timeout 2 app-svc-5000
-# curl: (28) Failed to connect...
+# curl: (28) Connection timed out after 2002 milliseconds
 ```
 
 ### 4. Cilium Layer 7 HTTP Policy
