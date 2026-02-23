@@ -14,22 +14,49 @@ First, confirm Cilium is healthy and Hubble is not yet active:
 
 ```bash
 $ cilium status
-Cilium:               OK
-Operator:             OK
-Envoy DaemonSet:      disabled (using embedded mode)
-Hubble Relay:         disabled
-ClusterMesh:          disabled
+    /¯¯\
+ /¯¯\__/¯¯\    Cilium:             OK
+ \__/¯¯\__/    Operator:           OK
+ /¯¯\__/¯¯\    Envoy DaemonSet:    disabled (using embedded mode)
+ \__/¯¯\__/    Hubble Relay:       disabled
+    \__/       ClusterMesh:        disabled
 
-Deployment          cilium-operator     Desired: 1, Ready: 1/1, Available: 1/1
-DaemonSet           cilium              Desired: 2, Ready: 2/2, Available: 2/2
-Containers:         cilium              Running: 2
-                    cilium-operator     Running: 1
+DaemonSet              cilium                   Desired: 2, Ready: 2/2, Available: 2/2
+Deployment             cilium-operator          Desired: 1, Ready: 1/1, Available: 1/1
+Containers:            cilium                   Running: 2
+                       cilium-operator          Running: 1
+                       clustermesh-apiserver
+                       hubble-relay
+Cluster Pods:          6/6 managed by Cilium
+Helm chart version:    1.15.3
+```
 
-Cluster Pods:  5/5 managed by Cilium
-Helm chart version:        v1.15.3
-Image versions
-  cilium            quay.io/cilium/cilium:v1.15.3
-  cilium-operator   quay.io/cilium/operator-generic:v1.15.3
+Установка Prometheus:
+
+```bash
+# Создаем namespace:
+$ kubectl create namespace monitoring
+# Добавляем репозиторий с чартами:
+$ helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+$ helm repo update
+$ helm search repo prometheus-community
+# Устанавливаем:
+$ helm install prometheus prometheus-community/prometheus --namespace monitoring
+```
+
+Установка Grafana:
+
+```bash
+# Добавляем репозиторий с чартами:
+$ helm repo add grafana https://grafana.github.io/helm-charts
+$ helm repo update
+$ helm search repo grafana/grafana
+# Устанавливаем:
+$ helm install grafana grafana/grafana --namespace monitoring
+# Смотрим notes чарта:
+$ helm get notes my-grafana -n monitoring
+# Смотрим пароль администратора:
+$ kubectl -n monitoring get secret grafana -o jsonpath='{.data.admin-password}' | base64 -d ; echo
 ```
 
 Verify that Grafana and Prometheus are up but not receiving Hubble metrics:
