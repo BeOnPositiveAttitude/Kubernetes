@@ -41,7 +41,7 @@ $ helm repo add prometheus-community https://prometheus-community.github.io/helm
 $ helm repo update
 $ helm search repo prometheus-community
 # Устанавливаем:
-$ helm install prometheus prometheus-community/prometheus --namespace monitoring
+$ helm install prometheus prometheus-community/kube-prometheus-stack --namespace monitoring
 ```
 
 Установка Grafana:
@@ -54,7 +54,7 @@ $ helm search repo grafana/grafana
 # Устанавливаем:
 $ helm install grafana grafana/grafana --namespace monitoring
 # Смотрим notes чарта:
-$ helm get notes my-grafana -n monitoring
+$ helm get notes grafana -n monitoring
 # Смотрим пароль администратора:
 $ kubectl -n monitoring get secret grafana -o jsonpath='{.data.admin-password}' | base64 -d ; echo
 ```
@@ -85,6 +85,7 @@ cilium  https://helm.cilium.io/
 Upgrade your Cilium installation to enable Hubble Relay, UI, and Prometheus metrics:
 
 ```bash
+$ helm repo add cilium https://helm.cilium.io/
 $ helm upgrade cilium cilium/cilium --version 1.15.4 \
     --namespace kube-system \
     --reuse-values \
