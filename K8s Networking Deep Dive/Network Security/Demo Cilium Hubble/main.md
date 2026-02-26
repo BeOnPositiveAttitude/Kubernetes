@@ -283,3 +283,43 @@ root@cilium# hubble observe -o json | jq .
 ### Conclusion
 
 Cilium Hubble delivers powerful network observability through both a rich UI and command-line interface. Integrate Hubble with Prometheus and Grafana for long-term monitoring or use the `hubble` CLI for on-the-fly troubleshooting.
+
+```yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-config
+data:
+  nginx.conf: |
+    server {
+        listen 4244;
+        listen [::]:4244;
+        server_name localhost;
+        location / {
+            root /usr/share/nginx/html;
+            index index.html index.htm;
+        }
+    }
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx-pod-custom
+spec:
+  containers:
+  - name: nginx
+    image: nginx:latest
+    ports:
+    - containerPort: 4244
+      hostPort: 4244
+      name: peer-test
+      protocol: TCP
+    volumeMounts:
+    - name: nginx-config-volume
+      mountPath: /etc/nginx/conf.d/default.conf
+      subPath: nginx.conf
+  volumes:
+    - name: nginx-config-volume
+      configMap:
+        name: nginx-config
+```
