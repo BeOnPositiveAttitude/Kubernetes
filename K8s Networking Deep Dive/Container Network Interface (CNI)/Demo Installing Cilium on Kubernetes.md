@@ -107,6 +107,8 @@ Hubble UI:         OK
 Cluster Pods:      X/Y managed by Cilium
 ```
 
+Тут вопрос, cilium ставили через CLI, непонятно при чем тут `helm upgrade`? Можно сразу переходить к следующему пункту.
+
 ### 5. Port-Forward Hubble Relay & Check Status
 
 Port-forward the Relay service locally:
@@ -118,7 +120,7 @@ $ cilium hubble port-forward
 This sets up:
 
 ```bash
-$ kubectl port-forward -n kube-system svc/hubble-relay --address 127.0.0.1 4245:80
+$ kubectl -n kube-system port-forward svc/hubble-relay --address 127.0.0.1 4245:80
 ```
 
 In a new terminal, query Hubble's health:

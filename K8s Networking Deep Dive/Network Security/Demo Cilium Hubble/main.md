@@ -98,6 +98,10 @@ $ helm upgrade cilium cilium/cilium --version 1.15.4 \
     --set hubble.metrics.enabled="{dns,drop,tcp,flow,port_distribution,icmp,httpV2:exemplars=true;labelsContext=source_ip,source_namespace,destination_ip,destination_namespace,destination_workload,traffic_direction}"
 ```
 
+С неправильным списком метрик (как в примере выше) pod `cilium-agent` поднимается, но в логах можно найти ошибку про Metrics Server и в итоге не слушается hostPort 4244, из-за этого не поднимается `hubble-relay`.
+
+Про hostNetwork и hostPort. Если в манифесте присутствует параметр `hostNetwork: true`, то подразумевается, что и hostPort-ы тоже "в деле". Если не указаны значения для hostPort-ов, но указаны для значения для containerPort-ов, то подразумевается, что `hostPort = containerPort`.
+
 | Metric Type          | Description                                   |
 | ---------------------| --------------------------------------------- |
 | `dns`                | DNS query and response details                |
