@@ -41,3 +41,33 @@ spec:
 Capabilities поддерживаются только на уровне контейнера, не на уровне pod-а.
 
 Смотреть под каким пользователем запущен контейнер: `kubectl exec -it ubuntu-sleeper -- whoami`.
+
+Список возможных опций securityContext на уровне containerLevel:
+
+- allowPrivilegeEscalation
+- appArmorProfile
+- capabilities
+- privileged
+- procMount
+- readOnlyRootFilesystem
+- runAsGroup
+- runAsNonRoot
+- runAsUser
+- seLinuxOptions
+- seccompProfile
+- windowsOptions
+
+Список возможных опций securityContext на уровне podLevel:
+
+- appArmorProfile
+- fsGroup
+- fsGroupChangePolicy
+- runAsGroup
+- runAsNonRoot
+- runAsUser
+- seLinuxOptions
+- seccompProfile
+- supplementalGroups
+- supplementalGroupsPolicy
+- sysctls
+- windowsOptions
