@@ -136,6 +136,12 @@ spec:
 
 Добавить в секрет два новых значения `foo` и `bar`:
 
-```shell
-$  kubectl patch secret my-super-secret -p '{"data":{"foo":"base64EncodedValue1", "bar":"base64EncodedValue2"}}'
+```bash
+$ kubectl patch secret my-super-secret -p '{"data":{"foo":"base64EncodedValue1", "bar":"base64EncodedValue2"}}'
+```
+
+Удалить определенный ключ из секрета (вместе со значением):
+
+```bash
+$ kubectl patch secret my-super-secret --type='json' -p='[{"op": "remove", "path": "/data/my.key"}]'
 ```
