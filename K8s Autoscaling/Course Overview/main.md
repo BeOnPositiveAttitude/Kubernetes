@@ -51,26 +51,7 @@ A few clarifying (уточняющих) points (моментов)
 - KEDA connects to external event sources (Kafka, SQS, Azure Queue, Prometheus, etc.) and exposes metrics or triggers (триггеры) that drive scaling (управляющие масштабированием), including scale-to-zero.
 
 **Avoid uncontrolled interaction between HPA and VPA: if both modify the same resource targets (for example, container CPU requests), they can create oscillations (колебаний). Use recommended patterns - like VPA in "recommend" mode with HPA controlling replica count - or split responsibilities (ответственности) by workload type.**
-(here)
-We'll include hands-on examples for manual and automated scaling, plus practical tips to avoid common issues (metric selection, cooldowns, target utilization, and resource fragmentation). Follow along to learn when to use HPA, VPA, CPA, Cluster Autoscaler, and KEDA so your applications remain available during spikes and efficient during low load.
 
-<Callout icon="lightbulb" color="#1CB2FE">
-  By the end of this course you'll understand how these autoscalers interact, which to use for different problems, and implementation best practices so applications stay available under changing load.
-</Callout>
+We'll include hands-on examples for manual and automated scaling, plus practical tips to avoid common issues (metric selection, cooldowns (период стабилизации, время восстановления), target (целевые показатели) utilization, and resource fragmentation). Follow along (следить за ходом событий) to learn when to use HPA, VPA, CPA, Cluster Autoscaler, and KEDA so your applications remain available during spikes and efficient during low load.
 
-Links and references
-
-* [Kubernetes Documentation](https://kubernetes.io/docs/)
-* [Cluster Autoscaler](https://cluster-autoscaler.kubernetes.io/)
-* [Karpenter (AWS alternative)](https://karpenter.sh/)
-* [KEDA - Event-Driven Autoscaling](https://keda.sh/)
-* [Vertical Pod Autoscaler (VPA) repo](https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler)
-
-Ready to get started with the first hands-on lesson?
-
-<CardGroup>
-  <Card title="Watch Video" icon="video" cta="Learn more" href="https://learn.kodekloud.com/user/courses/kubernetes-autoscaling/module/66710f67-c094-4a4c-b718-4a031d1ddebe/lesson/7605b2e1-8fbb-4b8c-849e-8f6a8c02f064" />
-</CardGroup>
-
-
-This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.
+By the end of this course you'll understand how these autoscalers interact, which to use for different problems, and implementation best practices so applications stay available under changing load.
