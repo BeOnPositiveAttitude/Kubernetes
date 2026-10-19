@@ -22,7 +22,7 @@ Two primary scaling aspects in Kubernetes:
 1. Cluster scaling - changes the number or size of worker nodes (virtual machines) in the cluster.
 2. Pod (workload) scaling - changes the number of application replicas (pods) or adjusts pod resource requests/limits.
 
-Cluster scaling offers OS-level resources (CPU, memory, disk, GPUs). Pod scaling adjusts application concurrency and throughput. Both layers complement one another: pod-level autoscalers create demand for node capacity, and cluster autoscalers provide that capacity.
+Cluster scaling offers OS-level resources (CPU, memory, disk, GPUs). Pod scaling adjusts application concurrency (параллелизм) and throughput (пропускную способность). Both layers complement (дополняют) one another: pod-level autoscalers create demand for node capacity, and cluster autoscalers provide that capacity.
 
 <Frame>
   <img src="https://mintcdn.com/kodekloud-c4ac6d9a/Xy-QQj1elzzjSGkz/images/Kubernetes-Autoscaling/Manual-Scaling/Why-Do-We-Need-to-Autoscale/kubernetes-scaling-cluster-pod-diagram.jpg?fit=max&auto=format&n=Xy-QQj1elzzjSGkz&q=85&s=61873d4d7a612f31131e038930c889bf" alt="A simple diagram titled &#x22;Scaling in Kubernetes&#x22; showing &#x22;Kubernetes Scaling&#x22; branching into two boxes: &#x22;Cluster Scaling&#x22; (worker node scaling) and &#x22;Pod Scaling&#x22; (pod, deployment, and statefulset scaling)." width="1920" height="1080" data-path="images/Kubernetes-Autoscaling/Manual-Scaling/Why-Do-We-Need-to-Autoscale/kubernetes-scaling-cluster-pod-diagram.jpg" />
