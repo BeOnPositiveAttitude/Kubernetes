@@ -4,7 +4,7 @@ This lesson covers Kubernetes autoscaling - how to automatically adjust (рег�
 
 Imagine you run an online store and traffic spikes (резко подскочить) during a flash sale (распродажа). If capacity doesn't increase quickly enough (достаточно быстро), pages slow or become unavailable and users abandon (бросать) their carts (корзины). Autoscaling prevents that by increasing resources when demand (спрос) rises (повышается) and decreasing them when demand falls, keeping costs (расходы) under control while preserving (сохраняя) performance (производительность).
 
-<img src="image.png" width="900" height="400"><br>
+<img src="image.png" width="700" height="400"><br>
 
 Autoscaling behaves like a thermostat for your infrastructure: it observes (наблюдает) load (metrics or events) and adjusts capacity so applications meet their service levels. In Kubernetes this can mean scaling application replica counts, resizing container resource requests/limits, or adding and removing nodes.
 
@@ -15,7 +15,7 @@ At a high level:
 - When load increases, you may need more Pod replicas and/or more nodes to host them.
 - Different autoscalers handle these responsibilities (обязанности): some scale Pods, others right-size (оптимизировать, подобрать подходящий размер) resources, and others manage the underlying node pool.
 
-<img src="image-1.png" width="900" height="400"><br>
+<img src="image-1.png" width="700" height="400"><br>
 
 What we'll cover in this course
 
@@ -27,7 +27,7 @@ What we'll cover in this course
 - KEDA (Kubernetes Event-Driven Autoscaler): scale based on event sources (message queues, streams) and enable scale-to-zero (масштабирование до нуля) patterns.
 - Hands-on (практические) examples and recommended patterns to avoid conflicts and instability (нестабильности).
 
-<img src="image-2.png" width="900" height="400"><br>
+<img src="image-2.png" width="700" height="400"><br>
 
 Autoscaler summary
 
