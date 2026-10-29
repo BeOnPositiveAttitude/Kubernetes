@@ -159,25 +159,7 @@ Additional considerations and best practices
 
 - Deploying Metrics Server: Some distributions omit (не включают, пропускают) it by default. Confirm `metrics-server` is running and reachable.
 - Scaling policy tuning: Use multiple metrics and configure scale-up/scale-down policies and stabilization windows to prevent oscillation (колебания).
-- Aggressiveness: Determine how aggressive scaling should be based on your cost, latency and SLA requirements.
+- Aggressiveness (агрессивность): Determine how aggressive scaling should be based on your cost, latency and SLA (Service Level Agreement) requirements.
 - Testing and observability: Validate HPA behavior with load tests and monitor HPA events (`kubectl describe hpa <name>`) and adapter logs.
 
-![A presentation slide titled "HPA Considerations" showing three columns with icons labeled "Metrics Server," "Metrics Evaluation," and "Scaling Behavior." The slide also lists metric types like "Custom" and "External" and includes a KodeKloud copyright.](https://mintcdn.com/kodekloud-c4ac6d9a/Xy-QQj1elzzjSGkz/images/Kubernetes-Autoscaling/Horizontal-Pod-Autoscaler-HPA/HPA-Architecture/hpa-considerations-metrics-server-evaluation-scaling.jpg?fit=max\&auto=format\&n=Xy-QQj1elzzjSGkz\&q=85\&s=0a9edae7d554869524f58f234e93f89a)
-
-Next steps and references
-
-* Hands-on: install Metrics Server and a Prometheus Adapter, create sample applications that expose custom metrics, and apply HPAs to observe autoscaling behavior.
-* Read more:
-  * [Kubernetes HPA documentation](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
-  * [Metrics Server](https://github.com/kubernetes-sigs/metrics-server)
-  * [Prometheus Adapter for Kubernetes Metrics APIs](https://github.com/kubernetes-sigs/prometheus-adapter)
-  * Your cloud provider or APM documentation for their external metric adapters (e.g., Datadog, New Relic)
-
-This completes the HPA architecture overview and the metric flow paths used for autoscaling. Use the examples above as templates when authoring HPA manifests and ensure your Metrics Server and adapters are properly configured for reliable automatic scaling.
-
-> **[Watch Video](https://learn.kodekloud.com/user/courses/kubernetes-autoscaling/module/245fe895-fa01-4adf-b796-ce7f28666043/lesson/5d8bfc51-788e-4d32-be9a-95a1e1149a49)**
-
-> **[Practice Lab](https://learn.kodekloud.com/user/courses/kubernetes-autoscaling/module/245fe895-fa01-4adf-b796-ce7f28666043/lesson/1ecc250a-8b72-4da9-aaca-5b75bd17417d)**
-
-
-This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.
+<img src="image-6.png" width="700" height="400"><br>
