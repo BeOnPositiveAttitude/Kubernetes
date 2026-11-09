@@ -108,28 +108,21 @@ The stabilization window reduces thrashing - rapid up/down scaling - by making d
 
 ### Practical guidance and tuning checklist
 
-- Start conservative: combine small `Percent` values and modest `Pods` caps to avoid overshoot.
+- Start conservative: combine small `Percent` values and modest (скромные) `Pods` caps (ограничения) to avoid overshoot (превышение, промахиваться).
 - Use `selectPolicy` to control behavior when multiple policies could apply (`Max` vs `Min`).
 - Set `periodSeconds` to limit how often a policy can be enforced; avoid extremely short intervals.
 - Add `stabilizationWindowSeconds` for scale-down to prevent thrash.
 - Validate behavior with controlled load tests while monitoring pods, application latency, and metrics.
-- Monitor the HPA events (`kubectl describe hpa <name>`) to see recommendations, policy applications, and stabilization influences.
+- Monitor the HPA events (`kubectl describe hpa <name>`) to see recommendations, policy applications, and stabilization influences (влияние механизмов стабилизации).
 
-## Summary
+### Summary
 
-* Policies under `behavior` govern how many pods (absolute or percent) can be added/removed and how often (`periodSeconds`).
-* The HPA controller evaluates metrics frequently (default \~15s), but policy `periodSeconds` determines the minimum interval a specific rule can be applied.
-* Use `selectPolicy` to choose how multiple policies are resolved (e.g., `Max` or `Min`).
-* A stabilization window (especially for `scaleDown`) prevents rapid downscales and reduces oscillation.
-* Combine policies, stabilization windows, and `selectPolicy` to balance responsiveness and stability for your application.
+- Policies under `behavior` govern (управляют, определяют) how many pods (absolute or percent) can be added/removed and how often (`periodSeconds`).
+- The HPA controller evaluates metrics frequently (default ~15s), but policy `periodSeconds` determines the minimum interval a specific rule can be applied.
+- Use `selectPolicy` to choose how multiple policies are resolved (e.g., `Max` or `Min`).
+- A stabilization window (especially for `scaleDown`) prevents rapid downscales and reduces oscillation.
+- Combine policies, stabilization windows, and `selectPolicy` to balance responsiveness and stability for your application.
 
-## Links and references
+### Links and references
 
-* [Horizontal Pod Autoscaler - Kubernetes](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
-* [kube-controller-manager options - `--horizontal-pod-autoscaler-sync-period`](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/)
-* For examples and HPA API fields, consult the Kubernetes API reference and HPA v2/v2beta2 docs.
-
-> [card] [Watch Video](https://learn.kodekloud.com/user/courses/kubernetes-autoscaling/module/245fe895-fa01-4adf-b796-ce7f28666043/lesson/d9eaf966-8398-420c-94d2-3e1b79bed80e)
-
-
-This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.
+- [kube-controller-manager options](https://kubernetes.io/docs/reference/command-line-tools-reference/kube-controller-manager/)
