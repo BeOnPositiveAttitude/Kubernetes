@@ -93,7 +93,7 @@ How ladder evaluation works:
   - Example: a cluster with 400 cores will match the `64` threshold (since 400 >= 64 but < 512), yielding 3 replicas from `coresToReplicas`.
 - The final replica count depends on how CPA is configured to combine the cores and nodes results (for many setups you will select the mapping for the metric you care about (о которой вы заботитесь) or merge (объединить) results according to the operator's logic).
 
-## Linear mode (тут)
+### Linear mode
 
 Linear mode computes replica counts using a proportional formula and then applies min/max bounds and protections like `preventSinglePointFailure`.
 
@@ -114,43 +114,32 @@ data:
 
 Linear calculation rules:
 
-* Compute:
-  * `replicas_from_cores = ceil(total_cores / coresPerReplica)`
-  * `replicas_from_nodes = ceil(total_nodes / nodesPerReplica)`
-* CPA uses the larger of the two values, then enforces `min` and `max`.
-* Always round up (ceiling) to prevent under-provisioning.
+- Compute:
+  - `replicas_from_cores = ceil(total_cores / coresPerReplica)`
+  - `replicas_from_nodes = ceil(total_nodes / nodesPerReplica)`
+- CPA uses the larger of the two values, then enforces `min` and `max`.
+- Always round up (ceiling) to prevent under-provisioning.
 
 Example calculation:
 
-* Cluster: 4 nodes, 13 cores
-* `coresPerReplica = 2` -> `replicas_from_cores = ceil(13 / 2) = 7`
-* `nodesPerReplica = 1` -> `replicas_from_nodes = ceil(4 / 1) = 4`
-* Choose the higher value: `7`
-* Apply bounds (min=1, max=100): final replicas = `7`
+- Cluster: 4 nodes, 13 cores
+- `coresPerReplica = 2` -> `replicas_from_cores = ceil(13 / 2) = 7`
+- `nodesPerReplica = 1` -> `replicas_from_nodes = ceil(4 / 1) = 4`
+- Choose the higher value: `7`
+- Apply bounds (min=1, max=100): final replicas = `7`
 
-## Best practices and tips
+### Best practices and tips
 
-* For critical cluster services (DNS, controllers), set a conservative `min` and consider `preventSinglePointFailure: true`.
-* If you need predictable capacity steps for SLA reasons, use ladder mode with deliberate thresholds.
-* For smoother autoscaling reacting to cluster capacity, use linear mode and tune `coresPerReplica` and `nodesPerReplica`.
-* Consider `includeUnschedulableNodes` only if your cluster topology requires counting nodes that are cordoned/unschedulable.
+- For critical cluster services (DNS, controllers), set a conservative `min` and consider `preventSinglePointFailure: true`.
+- If you need predictable capacity steps for SLA reasons, use ladder mode with deliberate (осознанными) thresholds.
+- For smoother autoscaling reacting to cluster capacity, use linear mode and tune `coresPerReplica` and `nodesPerReplica`.
+- Consider `includeUnschedulableNodes` only if your cluster topology requires counting (учет, подсчет) nodes that are cordoned/unschedulable.
 
 When configuring CPA, decide whether your service benefits from predictable step-changes (ladder) or proportional scaling (linear). For critical infrastructure (DNS, network controllers) prefer conservative settings and min replicas to avoid single points of failure.
 
-## Summary
+### Summary
 
-* CPA adjusts Deployment replicas for cluster-level services based on node count and/or CPU cores.
-* Ladder mode provides discrete, threshold-based scaling; linear mode provides proportional scaling with min/max and redundancy protections.
-* CPA integrates with the kube-apiserver to read cluster state and to update Deployment replica counts.
-* Choose the mode and configuration that best match your reliability and capacity requirements.
-
-## Links and references
-
-* [Kubernetes Concepts: Scaling](https://kubernetes.io/docs/concepts/cluster-administration/manage-deployment/)
-* [Kubernetes API Overview](https://kubernetes.io/docs/reference/using-api/api-overview/)
-* For CPA operator specifics, consult your distribution/operator documentation and ConfigMap examples for `ladder` and `linear`.
-
-> [card] [Watch Video](https://learn.kodekloud.com/user/courses/kubernetes-autoscaling/module/ad35ef0b-c572-4f9e-82e4-0865c98fd502/lesson/fffc1694-28ec-4983-a9fe-b573f278a628)
-
-
-This documentation is built and hosted on [Mintlify](https://mintlify.com), a developer documentation platform.
+- CPA adjusts Deployment replicas for cluster-level services based on node count and/or CPU cores.
+- Ladder mode provides discrete, threshold-based scaling; linear mode provides proportional scaling with min/max and redundancy protections.
+- CPA integrates with the kube-apiserver to read cluster state and to update Deployment replica counts.
+- Choose the mode and configuration that best match your reliability and capacity requirements.
